@@ -725,3 +725,55 @@ This disables only an optional compiler diagnostic; CoreAudio, ARM64, HRTF and
 the runtime implementation remain unchanged.
 
 Next gate: rerun `scripts/patch-gzdoom-sdl-audio.sh`.
+
+
+## AUDIO-RUNTIME — PASS
+
+User confirms the SDL GZDoom runtime now opens with working sound after the
+project-local OpenAL Soft/CoreAudio path. Audio is no longer a blocker.
+
+## SDL startup display regression — upstream fix backported
+
+Observed after audio PASS:
+- game/audio run;
+- initial SDL window can remain black;
+- toggling automap causes the game view to appear.
+
+This matches the class of SDL startup/phantom-window issue fixed upstream after
+g4.14.2 by GZDoom commit `c3fb744f47fe`:
+"Fix phantom window freezing desktop on some systems".
+
+NEXO backports only the relevant startup behavior to pinned g4.14.2:
+- create OpenGL window with `SDL_WINDOW_HIDDEN`;
+- show the window when the video mode is applied;
+- set `setmodeneeded = true` after initial network/game setup.
+
+Added:
+- `scripts/apply-gzdoom-sdl-startup-source.py`;
+- `scripts/patch-gzdoom-sdl-startup.sh`.
+
+The canonical full SDL setup also applies this source patch automatically.
+
+## DOOM arrival camera normalization
+
+A second startup symptom remained: the view could begin pointed toward the
+ceiling even though both sticks then behaved correctly.
+
+The DOOM adapter now centers `pawn.Pitch = 0.0` once on player entry. This is
+a destination-camera normalization, not an ongoing override; right-stick look
+remains fully active immediately afterward.
+
+## MARIO-SFX extractor macOS compatibility
+
+The first local extraction attempt failed before doing any work because macOS
+still ships Bash 3.2, which does not support associative arrays
+(`declare -A`).
+
+Extractor v2:
+- Bash 3.2 compatible;
+- no associative arrays;
+- no GNU-only `find -maxdepth`;
+- auto-detects US/JP/EU/Shindou by known SHA-1;
+- searches common local folders when no ROM path is supplied;
+- removes the temporary copied ROM after extraction;
+- leaves only gitignored local voice/action samples.
