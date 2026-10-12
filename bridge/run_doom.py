@@ -99,8 +99,19 @@ def build_pk3() -> Path:
 
     missing = sorted(required.difference(members))
     if missing:
+        hint = ""
+        if "zscript/nexo_handoff.zs" in missing:
+            hint = (
+                "\nRecovery on macOS:\n"
+                "  git restore --source=origin/main -- "
+                "doom/mod_src/zscript/nexo_handoff.zs\n"
+                "This can occur on an older checkout that had the former "
+                "ZSCRIPT/zscript case-insensitive path collision."
+            )
         raise RuntimeError(
-            "NEXO DOOM PK3 is incomplete; missing: " + ", ".join(missing)
+            "NEXO DOOM PK3 is incomplete; missing: "
+            + ", ".join(missing)
+            + hint
         )
 
     print("[NEXO] PK3 members: " + ", ".join(members))
