@@ -33,6 +33,7 @@ MOD_SRC = ROOT / "doom" / "mod_src"
 PK3 = ROOT / ".runtime" / "doom" / "nexo_doom.pk3"
 LOCAL_MARIO_SFX = ROOT / "assets_local" / "mario_sfx"
 LOCAL_MARIO_BODY = ROOT / "assets_local" / "mario_avatar"
+LOCAL_MARIO_HANDS = ROOT / "assets_local" / "mario_hands"
 OPENAL_SOFT_LIB = ROOT / ".runtime" / "doom" / "openal-soft" / "install" / "lib"
 OPENAL_LOG = BRIDGE / "runtime" / "openal-soft.log"
 NEXO_GZDOOM_CONFIG = BRIDGE / "runtime" / "gzdoom-nexo.ini"
@@ -493,7 +494,7 @@ def prepare_runtime_startup_script(render_prime: bool) -> Path | None:
     )
     return NEXO_STARTUP_CFG
 
-def cvar_args(data: dict, mario_sfx_ready: bool, avatar_body_ready: bool) -> list[str]:
+def cvar_args(data: dict, mario_sfx_ready: bool, avatar_body_ready: bool, mario_hands_ready: bool) -> list[str]:
     cargo = data.get("cargo", {})
     player = data.get("player_state", {})
     mission = data.get("mission", {})
@@ -507,6 +508,7 @@ def cvar_args(data: dict, mario_sfx_ready: bool, avatar_body_ready: bool) -> lis
         "nexo_score": str(int(mission.get("score", 0))),
         "nexo_mario_sfx": "true" if mario_sfx_ready else "false",
         "nexo_mario_movement": "true",
+        "nexo_mario_hands_ready": "true" if mario_hands_ready else "false",
         "nexo_perspective_transition": "true",
         "nexo_avatar_body_ready": "true" if avatar_body_ready else "false",
     }
@@ -556,6 +558,7 @@ def main() -> int:
     handoff = load_handoff()
     pk3, mario_sfx_ready = build_pk3()
     avatar_body_ready = (LOCAL_MARIO_BODY / "READY").exists()
+    mario_hands_ready = (LOCAL_MARIO_HANDS / "READY").exists()
     gzdoom, runtime_kind = find_gzdoom(args.gzdoom, args.runtime)
     iwad = find_iwad(args.iwad)
     nexo_config = (
@@ -614,7 +617,7 @@ def main() -> int:
     # WorldLoaded/PlayerEntered reads them while the destination map starts.
     # Putting them after +map can leave the first world-load event seeing the
     # CVAR defaults (notably nexo_handoff=false / nexo_mario_sfx=false).
-    cmd += cvar_args(handoff, mario_sfx_ready, avatar_body_ready)
+    cmd += cvar_args(handoff, mario_sfx_ready, avatar_body_ready, mario_hands_ready)
 
     cmd += ["+map", args.map]
 
@@ -649,6 +652,7 @@ def main() -> int:
     print(f"[NEXO] Perspective: third-person source -> first-person DOOM")
     print(f"[NEXO] Mario voice SFX: {'ON' if mario_sfx_ready else 'OFF (local core set not present)'}")
     print(f"[NEXO] Third-person Mario body: {'READY' if avatar_body_ready else 'PENDING local avatar assets'}")
+    print(f"[NEXO] Mario first-person hands: {'READY' if mario_hands_ready else 'PENDING local weapon-grip pack'}")
     if runtime_kind == "sdl":
         print("[NEXO] Renderer: desktop OpenGL forced (vid_preferbackend=0)")
         openal_local = list(OPENAL_SOFT_LIB.glob("libopenal*.dylib")) if OPENAL_SOFT_LIB.exists() else []
