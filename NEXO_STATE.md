@@ -427,3 +427,25 @@ Gate CONTROL-1:
 7. M2 still loads.
 
 Do not advance M3 until CONTROL-1 passes.
+
+
+### CONTROL-1 build correction — ZMusic / Homebrew
+
+The first SDL build attempt reached CMake successfully and detected:
+- arm64;
+- SDL2;
+- libvpx.
+
+It failed specifically at `find_package(ZMusic REQUIRED)`.
+
+Root cause: GZDoom g4.14.2's own macOS CI does not expect ZMusic to come
+from Homebrew or from the normal GZDoom source build. It downloads
+`zmusic-1.1.14-macos-arm.tar.xz` from the GZDoom `ci_deps` release,
+extracts it under the build directory, and passes that directory through
+`CMAKE_PREFIX_PATH`.
+
+The SDL setup script now mirrors that upstream procedure exactly.
+
+The script also no longer performs a broad Homebrew install/upgrade. It only
+installs missing dependencies, avoiding unrelated ffmpeg upgrades and reducing
+exposure to transient ghcr.io failures.
