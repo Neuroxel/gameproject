@@ -18,41 +18,49 @@ if ! command -v xcodebuild >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! command -v brew >/dev/null 2>&1; then
-  echo "[NEXO] ERROR: Homebrew is required for missing build dependencies."
-  echo "Install Homebrew from https://brew.sh and rerun this script."
-  exit 1
-fi
-
 # Do not upgrade the user's Homebrew installation. The previous version of this
 # script used one broad 'brew install' which caused Homebrew to upgrade existing
 # formulae and unrelated dependents (ffmpeg, etc.), making a transient ghcr.io
-# outage block this build. Install only dependencies that are actually missing.
-need_formula() {
+# outage block this build. Install only a dependency that is demonstrably absent.
+install_formula() {
   local formula="$1"
-  if brew list --versions "$formula" >/dev/null 2>&1; then
-    echo "[NEXO] Dependency already present: $formula"
-  else
-    echo "[NEXO] Installing missing dependency: $formula"
-    HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 \
-      brew install "$formula"
+  if ! command -v brew >/dev/null 2>&1; then
+    echo "[NEXO] ERROR: missing dependency '$formula' and Homebrew is unavailable."
+    echo "Install Homebrew from https://brew.sh and rerun this script."
+    exit 1
   fi
+  echo "[NEXO] Installing missing dependency: $formula"
+  HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 \
+    brew install "$formula"
 }
 
-if ! command -v cmake >/dev/null 2>&1; then
-  need_formula cmake
-else
+if command -v cmake >/dev/null 2>&1; then
   echo "[NEXO] Dependency already present: cmake ($(cmake --version | head -n 1))"
-fi
-
-if ! command -v ninja >/dev/null 2>&1; then
-  need_formula ninja
 else
-  echo "[NEXO] Dependency already present: ninja ($(ninja --version))"
+  install_formula cmake
 fi
 
-need_formula sdl2
-need_formula libvpx
+if command -v ninja >/dev/null 2>&1; then
+  echo "[NEXO] Dependency already present: ninja ($(ninja --version))"
+else
+  install_formula ninja
+fi
+
+if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists sdl2; then
+  echo "[NEXO] Dependency already present: SDL2 ($(pkg-config --modversion sdl2))"
+elif [ -e "/opt/homebrew/lib/libSDL2.dylib" ] || [ -e "/usr/local/lib/libSDL2.dylib" ]; then
+  echo "[NEXO] Dependency already present: SDL2 library"
+else
+  install_formula sdl2
+fi
+
+if command -v pkg-config >/dev/null 2>&1 && pkg-config --exists vpx; then
+  echo "[NEXO] Dependency already present: libvpx ($(pkg-config --modversion vpx))"
+elif [ -e "/opt/homebrew/lib/libvpx.dylib" ] || [ -e "/usr/local/lib/libvpx.dylib" ]; then
+  echo "[NEXO] Dependency already present: libvpx library"
+else
+  install_formula libvpx
+fi
 
 mkdir -p "$RUNTIME"
 
