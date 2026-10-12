@@ -1,0 +1,6 @@
+server noarchive bool nexo_handoff = false;
+server noarchive float nexo_mass = 0.0;
+server noarchive int nexo_coins = 0;
+server noarchive int nexo_goombas = 0;
+server noarchive int nexo_bobombs = 0;
+server noarchive int nexo_score = 0;
