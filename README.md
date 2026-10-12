@@ -3,30 +3,24 @@
 ## Estado
 
 - A0-A6 — PASS
-- A6.5 — **FAIL**
-- **A6.6 — VALIDACIÓN ACTIVA**
+- A6.5 — FAIL
+- A6.6 — PASS: navegación estable con Mario como autoridad física
+- **A6.7 — VALIDACIÓN ACTIVA: objetos realmente pegados + giro natural**
 
-## Cambio crítico
+## Qué cambió
 
-La versión anterior hacía que la bola fuera la autoridad física y pegaba a Mario detrás. Eso rompió puertas, superficies y navegación.
+No se modifica la arquitectura de navegación que ya funcionó.
 
-Ahora es al revés:
+Sólo se corrige la presentación:
 
-```
-Mario nativo
-  ↓
-física / puertas / escaleras / pendientes
-  ↓
-bola visual delante de Mario
-  ↓
-absorción + crecimiento + objetos pegados
-```
+- radio visual realista del modelo provisional;
+- Goombas mucho más cerca de la superficie;
+- leve incrustación visual para que parezcan pegados;
+- giro basado en distancia/radio en vez de un multiplicador fijo;
+- velocidad visual de giro reducida;
+- yaw visual suavizado para evitar que los objetos orbiten al doblar.
 
-La bola **no tiene colisión propia con el mundo**. Es visual y sirve como volumen de absorción.
-
-Esto debería permitir entrar al castillo y pasar puertas con el movimiento original de SM64.
-
-## Prueba
+## Actualizar
 
 ```bash
 cd ~/Documents/gameproject
@@ -36,21 +30,13 @@ bash scripts/install-macos.sh
 
 Reinicia SM64CoopDX.
 
-Prueba primero navegación, antes de ir a los Goombas:
+## Qué probar
 
-1. caminar/correr normalmente;
-2. entrar al castillo;
-3. atravesar una puerta;
-4. entrar a Bob-omb Battlefield;
-5. subir y bajar pendientes/escalones;
-6. confirmar que la bola no te bloquea.
+1. Confirma primero que puedes seguir entrando al escenario y atravesando puertas.
+2. Absorbe 2-4 Goombas.
+3. Detente y mira si ahora quedan realmente tocando la esfera.
+4. Avanza recto: el giro debe ser mucho más lento.
+5. Haz curvas: los Goombas no deberían hacer órbitas bruscas.
+6. Comprueba que el crecimiento continúa.
 
-Después prueba absorción:
-
-7. absorber 2-4 Goombas;
-8. comprobar crecimiento;
-9. comprobar que quedan visibles pegados.
-
-Si todo eso pasa, podremos avanzar a categorías de objetos sin seguir reparando la locomoción.
-
-> La esfera con puntas sigue siendo un modelo provisional.
+La esfera con puntas sigue siendo provisional; A6.7 sólo busca estabilizar la ilusión Katamari antes de añadir más categorías.
