@@ -40,7 +40,7 @@ USER_GZDOOM_CONFIG = Path.home() / "Library" / "Preferences" / "gzdoom.ini"
 NEXO_STARTUP_CFG = BRIDGE / "runtime" / "nexo-startup.cfg"
 
 MARIO_SFX_NAMES = ("jump", "hurt", "death", "use")
-MARIO_SFX_OPTIONAL = ("portal", "celebrate")
+MARIO_SFX_OPTIONAL = (\n    "portal", "celebrate",\n    "jump2", "jump3", "backflip", "longjump", "stomp", "dive",\n)
 MARIO_SFX_EXTS = (".ogg", ".wav", ".flac")
 
 
@@ -191,6 +191,7 @@ def build_pk3() -> tuple[Path, bool]:
 
         if mario_sfx:
             sndinfo_lines: list[str] = []
+            runtime_targets: dict[str, str] = {}
             for logical, path in sorted(mario_sfx.items()):
                 if path.suffix.lower() == ".wav":
                     dmx, rate = _wav_pcm16le_to_dmx(path)
@@ -203,13 +204,68 @@ def build_pk3() -> tuple[Path, bool]:
                 else:
                     arcname = f"sounds/nexo/mario/{path.name}"
                     zf.write(path, arcname)
+                runtime_targets[logical] = arcname
                 members.append(arcname)
                 sndinfo_lines.append(f'nexo/mario/{logical} "{arcname}"')
+
             if mario_sfx_ready:
-                if "portal" not in mario_sfx:
-                    sndinfo_lines.append("$alias nexo/mario/portal nexo/mario/use")
-                if "celebrate" not in mario_sfx:
-                    sndinfo_lines.append("$alias nexo/mario/celebrate nexo/mario/jump")
+                # Optional movement cues remain functional even before the user
+                # refreshes the expanded local extraction set.
+                fallback_aliases = {
+                    "portal": "use",
+                    "celebrate": "jump",
+                    "jump2": "jump",
+                    "jump3": "jump",
+                    "backflip": "jump2",
+                    "longjump": "jump3",
+                    "stomp": "use",
+                    "dive": "use",
+                }
+                for logical, fallback in fallback_aliases.items():
+                    if logical not in mario_sfx:
+                        sndinfo_lines.append(
+                            f"$alias nexo/mario/{logical} nexo/mario/{fallback}"
+                        )
+
+                # Avatar audio replaces Doom's *player voice* layer instead of
+                # playing on top of it. World/weapon/enemy audio remains native.
+                #
+                # Jump is intentionally silent here: NexoMarioDoomPlayer plays
+                # jump1/2/3 only after the engine confirms a real jump.
+                hurt_target = runtime_targets["hurt"]
+                death_target = runtime_targets["death"]
+                stomp_target = runtime_targets.get("stomp")
+
+                for gender in ("male", "female", "neutral", "other"):
+                    sndinfo_lines.append(
+                        f"$playersound player {gender} *jump DSEMPTY"
+                    )
+                    sndinfo_lines.append(
+                        f"$playersound player {gender} *usefail DSEMPTY"
+                    )
+                    for pain_name in ("*pain100", "*pain75", "*pain50", "*pain25"):
+                        sndinfo_lines.append(
+                            f'$playersound player {gender} {pain_name} "{hurt_target}"'
+                        )
+                    for death_name in ("*death", "*xdeath"):
+                        sndinfo_lines.append(
+                            f'$playersound player {gender} {death_name} "{death_target}"'
+                        )
+                    if stomp_target:
+                        sndinfo_lines.append(
+                            f'$playersound player {gender} *grunt "{stomp_target}"'
+                        )
+                        sndinfo_lines.append(
+                            f'$playersound player {gender} *land "{stomp_target}"'
+                        )
+                    else:
+                        sndinfo_lines.append(
+                            f"$playersound player {gender} *grunt DSEMPTY"
+                        )
+                        sndinfo_lines.append(
+                            f"$playersound player {gender} *land DSEMPTY"
+                        )
+
             zf.writestr("SNDINFO", "\n".join(sndinfo_lines) + "\n")
             members.append("SNDINFO")
 
