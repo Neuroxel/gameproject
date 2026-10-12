@@ -1,0 +1,36 @@
+{
+  "schema": "nexo.campaign.v1",
+  "campaign_id": "NEXO_MASHUP_ALPHA",
+  "chapters": [
+    {
+      "id": "M1_CARGA_IMPOSIBLE",
+      "world": "SM64_BOB",
+      "adapter": "sm64coopdx",
+      "next": "M2_STABILIZE_BREACH",
+      "status": "pass"
+    },
+    {
+      "id": "M2_STABILIZE_BREACH",
+      "world": "DOOM_MAP01",
+      "adapter": "gzdoom",
+      "next": "HUB_AFTER_M2",
+      "status": "pass"
+    },
+    {
+      "id": "HUB_AFTER_M2",
+      "world": "NEXO_HUB",
+      "adapter": "orchestrator",
+      "next": "M3_PORTAL_LAB",
+      "status": "active"
+    },
+    {
+      "id": "M3_PORTAL_LAB",
+      "world": "PORTAL_LAB",
+      "adapter": "source_portal",
+      "status": "planned",
+      "requires": {
+        "combat_shards": 8
+      }
+    }
+  ]
+}
