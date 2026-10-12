@@ -629,3 +629,46 @@ The canonical full SDL setup now mirrors that setting.
 For the already-built runtime:
 `scripts/patch-gzdoom-sdl-audio.sh` reconfigures/relinks incrementally against
 macOS OpenAL without rebuilding from scratch.
+
+
+## AUDIO-RUNTIME — OpenAL Soft local runtime
+
+The first `DYN_OPENAL=OFF` repair still produced a playable but silent SDL
+runtime.
+
+Revised root strategy:
+- use GZDoom's dynamic OpenAL path;
+- build OpenAL Soft 1.25.2 locally inside `.runtime`;
+- bundle `libopenal.1.dylib` next to the SDL GZDoom executable;
+- force OpenAL Soft's CoreAudio backend with `ALSOFT_DRIVERS=core`;
+- write an OpenAL diagnostic log to `bridge/runtime/openal-soft.log`.
+
+Added:
+- `scripts/setup-openal-soft-macos.sh`;
+- revised `scripts/patch-gzdoom-sdl-audio.sh`;
+- canonical setup uses `DYN_OPENAL=ON`.
+
+This avoids dependence on Apple's deprecated OpenAL framework and avoids
+Homebrew/ghcr.io for the OpenAL runtime.
+
+## MARIO-SFX extraction — READY
+
+Added:
+`scripts/extract-mario-sfx-from-sm64-rom.sh`.
+
+It clones only open-source sm64coopdx tools and extracts Mario voice samples
+locally from the user's own validated SM64 ROM. No Nintendo audio is downloaded
+or committed.
+
+Core mapped samples:
+- jump <- `00_mario_jump_hoo`;
+- hurt <- `0A_mario_attacked`;
+- death <- `03_mario_dying`;
+- use <- `05_mario_uh`.
+
+Optional identity cues:
+- portal <- `0C_mario_here_we_go`;
+- celebrate <- `04_mario_yahoo`.
+
+DOOM now plays the portal cue on arrival and celebration cue on M2 completion
+when Mario identity audio is enabled.
