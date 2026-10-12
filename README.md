@@ -2,23 +2,31 @@
 
 ## Estado
 
-- A0-A6 — PASS
-- A6.5 — FAIL
-- A6.6 — PASS: navegación estable con Mario como autoridad física
-- **A6.7 — VALIDACIÓN ACTIVA: objetos realmente pegados + giro natural**
+La navegación estable de A6.6 se conserva.
 
-## Qué cambió
+La prueba actual combina dos cosas:
 
-No se modifica la arquitectura de navegación que ya funcionó.
+**A6.8**
+- la bola sube visualmente al crecer;
+- deja de hundirse en el piso;
+- attachments quedan fuera de la superficie en vez de embebidos.
 
-Sólo se corrige la presentación:
+**A7-A8 — slice 1**
+- monedas;
+- Goombas;
+- Bob-ombs con umbral de tamaño;
+- HUD de progresión;
+- feedback "demasiado grande".
 
-- radio visual realista del modelo provisional;
-- Goombas mucho más cerca de la superficie;
-- leve incrustación visual para que parezcan pegados;
-- giro basado en distancia/radio en vez de un multiplicador fijo;
-- velocidad visual de giro reducida;
-- yaw visual suavizado para evitar que los objetos orbiten al doblar.
+## Progresión inicial
+
+| Objeto | Tamaño mínimo | Crecimiento |
+|---|---:|---:|
+| Moneda | 1.80 | +0.08 |
+| Goomba | 1.80 | +0.35 |
+| Bob-omb | 2.70 | +0.50 |
+
+Bob-omb no debe desaparecer si todavía eres pequeño.
 
 ## Actualizar
 
@@ -32,11 +40,13 @@ Reinicia SM64CoopDX.
 
 ## Qué probar
 
-1. Confirma primero que puedes seguir entrando al escenario y atravesando puertas.
-2. Absorbe 2-4 Goombas.
-3. Detente y mira si ahora quedan realmente tocando la esfera.
-4. Avanza recto: el giro debe ser mucho más lento.
-5. Haz curvas: los Goombas no deberían hacer órbitas bruscas.
-6. Comprueba que el crecimiento continúa.
+1. Navegación: puertas y entrada al escenario deben seguir funcionando.
+2. Absorbe varios Goombas y observa si la esfera crece hacia arriba, sin hundirse.
+3. Detente y mira si los Goombas quedan sobre la superficie, no dentro.
+4. Recoge monedas con la bola.
+5. Acércate a un Bob-omb antes de TAM 2.70: debe aparecer "DEMASIADO GRANDE".
+6. Crece hasta 2.70 o más.
+7. Absorbe un Bob-omb y confirma que queda pegado.
+8. Comprueba que el giro sigue lento y natural.
 
-La esfera con puntas sigue siendo provisional; A6.7 sólo busca estabilizar la ilusión Katamari antes de añadir más categorías.
+No usamos todavía Koopas: primero validamos que el sistema genérico de categorías/umbrales sea estable.
