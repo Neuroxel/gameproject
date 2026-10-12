@@ -119,31 +119,59 @@ def build_pk3() -> Path:
     return PK3
 
 
-def find_gzdoom(explicit: str | None) -> Path:
-    candidates = []
+def find_gzdoom(explicit: str | None, runtime_mode: str = "auto") -> tuple[Path, str]:
     if explicit:
-        candidates.append(Path(explicit).expanduser())
+        path = Path(explicit).expanduser()
+        if path.exists():
+            return path, "explicit"
+        raise FileNotFoundError(f"Explicit GZDoom executable not found: {path}")
 
     env = os.getenv("NEXO_GZDOOM")
     if env:
-        candidates.append(Path(env).expanduser())
+        path = Path(env).expanduser()
+        if path.exists():
+            return path, "env"
 
-    candidates += [
+    sdl_candidates = [
+        ROOT / ".runtime/doom/gzdoom-sdl/build/gzdoom",
+        ROOT / ".runtime/doom/gzdoom-sdl/build/Release/gzdoom",
+    ]
+    sdl_root = ROOT / ".runtime/doom/gzdoom-sdl/build"
+    if sdl_root.exists():
+        sdl_candidates.extend(sdl_root.glob("**/gzdoom"))
+
+    cocoa_candidates = [
         ROOT / ".runtime/doom/gzdoom/GZDoom.app/Contents/MacOS/gzdoom",
         Path("/Applications/GZDoom.app/Contents/MacOS/gzdoom"),
         Path.home() / "Applications/GZDoom.app/Contents/MacOS/gzdoom",
     ]
+    cocoa_root = ROOT / ".runtime/doom/gzdoom"
+    if cocoa_root.exists():
+        cocoa_candidates.extend(cocoa_root.glob("**/GZDoom.app/Contents/MacOS/gzdoom"))
 
-    runtime = ROOT / ".runtime/doom/gzdoom"
-    if runtime.exists():
-        candidates.extend(runtime.glob("**/GZDoom.app/Contents/MacOS/gzdoom"))
+    def first_existing(candidates: list[Path]) -> Path | None:
+        for path in candidates:
+            if path.exists() and path.is_file():
+                return path
+        return None
 
-    for path in candidates:
-        if path.exists():
-            return path
+    if runtime_mode in {"auto", "sdl"}:
+        sdl = first_existing(sdl_candidates)
+        if sdl is not None:
+            return sdl, "sdl"
+        if runtime_mode == "sdl":
+            raise FileNotFoundError(
+                "SDL GZDoom not found. Run: bash scripts/setup-gzdoom-sdl-macos.sh"
+            )
+
+    if runtime_mode in {"auto", "cocoa"}:
+        cocoa = first_existing(cocoa_candidates)
+        if cocoa is not None:
+            return cocoa, "cocoa"
 
     raise FileNotFoundError(
-        "GZDoom executable not found. Run: bash scripts/setup-doom-macos.sh"
+        "GZDoom executable not found. Run setup-doom-macos.sh "
+        "or setup-gzdoom-sdl-macos.sh"
     )
 
 
@@ -196,6 +224,12 @@ def main() -> int:
     parser.add_argument("--iwad", help="Path to Doom II compatible IWAD")
     parser.add_argument("--map", default="MAP01", help="Starting map")
     parser.add_argument(
+        "--runtime",
+        choices=("auto", "sdl", "cocoa"),
+        default="auto",
+        help="GZDoom backend: prefer SDL, force SDL, or force official Cocoa build",
+    )
+    parser.add_argument(
         "--controller-setup",
         action="store_true",
         help="Open GZDoom joystick/gamepad configuration menu on launch",
@@ -205,8 +239,18 @@ def main() -> int:
 
     handoff = load_handoff()
     pk3 = build_pk3()
-    gzdoom = find_gzdoom(args.gzdoom)
+    gzdoom, runtime_kind = find_gzdoom(args.gzdoom, args.runtime)
     iwad = find_iwad(args.iwad)
+
+    if args.controller_setup and runtime_kind == "cocoa":
+        print(
+            "[NEXO] WARNING: GZDoom 4.14.2 Cocoa controller input is known "
+            "broken on macOS 26 (triggers/D-pad)."
+        )
+        print(
+            "[NEXO] Recommended: bash scripts/setup-gzdoom-sdl-macos.sh "
+            "then rerun with --runtime sdl --controller-setup"
+        )
 
     DOOM_LOG.parent.mkdir(parents=True, exist_ok=True)
     if DOOM_LOG.exists():
@@ -235,6 +279,7 @@ def main() -> int:
     print(f"[NEXO] Source: {handoff['source']['world']}")
     print(f"[NEXO] Target: {handoff['target']['world']}")
     print(f"[NEXO] GZDoom: {gzdoom}")
+    print(f"[NEXO] Runtime backend: {runtime_kind.upper()}")
     print(f"[NEXO] IWAD: {iwad}")
     print(f"[NEXO] PK3: {pk3}")
     print(f"[NEXO] Mission log: {DOOM_LOG}")
