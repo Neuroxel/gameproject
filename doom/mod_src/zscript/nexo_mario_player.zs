@@ -258,13 +258,6 @@ class NexoMarioDoomPlayer : DoomPlayer
         NexoSetHandLayers(backState, frontState);
     }
 
-    bool NexoWeaponStateMatches(State current, Weapon weapon, Name label)
-    {
-        if (current == null || weapon == null) return false;
-        State baseState = weapon.FindState(label);
-        return baseState != null && InStateSequence(current, baseState);
-    }
-
     bool NexoWeaponIsFiring(Weapon weapon)
     {
         if (player == null || weapon == null) return false;
@@ -272,11 +265,16 @@ class NexoMarioDoomPlayer : DoomPlayer
         let psp = player.FindPSprite(PSP_WEAPON);
         if (psp == null || psp.CurState == null) return false;
 
+        State fire = weapon.FindState('Fire');
+        State hold = weapon.FindState('Hold');
+        State altFire = weapon.FindState('AltFire');
+        State altHold = weapon.FindState('AltHold');
+
         return
-            NexoWeaponStateMatches(psp.CurState, weapon, 'Fire')
-            || NexoWeaponStateMatches(psp.CurState, weapon, 'Hold')
-            || NexoWeaponStateMatches(psp.CurState, weapon, 'AltFire')
-            || NexoWeaponStateMatches(psp.CurState, weapon, 'AltHold');
+            (fire != null && InStateSequence(psp.CurState, fire))
+            || (hold != null && InStateSequence(psp.CurState, hold))
+            || (altFire != null && InStateSequence(psp.CurState, altFire))
+            || (altHold != null && InStateSequence(psp.CurState, altHold));
     }
 
     bool NexoContinuousWeapon(Weapon weapon)
