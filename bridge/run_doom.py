@@ -36,6 +36,7 @@ OPENAL_SOFT_LIB = ROOT / ".runtime" / "doom" / "openal-soft" / "install" / "lib"
 OPENAL_LOG = BRIDGE / "runtime" / "openal-soft.log"
 NEXO_GZDOOM_CONFIG = BRIDGE / "runtime" / "gzdoom-nexo.ini"
 USER_GZDOOM_CONFIG = Path.home() / "Library" / "Preferences" / "gzdoom.ini"
+NEXO_STARTUP_CFG = BRIDGE / "runtime" / "nexo-startup.cfg"
 
 MARIO_SFX_NAMES = ("jump", "hurt", "death", "use")
 MARIO_SFX_OPTIONAL = ("portal", "celebrate")
@@ -129,7 +130,7 @@ def build_pk3() -> tuple[Path, bool]:
                 arcname = f"sounds/nexo/mario/{path.name}"
                 zf.write(path, arcname)
                 members.append(arcname)
-                sndinfo_lines.append(f"nexo/mario/{logical} {arcname}")
+                sndinfo_lines.append(f'nexo/mario/{logical} "{arcname}"')
             if mario_sfx_ready:
                 if "portal" not in mario_sfx:
                     sndinfo_lines.append("$alias nexo/mario/portal nexo/mario/use")
@@ -326,6 +327,26 @@ def prepare_nexo_gzdoom_config(fullscreen: bool) -> Path:
     return NEXO_GZDOOM_CONFIG
 
 
+
+def prepare_runtime_startup_script(render_prime: bool) -> Path | None:
+    """Build delayed startup commands that must remain one command string.
+
+    GZDoom's `wait` only delays the remainder of the *same* AddCommandString
+    buffer. Separate command-line tokens such as `+wait 8 +togglemap` do not
+    form a delayed chain: the standalone wait has no remainder to schedule.
+
+    An exec file preserves the semicolon-separated chain as one string.
+    """
+    if not render_prime:
+        return None
+
+    NEXO_STARTUP_CFG.parent.mkdir(parents=True, exist_ok=True)
+    NEXO_STARTUP_CFG.write_text(
+        "wait 8; togglemap; wait 2; togglemap\n",
+        encoding="utf-8",
+    )
+    return NEXO_STARTUP_CFG
+
 def cvar_args(data: dict, mario_sfx_ready: bool, avatar_body_ready: bool) -> list[str]:
     cargo = data.get("cargo", {})
     player = data.get("player_state", {})
@@ -396,6 +417,9 @@ def main() -> int:
         else None
     )
 
+    render_prime = runtime_kind == "sdl" and not args.no_render_prime
+    startup_script = prepare_runtime_startup_script(render_prime)
+
     if args.controller_setup and runtime_kind == "cocoa":
         print(
             "[NEXO] WARNING: GZDoom 4.14.2 Cocoa controller input is known "
@@ -450,12 +474,12 @@ def main() -> int:
     # Empirical macOS 26 / SDL / Apple OpenGL workaround:
     # the 3D scene is black from startup, while entering automap renders
     # immediately and returning from it permanently wakes the normal 3D view.
-    # Prime exactly that engine transition automatically after the map has had
-    # a few tics to initialize. "wait" is GZDoom's delayed-console primitive,
-    # so the automap remains visible for only two tics.
-    render_prime = runtime_kind == "sdl" and not args.no_render_prime
-    if render_prime:
-        cmd += ["+wait", "8", "+togglemap", "+wait", "2", "+togglemap"]
+    #
+    # IMPORTANT: GZDoom's wait command only delays commands that follow it in
+    # the same semicolon-separated command string. Therefore this must run
+    # through one +exec script, not as separate +wait/+togglemap argv tokens.
+    if startup_script is not None:
+        cmd += ["+exec", str(startup_script)]
 
     if args.controller_setup:
         cmd += ["+menu_joystick"]
@@ -486,8 +510,10 @@ def main() -> int:
     if runtime_kind == "sdl":
         print(
             "[NEXO] Renderer wake-up prime: "
-            + ("OFF (--no-render-prime)" if args.no_render_prime else "ON (automap 2-tic prime)")
+            + ("OFF (--no-render-prime)" if args.no_render_prime else "ON (delayed automap prime)")
         )
+        if startup_script is not None:
+            print(f"[NEXO] Startup command script: {startup_script}")
     if args.controller_setup:
         print("[NEXO] Controller setup menu: requested")
     print("[NEXO] Command:")
