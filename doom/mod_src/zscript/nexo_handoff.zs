@@ -2,6 +2,17 @@ class NexoHandoffHandler : EventHandler
 {
     bool Applied;
     bool InM2Map;
+    bool IdentityActive;
+
+    // Perspective adapter state.
+    int PerspectiveTicks;
+    int PerspectivePlayer;
+    bool PerspectiveBodyVisible;
+
+    // Mario identity/audio state.
+    int LastButtons;
+    int LastHealth;
+    int HurtCooldown;
 
     // M2 — STABILIZE THE BREACH
     int M2Kills;
@@ -46,9 +57,78 @@ class NexoHandoffHandler : EventHandler
         }
     }
 
+    void PlayMarioJump(Actor pawn)
+    {
+        if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
+        pawn.A_StartSound("nexo/mario/jump", CHAN_VOICE, CHANF_DEFAULT, 1.0, ATTN_NONE);
+    }
+
+    void PlayMarioUse(Actor pawn)
+    {
+        if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
+        pawn.A_StartSound("nexo/mario/use", CHAN_VOICE, CHANF_DEFAULT, 1.0, ATTN_NONE);
+    }
+
+    void PlayMarioHurt(Actor pawn)
+    {
+        if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
+        pawn.A_StartSound("nexo/mario/hurt", CHAN_VOICE, CHANF_DEFAULT, 1.0, ATTN_NONE);
+    }
+
+    void PlayMarioDeath(Actor pawn)
+    {
+        if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
+        pawn.A_StartSound("nexo/mario/death", CHAN_VOICE, CHANF_DEFAULT, 1.0, ATTN_NONE);
+    }
+
+    void BeginPerspectiveTransition(int playerNum)
+    {
+        if (!CVarBool('nexo_perspective_transition')) return;
+
+        PerspectivePlayer = playerNum;
+        PerspectiveTicks = 35;
+        PerspectiveBodyVisible = false;
+
+        // We only reveal a third-person body when an actual Mario body/skin
+        // has been imported locally. Until then we preserve first-person DOOM
+        // rather than pretending the Doom marine proxy is Mario.
+        if (CVarBool('nexo_avatar_body_ready'))
+        {
+            players[playerNum].cheats |= CF_CHASECAM;
+            players[playerNum].cheats |= CF_FROZEN;
+            PerspectiveBodyVisible = true;
+        }
+
+        let pawn = players[playerNum].mo;
+        if (pawn != null)
+        {
+            pawn.A_PrintBold(
+                PerspectiveBodyVisible
+                    ? "NEXO PERSPECTIVE SYNC\n3P AVATAR -> 1P DOOM"
+                    : "NEXO PERSPECTIVE SYNC\nMARIO IDENTITY -> 1P DOOM",
+                2.0
+            );
+        }
+    }
+
+    void EndPerspectiveTransition()
+    {
+        if (PerspectivePlayer < 0 || PerspectivePlayer >= MAXPLAYERS) return;
+
+        if (PerspectiveBodyVisible)
+        {
+            players[PerspectivePlayer].cheats &= ~CF_CHASECAM;
+            players[PerspectivePlayer].cheats &= ~CF_FROZEN;
+        }
+
+        PerspectiveTicks = 0;
+        PerspectiveBodyVisible = false;
+    }
+
     override void WorldLoaded(WorldEvent e)
     {
         InM2Map = Level.MapName ~== "MAP01";
+        IdentityActive = CVarBool('nexo_handoff');
 
         // M2 belongs only to the arrival map. Once the player crosses the
         // semantic gate into MAP02, the original SM64 handoff must not be
@@ -57,15 +137,35 @@ class NexoHandoffHandler : EventHandler
         {
             Applied = false;
         }
+
+        PerspectivePlayer = -1;
+        PerspectiveTicks = 0;
+        PerspectiveBodyVisible = false;
+        LastButtons = 0;
+        LastHealth = 0;
+        HurtCooldown = 0;
     }
 
     override void PlayerEntered(PlayerEvent e)
     {
+        let pawn = players[e.PlayerNumber].mo;
+
+        // Mario's identity is world-independent inside the DOOM adapter.
+        // M2 itself is still restricted to MAP01.
+        if (IdentityActive && pawn != null)
+        {
+            LastHealth = pawn.health;
+            LastButtons = players[e.PlayerNumber].cmd.buttons;
+
+            if (InM2Map)
+            {
+                BeginPerspectiveTransition(e.PlayerNumber);
+            }
+        }
+
         if (!InM2Map) return;
         if (Applied) return;
         if (!CVarBool('nexo_handoff')) return;
-
-        let pawn = players[e.PlayerNumber].mo;
         if (pawn == null) return;
 
         Coins = CVarInt('nexo_coins');
@@ -120,11 +220,70 @@ class NexoHandoffHandler : EventHandler
             Mass, Coins, Goombas, Bobombs, InheritedScore
         );
         Console.Printf(
+            "[NEXO] Perspective adapter: third_person(SM64) -> first_person(DOOM), body_ready=%d\n",
+            CVarBool('nexo_avatar_body_ready')
+        );
+        Console.Printf(
+            "[NEXO] Mario identity audio: %s\n",
+            CVarBool('nexo_mario_sfx') ? "enabled" : "disabled/local-assets-missing"
+        );
+        Console.Printf(
             "[NEXO] M2 started: STABILIZE_BREACH goal=%d\n",
             M2Goal
         );
 
         Applied = true;
+    }
+
+    override void WorldTick()
+    {
+        if (PerspectiveTicks > 0)
+        {
+            PerspectiveTicks--;
+            if (PerspectiveTicks <= 0)
+            {
+                EndPerspectiveTransition();
+            }
+        }
+
+        if (!IdentityActive) return;
+
+        let pawn = players[consoleplayer].mo;
+        if (pawn == null) return;
+
+        int buttons = players[consoleplayer].cmd.buttons;
+
+        if ((buttons & BT_JUMP) && !(LastButtons & BT_JUMP))
+        {
+            PlayMarioJump(pawn);
+        }
+
+        if ((buttons & BT_USE) && !(LastButtons & BT_USE))
+        {
+            PlayMarioUse(pawn);
+        }
+
+        if (HurtCooldown > 0)
+        {
+            HurtCooldown--;
+        }
+
+        if (LastHealth > 0 && pawn.health > 0 && pawn.health < LastHealth && HurtCooldown <= 0)
+        {
+            PlayMarioHurt(pawn);
+            HurtCooldown = 18;
+        }
+
+        LastButtons = buttons;
+        LastHealth = pawn.health;
+    }
+
+    override void PlayerDied(PlayerEvent e)
+    {
+        if (!IdentityActive) return;
+
+        let pawn = players[e.PlayerNumber].mo;
+        PlayMarioDeath(pawn);
     }
 
     override void WorldThingDied(WorldEvent e)
@@ -172,13 +331,15 @@ class NexoHandoffHandler : EventHandler
 
     override void WorldUnloaded(WorldEvent e)
     {
+        EndPerspectiveTransition();
+
         if (!InM2Map) return;
         if (!Applied || !M2Complete) return;
 
         // Structured handoff line consumed by bridge/doom_handoff.py.
         // Target NEXO_HUB lets the orchestrator decide the third world.
         Console.Printf(
-            "[NEXO_HANDOFF] source=DOOM_MAP01 target=NEXO_HUB mission=M2_STABILIZE_BREACH kills=%d score=%d mass=%.2f coins=%d goombas=%d bobombs=%d nextmap=%s\n",
+            "[NEXO_HANDOFF] source=DOOM_MAP01 target=NEXO_HUB mission=M2_STABILIZE_BREACH kills=%d score=%d mass=%.2f coins=%d goombas=%d bobombs=%d perspective=first_person nextmap=%s\n",
             M2Kills,
             M2Score,
             Mass,
