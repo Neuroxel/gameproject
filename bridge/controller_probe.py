@@ -67,13 +67,18 @@ def main() -> int:
         manufacturer = (values.get("Manufacturer") or "").lower()
         usage = values.get("PrimaryUsage")
 
+        usage_page = values.get("PrimaryUsagePage")
+        standard_game_controller = (
+            usage_page in {"1", "0x1"}
+            and usage in {"4", "5", "0x4", "0x5"}
+        )
+
         looks_like_controller = (
-            usage in {"4", "5", "0x4", "0x5"}
+            standard_game_controller
             or "controller" in product
             or "gamepad" in product
             or "gamesir" in product
             or "gamesir" in manufacturer
-            or "wireless" in product
         )
 
         if not looks_like_controller:
