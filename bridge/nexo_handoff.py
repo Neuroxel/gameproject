@@ -126,6 +126,15 @@ def build_manifest(
             "id": "M1_CARGA_IMPOSIBLE",
             "score": as_int(data, "handoff_score"),
         },
+        "identity": {
+            "avatar": "MARIO",
+            "audio_profile": "mario_voice_v1",
+        },
+        "perspective": {
+            "source": "third_person",
+            "target": "first_person",
+            "transition": "portal_push_in",
+        },
         "player_state": {
             "logical_mass": as_float(data, "handoff_scale"),
         },
