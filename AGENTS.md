@@ -15,11 +15,17 @@ Eres el ejecutor local del proyecto NEXO Mashup Lab. El estado canónico está e
 
 ## Fase actual
 
-Gate A0. El único objetivo es verificar que el mod Lua ubicado en:
+A0 = PASS.
 
-`sm64coopdx/NexoMashupA/main.lua`
+Gate activo: **A1-A3.1**.
 
-puede cargarse en SM64CoopDX en macOS y mostrar su HUD.
+Objetivos:
+
+- confirmar que el modelo provisional se percibe realmente 3D;
+- confirmar gravedad/rodado/colisión básica;
+- confirmar empuje corporal;
+- confirmar que B cerca del objeto produce un impulso claramente superior;
+- confirmar que D-Pad abajo lo reposiciona.
 
 ## Directorio de mods esperado en macOS
 
@@ -27,13 +33,13 @@ puede cargarse en SM64CoopDX en macOS y mostrar su HUD.
 
 ## Política de depuración
 
-Si A0 falla:
+Si A1-A3.1 falla:
 
-1. comprobar ubicación exacta;
-2. comprobar que exista `main.lua`;
-3. iniciar SM64CoopDX con consola/logs si es posible;
-4. capturar el error exacto;
+1. comprobar que el repo local está actualizado;
+2. ejecutar `bash scripts/install-macos.sh`;
+3. iniciar SM64CoopDX con consola/logs si el problema no es visual;
+4. capturar el error o comportamiento exacto;
 5. hacer la corrección mínima;
-6. documentar resultado.
+6. documentar resultado en `NEXO_STATE.md`.
 
-No comenzar A1 hasta A0 PASS.
+No comenzar A4 hasta A1-A3.1 PASS.
