@@ -47,6 +47,7 @@ convert_sample "sound/samples/sfx_mario/03_mario_haha.aiff" "jump2_hoohoo"
 convert_sample "sound/samples/sfx_mario/04_mario_yahoo.aiff" "jump3_yahoo"
 convert_sample "sound/samples/sfx_mario/18_mario_waha.aiff" "jump3_waha"
 convert_sample "sound/samples/sfx_mario/19_mario_yippee.aiff" "jump3_yippee"
+convert_sample "sound/samples/sfx_mario/07_mario_wah2.aiff" "ground_pound_wah"
 
 # Legacy logical cues remain generated for backward compatibility with older
 # NEXO builds and non-triple movement actions.
