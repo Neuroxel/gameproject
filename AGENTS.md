@@ -56,3 +56,11 @@ For the local SDL GZDoom app, ensure
 
 Use the repair script for an already completed build; do not rebuild 835 targets
 for a missing runtime dylib.
+
+
+## SDL renderer invariant
+
+SDL is used for controller input, not GLES rendering.
+Always launch the macOS SDL runtime with desktop OpenGL:
+`vid_preferbackend=0`, `gl_es=false`.
+Do not re-enable the default Vulkan preference unless Vulkan is actually built.
