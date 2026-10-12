@@ -37,6 +37,19 @@ convert_sample() {
   echo "[NEXO] Created $(basename "$output") <- $(basename "$source")"
 }
 
+# Canonical SM64 jump voice grammar.
+# Jump 1 randomizes Yah/Wah/Hoo, jump 2 is Hoo-hoo, and jump 3 uses the
+# Yahoo/Waha/Yippee pool (weighted in ZScript to match the source game).
+convert_sample "sound/samples/sfx_mario/00_mario_jump_hoo.aiff" "jump1_hoo"
+convert_sample "sound/samples/sfx_mario/01_mario_jump_wah.aiff" "jump1_wah"
+convert_sample "sound/samples/sfx_mario/02_mario_yah.aiff" "jump1_yah"
+convert_sample "sound/samples/sfx_mario/03_mario_haha.aiff" "jump2_hoohoo"
+convert_sample "sound/samples/sfx_mario/04_mario_yahoo.aiff" "jump3_yahoo"
+convert_sample "sound/samples/sfx_mario/18_mario_waha.aiff" "jump3_waha"
+convert_sample "sound/samples/sfx_mario/19_mario_yippee.aiff" "jump3_yippee"
+
+# Legacy logical cues remain generated for backward compatibility with older
+# NEXO builds and non-triple movement actions.
 convert_sample "sound/samples/sfx_mario/01_mario_jump_wah.aiff" "jump2"
 convert_sample "sound/samples/sfx_mario/02_mario_yah.aiff" "jump3"
 convert_sample "sound/samples/sfx_mario/18_mario_waha.aiff" "backflip"
