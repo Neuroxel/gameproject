@@ -174,3 +174,34 @@ PASS si:
 7. jugar DOOM sigue siendo normal.
 
 No iniciar transición visual P2/P3 antes de P1.2 PASS.
+
+
+## P1.2 regression — handoff persistence fixed
+
+Observed error:
+`No pending NEXO handoff found` when running `run_doom.py --dry-run` after a previously successful M1 handoff.
+
+### Root cause
+
+`reset_progress()` in the SM64 mod wrote:
+
+`handoff_pending = 0`
+
+and `on_level_init()` invokes `reset_progress()`.
+
+Therefore a valid completed handoff could be erased merely by changing/reloading levels before the external bridge consumed it.
+
+### Fix
+
+1. SM64 no longer clears `handoff_pending` on reset/level load.
+2. Completed handoff remains durable until overwritten by a newer completed mission.
+3. Bridge v0.2 can recover legacy completed payloads whose pending bit was incorrectly cleared.
+4. DOOM launcher v0.2 reuses an existing validated `handoff.json` if a refresh from SM64 storage is unavailable.
+
+This makes Portal Fabric state durable across engine/session boundaries.
+
+### Immediate recovery
+
+The user should not need to replay M1 if either:
+- the old save still contains the handoff payload fields; or
+- `bridge/runtime/handoff.json` already exists from the previously successful export.
