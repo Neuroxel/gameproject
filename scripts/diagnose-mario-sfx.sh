@@ -46,6 +46,19 @@ def find_local(name: str):
             return p
     return None
 
+def dmx_info(data: bytes):
+    if len(data) < 8:
+        return {"valid": False, "reason": "short DMX header"}
+    fmt, rate, payload_len = struct.unpack_from("<HHI", data, 0)
+    valid = fmt == 3 and rate > 0 and payload_len > 0 and payload_len <= len(data) - 8
+    return {
+        "valid": valid,
+        "format": fmt,
+        "rate": rate,
+        "payload_len": payload_len,
+        "file_payload": len(data) - 8,
+    }
+
 def wav_info(data: bytes):
     if len(data) < 12:
         return {"valid": False, "reason": "short header"}
@@ -155,20 +168,30 @@ with zipfile.ZipFile(pk3, "r") as zf:
         target = mappings.get(logical)
         exists = target in members if target else False
         size = zf.getinfo(target).file_size if exists else -1
+        extra = ""
+        target_ok = exists and size > 0
+        if exists and target and target.endswith(".dmx"):
+            info = dmx_info(zf.read(target))
+            extra = (
+                f" dmx={int(info.get('valid', False))}"
+                f" rate={info.get('rate', 0)}"
+                f" payload={info.get('payload_len', 0)}"
+            )
+            target_ok = target_ok and bool(info.get("valid"))
         print(
             f"[NEXO] map {logical:24s} -> {str(target):34s} "
-            f"member={int(exists)} bytes={size}"
+            f"member={int(exists)} bytes={size}{extra}"
         )
-        mapping_ok = mapping_ok and exists and size > 0
+        mapping_ok = mapping_ok and target_ok
 
 print()
 print(f"[NEXO] RESULT mapping_and_members={'PASS' if mapping_ok else 'FAIL'}")
 print(f"[NEXO] RESULT all_six_pcm16le={'PASS' if all_pcm16le else 'NO'}")
 print("[NEXO] Interpretation:")
-print("  - mapping FAIL => fix SNDINFO/path/PK3 first.")
-print("  - mapping PASS + non-PCM/invalid WAV => normalize local audio before GZDoom.")
-print("  - mapping PASS + PCM16LE + runtime lump>=0/bytes>0 + S_GetLength=0")
-print("    => resource lookup is proven; remaining failure is GZDoom's sound decode/load path.")
+print("  - local PCM16LE proves source extraction is valid.")
+print("  - generated .dmx entries bypass ZMusic/libsndfile and use GZDoom's native raw path.")
+print("  - mapping PASS + dmx=1 + runtime S_GetLength>0 => AUDIO-ID-2 decoder bypass works.")
+print("  - mapping PASS + dmx=1 + S_GetLength=0 => investigate native DMX/OpenAL load path.")
 PY
 
 echo
