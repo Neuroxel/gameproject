@@ -1,49 +1,40 @@
 # NEXO Mashup Lab
 
-Laboratorio incremental para experimentar con mashups sistémicos de videojuegos.
-
-## Fase actual
-
-**A — Super Mario 64 × Katamari × GTA × Tony Hawk**
-
-Motor anfitrión inicial: **SM64CoopDX**  
-Estrategia: mod Lua, sin recompilar el juego y sin reverse engineering innecesario.
+Laboratorio incremental de mashups sistémicos de videojuegos.
 
 ## Estado
 
-- **A0 — PASS**
-- **A1-A3.1 — PASS**
-- **A4-A6 — VALIDACIÓN ACTIVA:** detectar Goombas, absorberlos y hacer crecer realmente la bola.
-- **A7+ — BLOQUEADO** hasta validar A4-A6.
+- A0 — PASS
+- A1-A3.1 — PASS
+- A4 — PASS
+- A5 — PASS
+- **A6.1 — VALIDACIÓN ACTIVA: crecimiento visible y control**
+- A7+ — bloqueado hasta A6.1 PASS
 
-El estado canónico detallado vive en `NEXO_STATE.md`.
+## Prueba actual
 
-## Qué debería verse ahora
+La bola ahora parte considerablemente más grande y el HUD muestra:
 
 ```
-NEXO MASHUP LAB
-A4-A6 KATAMARI TEST
-GOOMBAS: 0 | TAM: 1.15x | VEL: ...
+GOOMBAS: 0 | OBJ: 1.80 | VIS: 1.80
+GFX: 1.80 | VEL: ...
 ```
 
-La bola sigue usando el modelo 3D provisional de Spiny Ball.
+Al absorber el primer Goomba:
 
-## Prueba recomendada
+```
+OBJ: 2.35
+VIS: 1.80 -> ... -> 2.35
+GFX: debe acompañar a VIS
+```
 
-Usa **Bob-omb Battlefield**, donde hay Goombas accesibles.
+La esfera debería crecer de forma inequívoca mientras aparece:
 
-1. Empuja la bola hacia un Goomba.
-2. Al tocarlo/dejarlo entrar en el radio de la bola:
-   - el Goomba debe desaparecer;
-   - debe sonar feedback;
-   - debe aparecer `GOOMBA ABSORBIDO +1`;
-   - `GOOMBAS` debe subir;
-   - `TAM` debe aumentar;
-   - la bola debe hacerse físicamente más grande.
-3. Absorbe varios Goombas y comprueba que sigue siendo jugable.
-4. Pulsa D-Pad abajo para reiniciar tamaño/contador y reposicionar la bola.
+`CRECIENDO! GOOMBA +1`
 
-## Actualizar e instalar en macOS
+La velocidad pasiva se redujo y el radio de empuje aumentó para hacerla más controlable.
+
+## Actualizar e instalar
 
 ```bash
 cd ~/Documents/gameproject
@@ -51,14 +42,8 @@ git pull
 bash scripts/install-macos.sh
 ```
 
-Después reinicia SM64CoopDX y habilita el mod si fuera necesario.
+Reinicia SM64CoopDX.
 
-## Principios
+Usa Bob-omb Battlefield y absorbe uno o más Goombas. Si el modelo no crece, anota especialmente los valores **VIS** y **GFX** del HUD; éstos permiten localizar exactamente dónde falla la escala.
 
-1. Validar diversión antes de aumentar complejidad.
-2. Un gate funcional por vez.
-3. Mantener el repositorio libre de ROMs, dumps y assets propietarios.
-4. No introducir tooling pesado hasta que exista una necesidad técnica concreta.
-5. Cada cambio debe ser pequeño, reversible y verificable.
-
-> Este repositorio no incluye ni debe incluir ROMs, ejecutables comerciales ni assets protegidos de los juegos.
+> No incluir ROMs ni assets comerciales en este repositorio.
