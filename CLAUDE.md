@@ -105,3 +105,15 @@ CONTROL-1 is practical PASS with the SDL GameController backport.
 
 For the SDL audio runtime use DYN_OPENAL=OFF; existing builds can be repaired via
 scripts/patch-gzdoom-sdl-audio.sh.
+
+
+## SDL startup-window compatibility
+
+Pinned GZDoom g4.14.2 must also carry the narrow startup backport from upstream
+commit c3fb744f47fe. Canonical helper:
+`scripts/apply-gzdoom-sdl-startup-source.py`.
+
+Do not remove it when rebuilding the SDL runtime.
+
+DOOM arrival also centers player pitch once. This is required cross-engine
+camera normalization, not a persistent camera lock.
