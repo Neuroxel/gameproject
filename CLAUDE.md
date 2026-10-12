@@ -22,3 +22,12 @@ P1.1 manifest export = PASS.
 7. recursos derivados presentes.
 
 No tocar física SM64 ni visual QA de attachments durante P1.2.
+
+
+## Handoff durability invariant
+
+Never clear a completed handoff on level initialization/reset.
+
+Portal state crosses process boundaries and must remain durable until explicitly consumed or superseded.
+
+Bridge v0.2 supports recovery from the legacy pending-reset bug.
