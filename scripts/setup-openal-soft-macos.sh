@@ -44,6 +44,12 @@ fi
 echo "[NEXO] Apple compiler: $("$APPLE_CXX" --version | head -n 1)"
 echo "[NEXO] macOS SDK: $SDKROOT"
 
+# OpenAL Soft 1.25.2 enables -Wfunction-effects on AppleClang >=17 when the
+# compiler reports support. AppleClang 21 accepts the flag but diagnoses two
+# CoreAudio callback conversions as hard errors. Disable that optional warning
+# probe/result for this pinned release; it does not change runtime semantics.
+echo "[NEXO] Compatibility: disabling optional -Wfunction-effects for OpenAL Soft 1.25.2 / AppleClang 21"
+
 # A CMake build directory cannot safely switch compilers in-place. The failed
 # build was configured with Homebrew LLVM, so discard only OpenAL Soft's build
 # cache/artifacts; the downloaded source checkout is preserved.
@@ -67,6 +73,8 @@ env -u CC -u CXX cmake \
   -DCMAKE_OSX_SYSROOT="$SDKROOT" \
   -DCMAKE_OSX_ARCHITECTURES=arm64 \
   -DCMAKE_CXX_SCAN_FOR_MODULES=OFF \
+  -DHAVE_WFUNCTION_EFFECTS=FALSE \
+  -DALSOFT_WERROR=OFF \
   -DCMAKE_INSTALL_PREFIX="$INSTALL" \
   -DLIBTYPE=SHARED \
   -DALSOFT_UTILS=ON \
