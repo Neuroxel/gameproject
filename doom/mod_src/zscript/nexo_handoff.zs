@@ -1,6 +1,7 @@
 class NexoHandoffHandler : EventHandler
 {
     bool Applied;
+    bool InM2Map;
 
     // M2 — STABILIZE THE BREACH
     int M2Kills;
@@ -45,8 +46,22 @@ class NexoHandoffHandler : EventHandler
         }
     }
 
+    override void WorldLoaded(WorldEvent e)
+    {
+        InM2Map = Level.MapName.CompareNoCase("MAP01") == 0;
+
+        // M2 belongs only to the arrival map. Once the player crosses the
+        // semantic gate into MAP02, the original SM64 handoff must not be
+        // applied again.
+        if (!InM2Map)
+        {
+            Applied = false;
+        }
+    }
+
     override void PlayerEntered(PlayerEvent e)
     {
+        if (!InM2Map) return;
         if (Applied) return;
         if (!CVarBool('nexo_handoff')) return;
 
@@ -114,6 +129,7 @@ class NexoHandoffHandler : EventHandler
 
     override void WorldThingDied(WorldEvent e)
     {
+        if (!InM2Map) return;
         if (!Applied || M2Complete) return;
         if (e.Thing == null) return;
         if (!e.Thing.bIsMonster) return;
@@ -156,6 +172,7 @@ class NexoHandoffHandler : EventHandler
 
     override void WorldUnloaded(WorldEvent e)
     {
+        if (!InM2Map) return;
         if (!Applied || !M2Complete) return;
 
         // Structured handoff line consumed by bridge/doom_handoff.py.
