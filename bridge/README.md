@@ -72,3 +72,22 @@ Ejemplo:
 Crear `doom_adapter` que convierta este manifest en estado inicial DOOM.
 
 Nada de este bridge requiere tocar la ROM ni modificar los originales.
+
+
+## Identity + perspective continuity
+
+The v1 handoff schema now documents two optional backwards-compatible blocks:
+
+```json
+"identity": {
+  "avatar": "MARIO",
+  "audio_profile": "mario_voice_v1"
+},
+"perspective": {
+  "source": "third_person",
+  "target": "first_person",
+  "transition": "portal_push_in"
+}
+```
+
+World adapters preserve identity while choosing their own native camera mode.
