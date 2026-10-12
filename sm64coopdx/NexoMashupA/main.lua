@@ -221,7 +221,10 @@ local function reset_progress()
     clear_attached_visuals()
     clear_gate()
 
-    mod_storage_save("handoff_pending", "0")
+    -- IMPORTANT: a completed cross-world handoff is durable state.
+    -- Do not clear handoff_pending on level load/reset; doing so made the
+    -- portal result disappear before the external bridge could consume it.
+    -- A newer completed mission will overwrite the stored handoff.
 end
 
 local function apply_visual_scale(obj)
