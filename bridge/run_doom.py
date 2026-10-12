@@ -194,7 +194,7 @@ def _wav_pcm16le_to_dmx(path: Path) -> tuple[bytes, int]:
     return header + bytes(out), rate
 
 
-def build_pk3() -> tuple[Path, bool]:
+def build_pk3() -> tuple[Path, bool, bool]:
     if not MOD_SRC.exists():
         raise FileNotFoundError(f"DOOM mod source missing: {MOD_SRC}")
 
