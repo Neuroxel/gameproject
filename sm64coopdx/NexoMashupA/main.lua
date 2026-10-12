@@ -1,9 +1,11 @@
 -- name: NEXO Mashup A
--- description: NEXO Mashup Lab prototype. A1-A3: visible physics ball that Mario can push.
+-- description: NEXO Mashup Lab prototype. A1-A3.1: real 3D test model, physics and differentiated push/hit.
 
 local TITLE = "NEXO MASHUP LAB"
-local STATUS = "A1-A3 BALL TEST"
-local RESET_HINT = "DPAD ABAJO: reiniciar bola"
+local STATUS = "A1-A3.1 3D / FISICA"
+local RESET_HINT = "DPAD ABAJO: reiniciar  |  B: golpe fuerte"
+
+local hit_flash = 0
 
 local function get_ball()
     return obj_get_first_with_behavior_id(id_bhvNexoBall)
@@ -13,8 +15,9 @@ local function bhv_nexo_ball_init(obj)
     obj.oFlags = OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE
     obj.oGraphYOffset = 35
 
-    -- Visual size for the first prototype.
-    cur_obj_scale(0.80)
+    -- Temporary TRUE 3D model. We deliberately avoid E_MODEL_BOWLING_BALL:
+    -- its vanilla display list reads visually like a flat disc.
+    cur_obj_scale(1.15)
 
     -- Physics adapted from the official SM64CoopDX custom ball example.
     obj.oWallHitboxRadius = 55.0
@@ -24,8 +27,8 @@ local function bhv_nexo_ball_init(obj)
     obj.oFriction         = 0.97
     obj.oBuoyancy         = -2.00
 
-    obj.hitboxRadius = 90
-    obj.hitboxHeight = 90
+    obj.hitboxRadius = 95
+    obj.hitboxHeight = 95
 
     network_init_object(obj, true, nil)
 end
@@ -42,31 +45,35 @@ local function bhv_nexo_ball_loop(obj)
     local angle_to_player = obj_angle_to_object(obj, player)
     local local_player_touch = false
 
-    -- Mario can push the ball by walking/running into it.
-    -- Attacking gives a stronger shove.
-    local radius = 110
-    local push_strength = 7
+    -- Explicit B press is used as the test oracle for a strong hit.
+    -- This is intentionally distinct from passive body pushing.
+    local strong_hit = ((m.controller.buttonPressed & B_BUTTON) ~= 0)
+                       and distance_to_player < 185
 
-    if (m.action & ACT_FLAG_ATTACKING) ~= 0 then
-        radius = 150
-        push_strength = 16
-    end
+    if strong_hit then
+        obj.oMoveAngleYaw = angle_to_player + 0x8000
+        obj.oForwardVel = math.max(obj.oForwardVel, 78)
+        obj.oVelY = math.max(obj.oVelY, 20)
 
-    if distance_to_player < radius then
+        if m.playerIndex == 0 then
+            hit_flash = 24
+            local_player_touch = true
+        end
+    elseif distance_to_player < 115 then
+        -- Normal body push: deliberately much weaker than B.
         local xdiff = player.oPosX - obj.oPosX
         local zdiff = player.oPosZ - obj.oPosZ
 
         if distance_to_player > 1 then
-            obj.oPosX = obj.oPosX - (radius - distance_to_player) / radius * xdiff
-            obj.oPosZ = obj.oPosZ - (radius - distance_to_player) / radius * zdiff
+            obj.oPosX = obj.oPosX - (115 - distance_to_player) / 115 * xdiff
+            obj.oPosZ = obj.oPosZ - (115 - distance_to_player) / 115 * zdiff
         end
 
         obj.oMoveAngleYaw = angle_to_player + 0x8000
-        obj.oForwardVel = math.min(obj.oForwardVel + push_strength, 70)
 
-        if (m.action & ACT_FLAG_ATTACKING) ~= 0 then
-            obj.oVelY = obj.oVelY + 8.0
-        end
+        local mario_speed = math.abs(m.forwardVel)
+        local push = 2.5 + math.min(mario_speed * 0.10, 5.5)
+        obj.oForwardVel = math.min(obj.oForwardVel + push, 34)
 
         if m.playerIndex == 0 then
             local_player_touch = true
@@ -86,9 +93,10 @@ local function bhv_nexo_ball_loop(obj)
         obj_check_floor_death(step_rc, floor)
     end
 
-    -- Make the visual model visibly roll.
+    -- Visible roll of the TRUE 3D temporary model.
     obj.oFaceAngleYaw = obj.oMoveAngleYaw
-    obj.oFaceAnglePitch = obj.oFaceAnglePitch + obj.oForwardVel * 110
+    obj.oFaceAnglePitch = obj.oFaceAnglePitch + obj.oForwardVel * 105
+    obj.oFaceAngleRoll = obj.oFaceAngleRoll + obj.oForwardVel * 35
 
     if local_player_touch then
         network_send_object(obj, false)
@@ -111,17 +119,17 @@ local function spawn_ball_for_mario(m)
 
     local distance = 260
     local x = m.pos.x + sins(m.faceAngle.y) * distance
-    local y = m.pos.y + 80
+    local y = m.pos.y + 90
     local z = m.pos.z + coss(m.faceAngle.y) * distance
 
     spawn_sync_object(
         id_bhvNexoBall,
-        E_MODEL_BOWLING_BALL,
+        E_MODEL_SPINY_BALL,
         x, y, z,
         nil
     )
 
-    print("[NEXO] A1-A3 ball spawned")
+    print("[NEXO] A1-A3.1 3D ball spawned")
 end
 
 local function mario_update(m)
@@ -129,13 +137,15 @@ local function mario_update(m)
         return
     end
 
-    -- Automatic spawn keeps the prototype usable without setup knowledge.
+    if hit_flash > 0 then
+        hit_flash = hit_flash - 1
+    end
+
     if get_ball() == nil then
         spawn_ball_for_mario(m)
         return
     end
 
-    -- Manual reset/reposition in case the ball gets stuck.
     if (m.controller.buttonPressed & D_JPAD) ~= 0 then
         spawn_ball_for_mario(m)
     end
@@ -147,18 +157,22 @@ local function on_hud_render()
 
     local x = 28
     local y = 28
-    local title_scale = 0.62
-    local status_scale = 0.46
-    local hint_scale = 0.30
+    local title_scale = 0.58
+    local status_scale = 0.42
+    local info_scale = 0.28
 
     local ball = get_ball()
-    local ball_status = "BOLA: ACTIVA"
+    local ball_status = "BOLA 3D: ACTIVA"
+    local speed_text = "VEL: --"
+
     if ball == nil then
-        ball_status = "BOLA: REAPARECIENDO"
+        ball_status = "BOLA 3D: REAPARECIENDO"
+    else
+        speed_text = "VEL: " .. tostring(math.floor(math.abs(ball.oForwardVel)))
     end
 
-    local width = 390
-    local height = 108
+    local width = 430
+    local height = 126
 
     djui_hud_set_color(0, 0, 0, 175)
     djui_hud_render_rect(x - 10, y - 10, width, height)
@@ -167,16 +181,24 @@ local function on_hud_render()
     djui_hud_print_text(TITLE, x, y, title_scale)
 
     djui_hud_set_color(135, 255, 150, 255)
-    djui_hud_print_text(STATUS, x, y + 32, status_scale)
+    djui_hud_print_text(STATUS, x, y + 31, status_scale)
 
     djui_hud_set_color(255, 230, 120, 255)
-    djui_hud_print_text(ball_status, x, y + 58, hint_scale)
+    djui_hud_print_text(ball_status .. "  |  " .. speed_text, x, y + 56, info_scale)
 
-    djui_hud_set_color(220, 220, 220, 255)
-    djui_hud_print_text(RESET_HINT, x, y + 78, hint_scale)
+    if hit_flash > 0 then
+        djui_hud_set_color(255, 120, 80, 255)
+        djui_hud_print_text("GOLPE FUERTE!", x, y + 76, 0.34)
+    else
+        djui_hud_set_color(220, 220, 220, 255)
+        djui_hud_print_text(RESET_HINT, x, y + 78, info_scale)
+    end
+
+    djui_hud_set_color(180, 180, 180, 255)
+    djui_hud_print_text("Escaleras: limitacion conocida de esta fisica", x, y + 99, 0.23)
 end
 
 hook_event(HOOK_MARIO_UPDATE, mario_update)
 hook_event(HOOK_ON_HUD_RENDER, on_hud_render)
 
-print("[NEXO] Mashup A loaded — A0 PASS, A1-A3 validation active")
+print("[NEXO] Mashup A loaded — A1/A3.1 validation active")
