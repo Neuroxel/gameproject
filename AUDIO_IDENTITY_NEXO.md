@@ -64,3 +64,31 @@ avatar identity layer.
 
 This separation is intentional: the world owns environmental/weapon sound;
 the avatar owns voice/action identity.
+
+
+## Local extraction from the user's own SM64 ROM
+
+NEXO does not download or redistribute Nintendo voice clips.
+
+Instead, the project can use the open-source sm64coopdx extraction tools against
+the user's own vanilla SM64 ROM:
+
+```bash
+bash scripts/extract-mario-sfx-from-sm64-rom.sh /path/to/baserom.us.z64 us
+```
+
+If no ROM path is passed, the script searches common project/Documents/Downloads
+locations and accepts only a ROM whose SHA-1 matches the known vanilla version.
+
+The local extraction currently prepares:
+- jump;
+- hurt;
+- death;
+- use/action;
+- portal/entry ("Here we go");
+- celebration ("Yahoo").
+
+These files remain under gitignored `assets_local/mario_sfx/`.
+
+The DOOM adapter uses the first four as the mandatory core profile. Portal and
+celebration are optional enhancements, with safe aliases when absent.
