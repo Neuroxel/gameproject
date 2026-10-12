@@ -14,3 +14,9 @@ Trabajar sólo en:
 
 Runtime baseline: GZDoom 4.14.2.
 Legal test IWAD: Freedoom Phase 2 0.13.0.
+
+
+## Portal durability invariant
+
+Do not set `handoff_pending=0` from ordinary SM64 level reset/init code.
+A completed cross-engine handoff must survive process/level transitions.
