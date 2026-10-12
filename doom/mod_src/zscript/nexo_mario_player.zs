@@ -86,27 +86,11 @@ class NexoMarioDoomPlayer : DoomPlayer
     {
         wallAngle = NexoInputAngle();
 
-        // MovePlayer runs before CheckJump. MovementBlockingLine therefore
-        // captures a wall that actually stopped this tick's XY movement.
-        if (MovementBlockingLine != null)
-        {
-            return true;
-        }
-
-        // A short mid-body trace also catches a near wall when sliding along it.
-        FLineTraceData trace;
-        bool hit = LineTrace(
-            wallAngle,
-            Radius + 12.0,
-            0.0,
-            0,
-            Height * 0.5,
-            0.0,
-            0.0,
-            trace
-        );
-
-        return hit && trace.HitType == TRACE_HitWall;
+        // MovePlayer runs immediately before CheckJump. GZDoom exposes
+        // MovementBlockingLine specifically as the line that stopped the
+        // actor's current XY movement, so wall-kick requires real collision
+        // evidence instead of a speculative proximity trace.
+        return MovementBlockingLine != null;
     }
 
     void NexoResetAirActions()
