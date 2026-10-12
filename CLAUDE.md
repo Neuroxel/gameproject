@@ -152,3 +152,21 @@ WorldLoaded/PlayerEntered sees the intended values.
   AddCommandString buffer. Renderer prime must stay in one exec-script line.
 - Mario identity SFX use dedicated global CHAN_5/UI; do not reuse Doom's
   native CHAN_VOICE.
+
+
+## Canonical continuity additions
+
+Before changing cross-engine architecture, avatar identity, or world order, read:
+- `NEXO_MASTER_PLAN.md`;
+- `NEXO_STATE.md`;
+- `AVATAR_MOVEMENT_NEXO.md` when touching Mario movement/physics;
+- `AUDIO_IDENTITY_NEXO.md` when touching player/world/NEXO sound ownership.
+
+New invariant:
+Mario's recognizable locomotion may persist across worlds through an avatar
+adapter, but it must be adapted to the destination's geometry, camera and
+dominant mechanics. Do not blindly copy SM64 heights/camera behavior into DOOM.
+
+Do not declare `MARIOMOVE-1` PASS until the user has runtime-tested the
+movement slice. Do not restore Doomguy player vocals underneath Mario identity
+audio.
