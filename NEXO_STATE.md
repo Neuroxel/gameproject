@@ -271,3 +271,56 @@ nested file:
 
 Do not pop/drop prior autostashes until P1.2 is validated; they may contain
 pre-fix local edits.
+
+
+## Portal Fabric P1.2 — PASS
+
+Evidencia confirmada por el usuario:
+
+- GZDoom 4.14.2 arranca correctamente en Apple M4;
+- Freedoom Phase 2 MAP01 carga;
+- NEXO PK3 carga;
+- ZScript ejecuta;
+- mensaje `NEXO HANDOFF SM64 -> DOOM` aparece;
+- masa 6.10, monedas 5, Goombas 4, Bob-ombs 5 y score 15824 llegan a DOOM;
+- recursos derivados se aplican.
+
+Esto demuestra transferencia de estado real entre dos engines.
+
+## M2 — ACTIVE: ESTABILIZA LA BRECHA
+
+M2 continúa M1 dentro de DOOM.
+
+Objetivo v0:
+- eliminar 8 hostiles en MAP01;
+- después alcanzar la salida normal del mapa.
+
+Score:
+- hereda score M1;
+- +500 por baja;
+- +3000 bonus al estabilizar la brecha.
+
+Al completar:
+- mensaje `BRECHA ESTABILIZADA`;
+- salida de MAP01 actúa como NEXO Gate semántico.
+
+Al descargar MAP01 se escribe al log una línea estructurada:
+`[NEXO_HANDOFF] ...`
+
+`bridge/doom_handoff.py` convierte esa línea a:
+`bridge/runtime/handoff_from_doom.json`.
+
+Target inicial:
+`NEXO_HUB`.
+
+El hub es una capa orquestadora para decidir el tercer mundo; no obliga todavía a instalar Portal/Source.
+
+## UI decision
+
+No fusionar menús completos de cada juego por ahora.
+
+Preservar UI nativa de cada mundo + una capa NEXO común y mínima para:
+- misión;
+- progreso;
+- carga/score relevante;
+- portal siguiente.
