@@ -4,20 +4,18 @@
 
 Leer `NEXO_STATE.md`.
 
-## Gate activo
+## Gate actual
 
-A6.8 + A7/A8 slice 1.
+M1 vertical slice.
 
-Preservar:
-- Mario = navegación/física;
-- bola intangible y sin collider del mundo;
-- giro lento A6.7.
+### Invariantes
 
-Cambios autorizados:
-- anclaje vertical visual;
-- offsets de attachments;
-- sistema genérico de pickup tiers;
-- monedas, Goombas, Bob-ombs;
-- HUD/feedback.
+- Mario = física/navegación.
+- Bola = visual/absorción/progresión.
+- Masa lógica != escala visual.
+- Compact mode sólo cambia presentación.
+- Attachments son rígidos; se ocultan si la geometría los tapa.
+- No floor-clamp individual.
+- NEXO Gate usa handoff persistente.
 
-No añadir Koopa hasta PASS de este slice.
+No ampliar catálogo ni integrar DOOM hasta PASS de M1.
