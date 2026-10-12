@@ -110,3 +110,33 @@ The DOOM PK3 now uses a root `zscript.zc` entry point and validates these member
 - `zscript/nexo_handoff.zs`
 
 This prevents launching a PK3 whose handler class cannot be discovered.
+
+
+## M2 — DOOM: ESTABILIZA LA BRECHA
+
+Después del handoff SM64 -> DOOM:
+
+1. elimina 8 hostiles;
+2. aparecerá `BRECHA ESTABILIZADA`;
+3. busca la salida normal de MAP01;
+4. al salir, GZDoom escribe un handoff DOOM -> NEXO_HUB.
+
+El launcher guarda la consola en:
+
+```
+bridge/runtime/doom.log
+```
+
+Después de salir de MAP01:
+
+```bash
+python3 bridge/doom_handoff.py --print
+```
+
+Debe generar:
+
+```
+bridge/runtime/handoff_from_doom.json
+```
+
+Este manifest será la entrada del tercer mundo.
