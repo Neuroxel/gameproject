@@ -1,11 +1,33 @@
 -- name: NEXO Mashup A
--- description: NEXO Mashup Lab prototype. A1-A3.1: real 3D test model, physics and differentiated push/hit.
+-- description: NEXO Mashup Lab prototype. A4-A6: Goomba detection, absorption and real ball growth.
 
 local TITLE = "NEXO MASHUP LAB"
-local STATUS = "A1-A3.1 3D / FISICA"
-local RESET_HINT = "DPAD ABAJO: reiniciar  |  B: golpe fuerte"
+local STATUS = "A4-A6 KATAMARI TEST"
+local RESET_HINT = "DPAD ABAJO: reiniciar progreso  |  B: golpe fuerte"
 
+local BASE_SCALE = 1.15
+local SCALE_PER_GOOMBA = 0.18
+local MAX_SCALE = 3.25
+
+local BASE_WALL_RADIUS = 55.0
+local BASE_HITBOX_RADIUS = 95
+local BASE_HITBOX_HEIGHT = 95
+
+local absorbed_count = 0
+local ball_scale = BASE_SCALE
 local hit_flash = 0
+local absorb_flash = 0
+
+local function reset_progress()
+    absorbed_count = 0
+    ball_scale = BASE_SCALE
+    absorb_flash = 0
+    hit_flash = 0
+end
+
+local function update_scale_from_progress()
+    ball_scale = math.min(BASE_SCALE + absorbed_count * SCALE_PER_GOOMBA, MAX_SCALE)
+end
 
 local function get_ball()
     return obj_get_first_with_behavior_id(id_bhvNexoBall)
@@ -15,25 +37,64 @@ local function bhv_nexo_ball_init(obj)
     obj.oFlags = OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE
     obj.oGraphYOffset = 35
 
-    -- Temporary TRUE 3D model. We deliberately avoid E_MODEL_BOWLING_BALL:
-    -- its vanilla display list reads visually like a flat disc.
-    cur_obj_scale(1.15)
+    obj_scale(obj, ball_scale)
 
-    -- Physics adapted from the official SM64CoopDX custom ball example.
-    obj.oWallHitboxRadius = 55.0
-    obj.oGravity          = 2.50
-    obj.oBounciness       = -0.35
-    obj.oDragStrength     = 0.00
-    obj.oFriction         = 0.97
-    obj.oBuoyancy         = -2.00
+    obj.oGravity      = 2.50
+    obj.oBounciness   = -0.35
+    obj.oDragStrength = 0.00
+    obj.oFriction     = 0.97
+    obj.oBuoyancy     = -2.00
 
-    obj.hitboxRadius = 95
-    obj.hitboxHeight = 95
+    local ratio = ball_scale / BASE_SCALE
+    obj.oWallHitboxRadius = BASE_WALL_RADIUS * ratio
+    obj.hitboxRadius = BASE_HITBOX_RADIUS * ratio
+    obj.hitboxHeight = BASE_HITBOX_HEIGHT * ratio
 
     network_init_object(obj, true, nil)
 end
 
+local function absorb_nearby_goombas(obj)
+    local ratio = ball_scale / BASE_SCALE
+    local absorb_radius = 125 + 55 * ratio
+
+    local goomba = obj_get_first_with_behavior_id(id_bhvGoomba)
+    local safety = 0
+
+    while goomba ~= nil and safety < 256 do
+        safety = safety + 1
+        local next_goomba = obj_get_next_with_same_behavior_id(goomba)
+
+        if dist_between_objects(obj, goomba) <= absorb_radius then
+            obj_mark_for_deletion(goomba)
+
+            absorbed_count = absorbed_count + 1
+            update_scale_from_progress()
+
+            absorb_flash = 40
+            obj.oVelY = math.max(obj.oVelY, 7)
+
+            -- Audible feedback while the current object is the ball behavior.
+            cur_obj_play_sound_2(SOUND_GENERAL_COIN)
+
+            print("[NEXO] Goomba absorbed. Total: " .. tostring(absorbed_count))
+        end
+
+        goomba = next_goomba
+    end
+end
+
 local function bhv_nexo_ball_loop(obj)
+    local ratio = ball_scale / BASE_SCALE
+
+    -- A6: growth is not cosmetic only. Visual scale and collision volumes grow together.
+    obj_scale(obj, ball_scale)
+    obj.oWallHitboxRadius = BASE_WALL_RADIUS * ratio
+    obj.hitboxRadius = BASE_HITBOX_RADIUS * ratio
+    obj.hitboxHeight = BASE_HITBOX_HEIGHT * ratio
+
+    -- A4-A5: detect and absorb standard Goombas.
+    absorb_nearby_goombas(obj)
+
     local m = nearest_mario_state_to_object(obj)
     if m == nil or m.marioObj == nil then
         object_step_without_floor_orient()
@@ -45,34 +106,43 @@ local function bhv_nexo_ball_loop(obj)
     local angle_to_player = obj_angle_to_object(obj, player)
     local local_player_touch = false
 
-    -- Explicit B press is used as the test oracle for a strong hit.
-    -- This is intentionally distinct from passive body pushing.
+    -- Push radius grows with the ball so Mario can still make contact naturally.
+    local push_radius = 70 + 45 * ratio
+    local strong_hit_radius = push_radius + 75
+
     local strong_hit = ((m.controller.buttonPressed & B_BUTTON) ~= 0)
-                       and distance_to_player < 185
+                       and distance_to_player < strong_hit_radius
 
     if strong_hit then
         obj.oMoveAngleYaw = angle_to_player + 0x8000
-        obj.oForwardVel = math.max(obj.oForwardVel, 78)
-        obj.oVelY = math.max(obj.oVelY, 20)
+
+        -- Larger balls retain a strong hit, but not infinitely fast.
+        local strong_speed = math.max(58, 78 - absorbed_count * 2)
+        obj.oForwardVel = math.max(obj.oForwardVel, strong_speed)
+        obj.oVelY = math.max(obj.oVelY, 18)
 
         if m.playerIndex == 0 then
             hit_flash = 24
             local_player_touch = true
         end
-    elseif distance_to_player < 115 then
-        -- Normal body push: deliberately much weaker than B.
+
+    elseif distance_to_player < push_radius then
         local xdiff = player.oPosX - obj.oPosX
         local zdiff = player.oPosZ - obj.oPosZ
 
         if distance_to_player > 1 then
-            obj.oPosX = obj.oPosX - (115 - distance_to_player) / 115 * xdiff
-            obj.oPosZ = obj.oPosZ - (115 - distance_to_player) / 115 * zdiff
+            obj.oPosX = obj.oPosX - (push_radius - distance_to_player) / push_radius * xdiff
+            obj.oPosZ = obj.oPosZ - (push_radius - distance_to_player) / push_radius * zdiff
         end
 
         obj.oMoveAngleYaw = angle_to_player + 0x8000
 
         local mario_speed = math.abs(m.forwardVel)
-        local push = 2.5 + math.min(mario_speed * 0.10, 5.5)
+
+        -- Mild mass effect: each absorbed Goomba makes passive pushing a little heavier.
+        local mass_factor = 1 + absorbed_count * 0.10
+        local push = (2.5 + math.min(mario_speed * 0.10, 5.5)) / mass_factor
+
         obj.oForwardVel = math.min(obj.oForwardVel + push, 34)
 
         if m.playerIndex == 0 then
@@ -93,7 +163,7 @@ local function bhv_nexo_ball_loop(obj)
         obj_check_floor_death(step_rc, floor)
     end
 
-    -- Visible roll of the TRUE 3D temporary model.
+    -- Visible roll of the temporary 3D model.
     obj.oFaceAngleYaw = obj.oMoveAngleYaw
     obj.oFaceAnglePitch = obj.oFaceAnglePitch + obj.oForwardVel * 105
     obj.oFaceAngleRoll = obj.oFaceAngleRoll + obj.oForwardVel * 35
@@ -129,7 +199,7 @@ local function spawn_ball_for_mario(m)
         nil
     )
 
-    print("[NEXO] A1-A3.1 3D ball spawned")
+    print("[NEXO] A4-A6 ball spawned")
 end
 
 local function mario_update(m)
@@ -141,14 +211,23 @@ local function mario_update(m)
         hit_flash = hit_flash - 1
     end
 
+    if absorb_flash > 0 then
+        absorb_flash = absorb_flash - 1
+    end
+
     if get_ball() == nil then
         spawn_ball_for_mario(m)
         return
     end
 
     if (m.controller.buttonPressed & D_JPAD) ~= 0 then
+        reset_progress()
         spawn_ball_for_mario(m)
     end
+end
+
+local function on_level_init()
+    reset_progress()
 end
 
 local function on_hud_render()
@@ -157,22 +236,22 @@ local function on_hud_render()
 
     local x = 28
     local y = 28
-    local title_scale = 0.58
-    local status_scale = 0.42
-    local info_scale = 0.28
+    local title_scale = 0.56
+    local status_scale = 0.40
+    local info_scale = 0.27
 
     local ball = get_ball()
-    local ball_status = "BOLA 3D: ACTIVA"
     local speed_text = "VEL: --"
 
-    if ball == nil then
-        ball_status = "BOLA 3D: REAPARECIENDO"
-    else
+    if ball ~= nil then
         speed_text = "VEL: " .. tostring(math.floor(math.abs(ball.oForwardVel)))
     end
 
-    local width = 430
-    local height = 126
+    local size_text = string.format("TAM: %.2fx", ball_scale)
+    local count_text = "GOOMBAS: " .. tostring(absorbed_count)
+
+    local width = 455
+    local height = 144
 
     djui_hud_set_color(0, 0, 0, 175)
     djui_hud_render_rect(x - 10, y - 10, width, height)
@@ -181,12 +260,15 @@ local function on_hud_render()
     djui_hud_print_text(TITLE, x, y, title_scale)
 
     djui_hud_set_color(135, 255, 150, 255)
-    djui_hud_print_text(STATUS, x, y + 31, status_scale)
+    djui_hud_print_text(STATUS, x, y + 30, status_scale)
 
     djui_hud_set_color(255, 230, 120, 255)
-    djui_hud_print_text(ball_status .. "  |  " .. speed_text, x, y + 56, info_scale)
+    djui_hud_print_text(count_text .. "  |  " .. size_text .. "  |  " .. speed_text, x, y + 54, info_scale)
 
-    if hit_flash > 0 then
+    if absorb_flash > 0 then
+        djui_hud_set_color(120, 255, 120, 255)
+        djui_hud_print_text("GOOMBA ABSORBIDO +1", x, y + 76, 0.34)
+    elseif hit_flash > 0 then
         djui_hud_set_color(255, 120, 80, 255)
         djui_hud_print_text("GOLPE FUERTE!", x, y + 76, 0.34)
     else
@@ -195,10 +277,12 @@ local function on_hud_render()
     end
 
     djui_hud_set_color(180, 180, 180, 255)
-    djui_hud_print_text("Escaleras: limitacion conocida de esta fisica", x, y + 99, 0.23)
+    djui_hud_print_text("Objetivo: rueda contra un Goomba y haz crecer la bola", x, y + 102, 0.23)
+    djui_hud_print_text("Modelo con puntas = provisional; se reemplazara despues", x, y + 119, 0.23)
 end
 
 hook_event(HOOK_MARIO_UPDATE, mario_update)
+hook_event(HOOK_ON_LEVEL_INIT, on_level_init)
 hook_event(HOOK_ON_HUD_RENDER, on_hud_render)
 
-print("[NEXO] Mashup A loaded — A1/A3.1 validation active")
+print("[NEXO] Mashup A loaded — A1-A3.1 PASS; A4-A6 validation active")
