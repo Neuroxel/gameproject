@@ -11,8 +11,6 @@ class NexoHandoffHandler : EventHandler
 
     // Mario identity/audio state.
     int LastButtons;
-    int LastHealth;
-    int HurtCooldown;
 
     // M2 — STABILIZE THE BREACH
     int M2Kills;
@@ -109,28 +107,10 @@ class NexoHandoffHandler : EventHandler
         }
     }
 
-    void PlayMarioJump(Actor pawn)
-    {
-        if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
-        S_StartSound("nexo/mario/jump", CHAN_5, CHANF_UI, 1.0, ATTN_NONE);
-    }
-
     void PlayMarioUse(Actor pawn)
     {
         if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
         S_StartSound("nexo/mario/use", CHAN_5, CHANF_UI, 1.0, ATTN_NONE);
-    }
-
-    void PlayMarioHurt(Actor pawn)
-    {
-        if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
-        S_StartSound("nexo/mario/hurt", CHAN_5, CHANF_UI, 1.0, ATTN_NONE);
-    }
-
-    void PlayMarioDeath(Actor pawn)
-    {
-        if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
-        S_StartSound("nexo/mario/death", CHAN_5, CHANF_UI, 1.0, ATTN_NONE);
     }
 
     void PlayMarioPortal(Actor pawn)
@@ -209,7 +189,6 @@ class NexoHandoffHandler : EventHandler
         PerspectivePlayer = -1;
         PerspectiveTicks = 0;
         PerspectiveBodyVisible = false;
-        HurtCooldown = 0;
 
         let pawn = players[e.PlayerNumber].mo;
 
@@ -230,7 +209,6 @@ class NexoHandoffHandler : EventHandler
             // fully live immediately after this one-time center operation.
             pawn.Pitch = 0.0;
 
-            LastHealth = pawn.health;
             LastButtons = players[e.PlayerNumber].cmd.buttons;
 
             if (InM2Map)
@@ -335,37 +313,15 @@ class NexoHandoffHandler : EventHandler
 
         int buttons = players[consoleplayer].cmd.buttons;
 
-        if ((buttons & BT_JUMP) && !(LastButtons & BT_JUMP))
-        {
-            PlayMarioJump(pawn);
-        }
-
+        // Jump/pain/death are no longer inferred from raw button/health state.
+        // NexoMarioDoomPlayer owns confirmed jump semantics and SNDINFO remaps
+        // native player pain/death events directly to Mario.
         if ((buttons & BT_USE) && !(LastButtons & BT_USE))
         {
             PlayMarioUse(pawn);
         }
 
-        if (HurtCooldown > 0)
-        {
-            HurtCooldown--;
-        }
-
-        if (LastHealth > 0 && pawn.health > 0 && pawn.health < LastHealth && HurtCooldown <= 0)
-        {
-            PlayMarioHurt(pawn);
-            HurtCooldown = 18;
-        }
-
         LastButtons = buttons;
-        LastHealth = pawn.health;
-    }
-
-    override void PlayerDied(PlayerEvent e)
-    {
-        if (!IdentityActive) return;
-
-        let pawn = players[e.PlayerNumber].mo;
-        PlayMarioDeath(pawn);
     }
 
     override void WorldThingDied(WorldEvent e)
