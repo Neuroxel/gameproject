@@ -1,34 +1,26 @@
 # CLAUDE.md
 
-Lee `NEXO_STATE.md` primero.
+Lee `NEXO_STATE.md`.
 
-## Gate activo
+## Gate actual
 
-M1 vertical slice:
+M1.1 — recuperación de activación.
 
-- rigid attachments;
-- compact mode;
-- mission objectives;
-- return gate;
-- persistent DOOM handoff.
+La regresión fue causada por usar `gCurrCourseNum` como gate Lua.
 
-## Restricciones arquitectónicas
+### Invariante
 
-- Mario es la única autoridad de navegación/física.
-- NO reintroducir collider rígido de la bola.
-- Masa lógica y escala visual son variables diferentes.
-- Attachments no deben floor-clampearse individualmente.
-- No añadir Koopa/otros mundos hasta validar M1.
+Usar para localización del jugador:
 
-## Validar
+`gNetworkPlayers[0].currCourseNum`
+`gNetworkPlayers[0].currLevelNum`
 
-1. Sin bola en castillo.
-2. Bola al entrar BOB.
-3. Attachments rígidos/ocultables.
-4. COMPACT cerca de paredes/techo.
-5. Masa lógica preservada.
-6. Requisitos M1.
-7. Gate en spawn.
-8. Mission complete al tocarlo.
-9. handoff_target=DOOM guardado.
-10. navegación sin regresión.
+No restaurar `gCurrCourseNum` como fuente del gate M1.
+
+## Validar primero
+
+1. Castillo: sin bola/HUD.
+2. BOB: bola + HUD aparecen.
+3. Sólo después validar compact/attachments/mission gate.
+
+No ampliar features hasta recuperar baseline.
