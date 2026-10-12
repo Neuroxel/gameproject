@@ -170,3 +170,18 @@ dominant mechanics. Do not blindly copy SM64 heights/camera behavior into DOOM.
 Do not declare `MARIOMOVE-1` PASS until the user has runtime-tested the
 movement slice. Do not restore Doomguy player vocals underneath Mario identity
 audio.
+
+
+## Mario first-person embodiment
+
+Before changing DOOM weapon presentation or Mario hand overlays, read:
+- `MARIO_FIRST_PERSON_NEXO.md`;
+- `AVATAR_MOVEMENT_NEXO.md`;
+- `AUDIO_IDENTITY_NEXO.md`.
+
+Invariant: the destination weapon remains mechanically native. Mario must be
+shown as the character holding/operating it. Do not ship a Fist-only Mario
+reskin and call first-person embodiment complete.
+
+`nexo_mario_hands_ready` must remain false until a coherent local grip pack
+exists for multiple weapons.
