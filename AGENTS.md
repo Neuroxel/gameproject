@@ -4,16 +4,17 @@ Estado canónico: `NEXO_STATE.md`.
 
 ## Gate activo
 
-A6.1.
+A6.5.
 
-A0-A5 están aprobados.
+La arquitectura de empuje libre anterior fue descartada. No restaurarla.
 
-Validar tres capas separadas del crecimiento:
+### Debe validarse
 
-1. lógica: `OBJ`;
-2. aplicación: `VIS`;
-3. motor/render: `GFX`.
+1. direct-drive con m.intendedYaw / m.intendedMag;
+2. Mario follower detrás de la bola;
+3. dash B;
+4. step-assist moderado;
+5. Goomba activo -> cascarón visual pasivo pegado;
+6. múltiples attachments sin crash.
 
-Si OBJ/VIS/GFX suben y el modelo no cambia visualmente, no alterar la lógica de progresión: investigar/reemplazar el modelo provisional.
-
-No comenzar A7 hasta A6.1 PASS.
+No comenzar A7 hasta A6.5 PASS.
