@@ -349,6 +349,15 @@ def build_pk3() -> tuple[Path, bool, bool]:
     print("[NEXO] PK3 members: " + ", ".join(members))
     if mario_sfx_ready:
         print("[NEXO] Mario identity SFX: core set embedded (jump/hurt/death/use)")
+        canonical_jump_names = {
+            "jump1_hoo", "jump1_wah", "jump1_yah", "jump2_hoohoo",
+            "jump3_yahoo", "jump3_waha", "jump3_yippee",
+        }
+        canonical_jump_ready = canonical_jump_names.issubset(mario_sfx)
+        print(
+            "[NEXO] Mario jump voice grammar: "
+            + ("CANONICAL SM64 POOL" if canonical_jump_ready else "COMPATIBILITY FALLBACK")
+        )
         print("[NEXO] Mario locomotion adapter: ON (triple/backflip/longjump/stomp/sideflip/wallkick/dive)")
     elif mario_sfx:
         missing_sfx = [name for name in MARIO_SFX_NAMES if name not in mario_sfx]
@@ -358,6 +367,7 @@ def build_pk3() -> tuple[Path, bool, bool]:
 
     if mario_hands_ready:
         print("[NEXO] Mario first-person hand pack: COMPLETE and embedded")
+        print("[NEXO] Mario hand runtime: v2 grip scale + Fire/Hold recoil + movement coupling")
     elif (LOCAL_MARIO_HANDS / "READY").exists():
         print(
             "[NEXO] WARNING: Mario hand READY marker exists but pack is incomplete: "
