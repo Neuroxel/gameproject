@@ -119,7 +119,7 @@ cmake \
   -DCMAKE_PREFIX_PATH="$BUILD/zmusic" \
   -DPK3_QUIET_ZIPDIR=ON \
   -DOSX_COCOA_BACKEND=OFF \
-  -DDYN_OPENAL=OFF
+  -DDYN_OPENAL=ON
 
 CPU_COUNT="$(sysctl -n hw.logicalcpu 2>/dev/null || echo 4)"
 
@@ -175,6 +175,10 @@ if [ ! -f "$ZMUSIC_SONAME" ]; then
   echo "[NEXO] ERROR: failed to bundle ZMusic runtime dependency."
   exit 1
 fi
+
+echo "[NEXO] Preparing project-local OpenAL Soft runtime..."
+bash "$ROOT/scripts/setup-openal-soft-macos.sh"
+bash "$ROOT/scripts/repair-gzdoom-sdl-macos.sh"
 
 echo
 echo "[NEXO] SDL2 GZDoom ready."
