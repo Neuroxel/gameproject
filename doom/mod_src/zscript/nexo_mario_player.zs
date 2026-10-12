@@ -83,7 +83,7 @@ class NexoMarioDoomPlayer : DoomPlayer
             return;
         }
 
-        bool jumpDown = !!(p.cmd.buttons & BT_JUMP);
+        bool jumpDown = (p.cmd.buttons & BT_JUMP) != 0;
         bool jumpRising = jumpDown && !(p.oldbuttons & BT_JUMP);
 
         if (!jumpDown)
@@ -198,7 +198,7 @@ class NexoMarioDoomPlayer : DoomPlayer
 
         if (p != null && NexoMovementEnabled())
         {
-            bool crouchDown = !!(p.cmd.buttons & BT_CROUCH);
+            bool crouchDown = (p.cmd.buttons & BT_CROUCH) != 0;
             bool crouchRising = crouchDown && !(p.oldbuttons & BT_CROUCH);
             bool airborne = !p.onground || Pos.Z > floorz + 1.0;
 
