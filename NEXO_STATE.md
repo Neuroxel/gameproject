@@ -979,3 +979,44 @@ Interpretation gate:
 No Nintendo audio is committed. No OpenAL/controller/renderer changes were made.
 AUDIO-ID-2 remains FAIL until the user runs the deterministic diagnostic and
 one normal SDL launch.
+
+
+## AUDIO-ID-2 — ZMUSIC WAV DECODER BYPASS PREPARED
+
+New evidence from the user's deterministic run:
+- all six local files are valid PCM, 16-bit little-endian, mono, 16 kHz;
+- generated SNDINFO mappings and PK3 membership are PASS;
+- runtime `Wads.CheckNumForFullName()` resolves every exact sound path;
+- each runtime lump has the expected non-zero byte size;
+- nevertheless all six `S_GetLength()` values remain exactly `0.000`.
+
+This proves the failure occurs after resource lookup.
+
+Pinned GZDoom 4.14.2 source shows non-DMX SFX are passed to
+`GSnd->LoadSound()`, which calls ZMusic `CreateDecoder()`.
+Pinned ZMusic 1.1.14 shows that generic sound decoding is provided only by
+optional libsndfile and mpg123 decoder paths; WAV depends on libsndfile.
+Its macOS dynamic-dependencies CI build enables dynamic libsndfile loading while
+not installing libsndfile as a build dependency. Therefore the current working
+root-cause classification is: **the WAV decoder path is unavailable at runtime,
+most likely because ZMusic cannot load libsndfile**.
+
+NEXO now avoids making Mario identity depend on that optional runtime component:
+- original local WAV files remain untouched and gitignored;
+- `bridge/run_doom.py` converts PCM16LE WAV to native Doom DMX data only while
+  constructing the local PK3;
+- generated SNDINFO points to `sounds/nexo/mario/*.dmx`;
+- DMX is recognized by GZDoom before ZMusic and is loaded through
+  `LoadSoundRaw()`;
+- source sample rate is preserved; stereo would be mixed to mono;
+- no GZDoom rebuild, Homebrew install, Nintendo asset commit, controller change,
+  renderer change, or OpenAL change is required.
+
+Tradeoff:
+DMX uses unsigned 8-bit mono audio. This is acceptable as a deterministic gate
+closure path; if identity quality is materially degraded after it works, a later
+quality pass may restore full 16-bit WAV by bundling a known-working libsndfile
+runtime.
+
+AUDIO-ID-2 is still NOT PASS until user runtime confirms positive
+`S_GetLength()` and audible Mario cues.
