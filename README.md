@@ -12,7 +12,7 @@ Estrategia: mod Lua, sin recompilar el juego y sin reverse engineering innecesar
 ## Estado
 
 - **A0 — PASS:** pipeline ChatGPT/GitHub -> Mac -> SM64CoopDX validado.
-- **A1-A3 — VALIDACIÓN ACTIVA:** bola visible, física básica y empuje por Mario.
+- **A1-A3.1 — VALIDACIÓN ACTIVA:** modelo 3D provisional, física básica y golpe B diferenciado.
 - **A4-A6 — BLOQUEADO** hasta validar A1-A3.
 
 El estado canónico detallado vive en `NEXO_STATE.md`.
@@ -28,12 +28,12 @@ BOLA: ACTIVA
 DPAD ABAJO: reiniciar bola
 ```
 
-Una bola de bowling negra debería aparecer automáticamente frente a Mario.
+Un objeto esférico 3D provisional (Spiny Ball) debería aparecer automáticamente frente a Mario. Se usa temporalmente para validar volumen, rotación y física antes de crear nuestro modelo propio.
 
 Prueba:
 
 1. caminar/correr contra la bola;
-2. golpearla mediante una acción ofensiva;
+2. pulsar B cerca de ella y comprobar que aparezca `GOLPE FUERTE!` y salga mucho más rápido;
 3. dejarla rodar por una pendiente;
 4. pulsar D-Pad abajo para reposicionarla.
 
