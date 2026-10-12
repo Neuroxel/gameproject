@@ -1,54 +1,56 @@
 # NEXO Mashup Lab
 
-## Estado actual
+## Estado
 
-- A0 — PASS
-- A1-A3.1 — PASS
-- A4-A5 — PASS
-- A6 — PASS: crecimiento visible
-- **A6.5 — VALIDACIÓN ACTIVA: control directo + Goombas pegados**
+- A0-A6 — PASS
+- A6.5 — **FAIL**
+- **A6.6 — VALIDACIÓN ACTIVA**
 
-## Cambio importante
+## Cambio crítico
 
-La bola ya no se controla empujándola físicamente con Mario.
+La versión anterior hacía que la bola fuera la autoridad física y pegaba a Mario detrás. Eso rompió puertas, superficies y navegación.
 
-Ahora:
+Ahora es al revés:
 
 ```
-stick analogico
-      ↓
-control directo de la bola
-      ↓
-Mario se mantiene detrás visualmente
+Mario nativo
+  ↓
+física / puertas / escaleras / pendientes
+  ↓
+bola visual delante de Mario
+  ↓
+absorción + crecimiento + objetos pegados
 ```
 
-Esto está inspirado en la lógica de Katamari, pero simplificado a un stick relativo a cámara para hacerlo más accesible.
+La bola **no tiene colisión propia con el mundo**. Es visual y sirve como volumen de absorción.
 
-### B
+Esto debería permitir entrar al castillo y pasar puertas con el movimiento original de SM64.
 
-B activa un **DASH**.
+## Prueba
 
-### Absorción
-
-Los Goombas ya no deberían simplemente desaparecer. El enemigo activo se reemplaza por un **cascarón visual pasivo** que queda pegado a la superficie y gira/se desplaza con la bola.
-
-## Prueba recomendada
-
-1. Actualiza e instala:
 ```bash
 cd ~/Documents/gameproject
 git pull
 bash scripts/install-macos.sh
 ```
-2. Reinicia SM64CoopDX.
-3. En Bob-omb Battlefield:
-   - mueve el stick sin intentar empujar manualmente la bola;
-   - cambia de dirección varias veces;
-   - prueba detenerte;
-   - pulsa B para dash;
-   - absorbe 2-4 Goombas;
-   - comprueba que quedan visibles pegados.
 
-Lo más importante de esta versión no es la física perfecta: es comprobar si **por fin se siente controlable y divertido**.
+Reinicia SM64CoopDX.
 
-> El modelo con puntas sigue siendo provisional.
+Prueba primero navegación, antes de ir a los Goombas:
+
+1. caminar/correr normalmente;
+2. entrar al castillo;
+3. atravesar una puerta;
+4. entrar a Bob-omb Battlefield;
+5. subir y bajar pendientes/escalones;
+6. confirmar que la bola no te bloquea.
+
+Después prueba absorción:
+
+7. absorber 2-4 Goombas;
+8. comprobar crecimiento;
+9. comprobar que quedan visibles pegados.
+
+Si todo eso pasa, podremos avanzar a categorías de objetos sin seguir reparando la locomoción.
+
+> La esfera con puntas sigue siendo un modelo provisional.
