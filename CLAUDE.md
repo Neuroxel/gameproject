@@ -1,20 +1,21 @@
 # CLAUDE.md
 
-Lee `NEXO_STATE.md` primero.
+Lee `NEXO_STATE.md`.
 
-## Estado
+A6.6 = PASS. No modificar su arquitectura.
 
-A6.5 fue rechazado por bugs de navegación.
+Gate activo: **A6.7 visual attachment/roll polish**.
 
-Gate activo: **A6.6 Mario-authoritative navigation**.
+Preservar:
+- Mario como única autoridad física;
+- bola intangible y sin colisión del mundo;
+- navegación nativa.
 
-Principio obligatorio:
-
-- NO modificar posición/velocidad/acción de Mario.
-- NO volver a hacer que la bola sea collider/autoridad física.
-- Mario conserva su movimiento nativo.
-- La bola sólo sigue visualmente y absorbe.
-
-Validar castillo, puertas, Bob-omb Battlefield, pendientes, attachments y crecimiento.
+Validar:
+- attachments tocando la superficie;
+- giro mucho más lento;
+- giros sin órbitas bruscas;
+- puertas/superficies siguen funcionando;
+- absorción y crecimiento no regresionan.
 
 No avanzar a A7 sin PASS.
