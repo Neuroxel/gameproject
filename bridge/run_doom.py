@@ -28,6 +28,11 @@ HANDOFF = BRIDGE / "runtime" / "handoff.json"
 DOOM_LOG = BRIDGE / "runtime" / "doom.log"
 MOD_SRC = ROOT / "doom" / "mod_src"
 PK3 = ROOT / ".runtime" / "doom" / "nexo_doom.pk3"
+LOCAL_MARIO_SFX = ROOT / "assets_local" / "mario_sfx"
+LOCAL_MARIO_BODY = ROOT / "assets_local" / "mario_avatar"
+
+MARIO_SFX_NAMES = ("jump", "hurt", "death", "use")
+MARIO_SFX_EXTS = (".ogg", ".wav", ".flac")
 
 
 def export_handoff() -> bool:
@@ -77,7 +82,18 @@ def load_handoff() -> dict:
     )
 
 
-def build_pk3() -> Path:
+def find_local_mario_sfx() -> dict[str, Path]:
+    found: dict[str, Path] = {}
+    for logical in MARIO_SFX_NAMES:
+        for ext in MARIO_SFX_EXTS:
+            candidate = LOCAL_MARIO_SFX / f"{logical}{ext}"
+            if candidate.exists():
+                found[logical] = candidate
+                break
+    return found
+
+
+def build_pk3() -> tuple[Path, bool]:
     if not MOD_SRC.exists():
         raise FileNotFoundError(f"DOOM mod source missing: {MOD_SRC}")
 
@@ -90,6 +106,8 @@ def build_pk3() -> Path:
 
     PK3.parent.mkdir(parents=True, exist_ok=True)
     members: list[str] = []
+    mario_sfx = find_local_mario_sfx()
+    mario_sfx_ready = all(name in mario_sfx for name in MARIO_SFX_NAMES)
 
     with zipfile.ZipFile(PK3, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for path in sorted(MOD_SRC.rglob("*")):
@@ -97,6 +115,16 @@ def build_pk3() -> Path:
                 arcname = path.relative_to(MOD_SRC).as_posix()
                 zf.write(path, arcname)
                 members.append(arcname)
+
+        if mario_sfx:
+            sndinfo_lines: list[str] = []
+            for logical, path in sorted(mario_sfx.items()):
+                arcname = f"sounds/nexo/mario/{path.name}"
+                zf.write(path, arcname)
+                members.append(arcname)
+                sndinfo_lines.append(f"nexo/mario/{logical} {arcname}")
+            zf.writestr("SNDINFO", "\n".join(sndinfo_lines) + "\n")
+            members.append("SNDINFO")
 
     missing = sorted(required.difference(members))
     if missing:
@@ -116,7 +144,14 @@ def build_pk3() -> Path:
         )
 
     print("[NEXO] PK3 members: " + ", ".join(members))
-    return PK3
+    if mario_sfx_ready:
+        print("[NEXO] Mario identity SFX: core set embedded (jump/hurt/death/use)")
+    elif mario_sfx:
+        missing_sfx = [name for name in MARIO_SFX_NAMES if name not in mario_sfx]
+        print("[NEXO] Mario identity SFX: partial; disabled until complete: " + ", ".join(missing_sfx))
+    else:
+        print("[NEXO] Mario identity SFX: no local assets; hooks remain disabled")
+    return PK3, mario_sfx_ready
 
 
 def find_gzdoom(explicit: str | None, runtime_mode: str = "auto") -> tuple[Path, str]:
@@ -198,7 +233,7 @@ def find_iwad(explicit: str | None) -> Path:
     )
 
 
-def cvar_args(data: dict) -> list[str]:
+def cvar_args(data: dict, mario_sfx_ready: bool, avatar_body_ready: bool) -> list[str]:
     cargo = data.get("cargo", {})
     player = data.get("player_state", {})
     mission = data.get("mission", {})
@@ -210,6 +245,9 @@ def cvar_args(data: dict) -> list[str]:
         "nexo_goombas": str(int(cargo.get("goombas", 0))),
         "nexo_bobombs": str(int(cargo.get("bobombs", 0))),
         "nexo_score": str(int(mission.get("score", 0))),
+        "nexo_mario_sfx": "true" if mario_sfx_ready else "false",
+        "nexo_perspective_transition": "true",
+        "nexo_avatar_body_ready": "true" if avatar_body_ready else "false",
     }
 
     args: list[str] = []
@@ -238,7 +276,8 @@ def main() -> int:
     args = parser.parse_args()
 
     handoff = load_handoff()
-    pk3 = build_pk3()
+    pk3, mario_sfx_ready = build_pk3()
+    avatar_body_ready = (LOCAL_MARIO_BODY / "READY").exists()
     gzdoom, runtime_kind = find_gzdoom(args.gzdoom, args.runtime)
     iwad = find_iwad(args.iwad)
 
@@ -279,7 +318,7 @@ def main() -> int:
 
         "+map", args.map,
     ]
-    cmd += cvar_args(handoff)
+    cmd += cvar_args(handoff, mario_sfx_ready, avatar_body_ready)
 
     if args.controller_setup:
         cmd += ["+menu_joystick"]
@@ -292,6 +331,10 @@ def main() -> int:
     print(f"[NEXO] IWAD: {iwad}")
     print(f"[NEXO] PK3: {pk3}")
     print(f"[NEXO] Mission log: {DOOM_LOG}")
+    print(f"[NEXO] Avatar identity: MARIO")
+    print(f"[NEXO] Perspective: third-person source -> first-person DOOM")
+    print(f"[NEXO] Mario voice SFX: {'ON' if mario_sfx_ready else 'OFF (local core set not present)'}")
+    print(f"[NEXO] Third-person Mario body: {'READY' if avatar_body_ready else 'PENDING local avatar assets'}")
     if runtime_kind == "sdl":
         print("[NEXO] Renderer: desktop OpenGL forced (vid_preferbackend=0)")
     print("[NEXO] Controller: joystick/gamepad forced ON")
