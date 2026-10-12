@@ -935,3 +935,47 @@ destination adapter is explicitly marked `ready`.
 
 This advances Portal Fabric at the data/orchestration layer without pretending
 that a Portal/Source runtime integration already exists.
+
+
+## AUDIO-ID-2 — RESOURCE/DECODER ISOLATION
+
+Latest runtime evidence remains:
+- all six local Mario WAV files are embedded in the generated PK3;
+- `nexo_mario_sfx=true`;
+- PlayerEntered executes and requests the portal cue;
+- Doom/Freedoom audio works;
+- `S_GetLength()` returns `0.000` for all six Mario logical sounds.
+
+Pinned GZDoom g4.14.2 source was rechecked at the exact tag:
+- SNDINFO logical mappings call `S_AddSound(logicalname, lumpname)`;
+- that resolves the second token with
+  `fileSystem.CheckNumForFullName(lumpname, true, ns_sounds)`;
+- ZIP entries retain their full `LongName`, including the leading
+  `sounds/` directory, while that directory also assigns `ns_sounds`.
+
+Therefore the current generated mapping form
+`nexo/mario/jump "sounds/nexo/mario/jump.wav"`
+is consistent with the pinned filesystem/parser implementation. The earlier
+"path probably needs the sounds/ prefix removed" hypothesis is rejected.
+
+The remaining unresolved boundary is now:
+1. actual runtime resource lookup of each PK3 member; versus
+2. decoding/loading of the local WAV payload.
+
+Added deterministic instrumentation:
+- ZScript logs `Wads.CheckNumForFullName()` lump id and byte length for all
+  six exact PK3 paths before calling `S_GetLength()`;
+- `scripts/diagnose-mario-sfx.sh` rebuilds the PK3 via dry-run, verifies
+  ZIP integrity and exact SNDINFO targets, parses the six local WAV RIFF/fmt/data
+  headers, and reports whether they are standard PCM 16-bit little-endian.
+
+Interpretation gate:
+- missing/negative lump => resource/path layer still broken;
+- lump >= 0 and bytes > 0, but invalid/non-PCM WAV => local conversion layer;
+- lump >= 0 and bytes > 0, standard PCM16LE, but `S_GetLength=0` =>
+  resource resolution is proven and the remaining root cause is inside
+  GZDoom's sound decode/load path.
+
+No Nintendo audio is committed. No OpenAL/controller/renderer changes were made.
+AUDIO-ID-2 remains FAIL until the user runs the deterministic diagnostic and
+one normal SDL launch.
