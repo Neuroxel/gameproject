@@ -209,3 +209,23 @@ For GZDoom 4.14.2, ZMusic is supplied exactly as in upstream CI:
 The setup script deliberately avoids upgrading already-installed Homebrew
 formulae. A temporary ghcr.io/Homebrew outage therefore should not block the
 build when cmake, ninja, SDL2, and libvpx are already present.
+
+
+### Repair an already-built SDL runtime
+
+If the SDL build finished but macOS reports:
+
+```
+Library not loaded: @rpath/libzmusic.1.dylib
+```
+
+do **not** rebuild GZDoom. Repair the app bundle:
+
+```bash
+git pull
+bash scripts/repair-gzdoom-sdl-macos.sh
+python3 bridge/run_doom.py --runtime sdl --controller-setup
+```
+
+The repair copies the already downloaded ZMusic dylib into GZDoom's
+`Contents/MacOS` directory under the runtime filename the executable requests.
