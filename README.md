@@ -333,3 +333,13 @@ python3 bridge/run_doom.py --runtime sdl
 ```
 
 The extracted files stay local and gitignored.
+
+
+If the OpenAL Soft patch still launches silently, run:
+
+```bash
+bash scripts/diagnose-doom-audio.sh
+```
+
+It reports the bundled dylib, GZDoom CMake audio flags, a direct CoreAudio
+device probe, and the last OpenAL Soft runtime log.
