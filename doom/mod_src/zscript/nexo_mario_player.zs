@@ -100,6 +100,143 @@ class NexoMarioDoomPlayer : DoomPlayer
         NexoWallKickCooldown = 0;
     }
 
+    void NexoClearHandLayers()
+    {
+        if (player == null) return;
+
+        let back = player.FindPSprite(-2);
+        if (back != null) back.SetState(null);
+
+        let front = player.FindPSprite(2);
+        if (front != null) front.SetState(null);
+    }
+
+    void NexoSetHandLayers(State backState, State frontState)
+    {
+        if (player == null || player.ReadyWeapon == null)
+        {
+            NexoClearHandLayers();
+            return;
+        }
+
+        if (backState == null || frontState == null)
+        {
+            NexoClearHandLayers();
+            return;
+        }
+
+        let back = player.FindPSprite(-2);
+        if (back == null
+            || back.CurState != backState
+            || back.Caller != player.ReadyWeapon)
+        {
+            player.SetPSprite(-2, backState);
+        }
+
+        let front = player.FindPSprite(2);
+        if (front == null
+            || front.CurState != frontState
+            || front.Caller != player.ReadyWeapon)
+        {
+            player.SetPSprite(2, frontState);
+        }
+    }
+
+    void NexoUseHandPose(State backState, State frontState)
+    {
+        NexoSetHandLayers(backState, frontState);
+    }
+
+    void NexoUpdateFirstPersonHands()
+    {
+        if (player == null
+            || !NexoCVarBool('nexo_handoff')
+            || !NexoCVarBool('nexo_mario_hands_ready')
+            || player.ReadyWeapon == null)
+        {
+            NexoClearHandLayers();
+            return;
+        }
+
+        let handStates = GetDefaultByType("NexoMarioHandStates");
+        if (handStates == null)
+        {
+            NexoClearHandLayers();
+            return;
+        }
+
+        let weapon = player.ReadyWeapon;
+
+        if (weapon is "Fist")
+        {
+            NexoUseHandPose(
+                handStates.FindState('FistBack'),
+                handStates.FindState('FistFront')
+            );
+        }
+        else if (weapon is "Chainsaw")
+        {
+            NexoUseHandPose(
+                handStates.FindState('ChainsawBack'),
+                handStates.FindState('ChainsawFront')
+            );
+        }
+        else if (weapon is "Pistol")
+        {
+            NexoUseHandPose(
+                handStates.FindState('PistolBack'),
+                handStates.FindState('PistolFront')
+            );
+        }
+        else if (weapon is "SuperShotgun")
+        {
+            NexoUseHandPose(
+                handStates.FindState('SuperShotgunBack'),
+                handStates.FindState('SuperShotgunFront')
+            );
+        }
+        else if (weapon is "Shotgun")
+        {
+            NexoUseHandPose(
+                handStates.FindState('ShotgunBack'),
+                handStates.FindState('ShotgunFront')
+            );
+        }
+        else if (weapon is "Chaingun")
+        {
+            NexoUseHandPose(
+                handStates.FindState('ChaingunBack'),
+                handStates.FindState('ChaingunFront')
+            );
+        }
+        else if (weapon is "RocketLauncher")
+        {
+            NexoUseHandPose(
+                handStates.FindState('RocketBack'),
+                handStates.FindState('RocketFront')
+            );
+        }
+        else if (weapon is "PlasmaRifle" || weapon is "ID24Incinerator")
+        {
+            NexoUseHandPose(
+                handStates.FindState('PlasmaBack'),
+                handStates.FindState('PlasmaFront')
+            );
+        }
+        else if (weapon is "BFG9000" || weapon is "ID24CalamityBlade")
+        {
+            NexoUseHandPose(
+                handStates.FindState('BFGBack'),
+                handStates.FindState('BFGFront')
+            );
+        }
+        else
+        {
+            // Unknown/mod weapon: never paste a misleading generic grip.
+            NexoClearHandLayers();
+        }
+    }
+
     override void BeginPlay()
     {
         Super.BeginPlay();
@@ -122,6 +259,10 @@ class NexoMarioDoomPlayer : DoomPlayer
         Super.PlayerThink();
 
         if (player == null) return;
+
+        // Hand overlays are presentation-only and remain dormant until a
+        // validated local multi-weapon grip pack sets the readiness gate.
+        NexoUpdateFirstPersonHands();
 
         bool onGroundNow = player.onground;
 
