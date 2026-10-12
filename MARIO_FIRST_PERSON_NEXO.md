@@ -255,8 +255,8 @@ When:
 - Mario hand assets are ready; and
 - `ReadyWeapon is Fist`;
 
-NEXO hides only the native **Fist PSprite presentation** by forcing its alpha to
-zero.
+NEXO hides only the native **Fist PSprite presentation** by saving its current
+PSprite scale and setting that visual scale to zero.
 
 Native Fist:
 - damage;
@@ -266,8 +266,8 @@ Native Fist:
 
 remain untouched.
 
-Switching away from Fist or disabling the hand gate restores native weapon
-alpha immediately.
+Switching away from Fist or disabling the hand gate restores the saved native
+weapon scale immediately.
 
 ### Procedural weapon-hand animation
 
