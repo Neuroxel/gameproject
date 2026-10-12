@@ -145,3 +145,24 @@ bash scripts/extend-mario-movement-sfx-local.sh
 
 If absent, SNDINFO aliases them to existing Mario core cues so gameplay remains
 functional.
+
+
+## Dedicated Mario player sound class
+
+`NexoMarioDoomPlayer` now sets:
+
+`Player.SoundClass "nexo_mario"`.
+
+Generated SNDINFO defines the avatar mappings for both:
+- `nexo_mario` (canonical NEXO Mario player);
+- `player` (fallback resilience for temporary skin/class transitions).
+
+For both classes and all supported genders:
+- `*jump` -> silent; movement adapter owns confirmed jump cues;
+- `*usefail` and `*puzzfail` -> silent;
+- pain -> Mario hurt;
+- death variants -> Mario death;
+- grunt/land -> Mario stomp cue when available.
+
+This specifically addresses the observed residual Doom-player voice on the
+Use/action button while preserving actual door/switch/world sounds.
