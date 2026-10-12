@@ -343,3 +343,18 @@ bash scripts/diagnose-doom-audio.sh
 
 It reports the bundled dylib, GZDoom CMake audio flags, a direct CoreAudio
 device probe, and the last OpenAL Soft runtime log.
+
+
+### OpenAL Soft macOS compiler recovery
+
+If the audio patch fails with missing `pthread.h`, `Availability.h`,
+`sched.h`, or `time.h` while the command line points at Homebrew LLVM,
+update and rerun:
+
+```bash
+git pull
+bash scripts/patch-gzdoom-sdl-audio.sh
+```
+
+The OpenAL builder now forces Apple Clang and the active macOS SDK, and removes
+only the stale OpenAL build cache created with the wrong compiler.
