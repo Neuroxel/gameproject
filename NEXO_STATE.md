@@ -10,17 +10,15 @@ Construir progresivamente un mashup jugable, divertido y observable, comenzando 
 
 ### Fase A — SM64CoopDX + Lua
 
-Orden previsto:
-
 - A0 — pipeline de mod y HUD visible.
-- A1 — esfera/objeto rodante visible en 3D.
+- A1 — objeto rodante visible en 3D.
 - A2 — física estable.
-- A3 — Mario puede empujarla y golpearla con respuestas diferenciadas.
+- A3 — Mario puede empujarlo y golpearlo con respuestas diferenciadas.
 - A4 — detección de entidades absorbibles.
 - A5 — primer Goomba absorbible.
-- A6 — crecimiento de esfera.
+- A6 — crecimiento real del objeto.
 - A7 — umbrales de absorción por tamaño.
-- A8 — HUD de tamaño/puntuación.
+- A8 — HUD/progresión de tamaño y puntuación.
 - A9 — kill gate de diversión.
 - A10 — sistema tipo GTA wanted, sólo si A9 = PASS.
 - A11 — sistema de combos tipo Tony Hawk, sólo si el prototipo sigue siendo divertido.
@@ -37,49 +35,54 @@ Migrar a mashup multi-juego real con Godot + libsm64 + contenido/mapas compatibl
 
 ### A0 — PASS
 
-Confirmado el 2026-10-12 mediante captura del usuario.
+Confirmado el 2026-10-12.
 
-### Primera validación A1-A3 — RESULTADO PARCIAL
+### A1-A3.1 — PASS
 
-Observación del usuario:
+Confirmado por el usuario el 2026-10-12:
 
-- el objeto aparece y tiene sombra;
-- puede ser empujado;
-- cae bajo gravedad;
-- en escaleras pierde apoyo y cae;
-- el modelo `E_MODEL_BOWLING_BALL` se percibe como una imagen/disco 2D rotando;
-- golpe y empuje normal no mostraban diferencia perceptible.
+- el modelo provisional se percibe en 3D;
+- puede empujarse de forma controlable;
+- el golpe fuerte con B produce un desplazamiento claramente mayor;
+- la física básica continúa estable.
 
-Conclusión:
+La limitación de escaleras permanece documentada y no bloquea el gate.
 
-- **A1: FAIL visual** con el modelo bowling-ball.
-- **A2: PARTIAL PASS** para gravedad/rodado/colisión básica; subir escaleras no es requisito de este gate.
-- **A3: PARTIAL PASS** para empuje corporal; FAIL para diferenciación de golpe.
+### A4-A6 — PENDING VALIDATION
 
-### A1-A3.1 — PENDING VALIDATION
+Implementación actual:
 
-Correcciones aplicadas:
+1. La bola recorre los objetos con comportamiento `id_bhvGoomba`.
+2. Cuando un Goomba entra en el radio de absorción, se marca para eliminación.
+3. El contador `GOOMBAS` aumenta.
+4. La escala visual aumenta +0.18 por Goomba, con límite provisional 3.25x.
+5. Crecen también `oWallHitboxRadius`, `hitboxRadius` y `hitboxHeight`.
+6. El radio de empuje de Mario aumenta con la bola.
+7. Se introduce un efecto de masa suave: cuantos más Goombas absorbe, más cuesta empujarla pasivamente.
+8. El HUD muestra `GOOMBA ABSORBIDO +1`, tamaño y velocidad.
+9. D-Pad abajo reinicia progreso y reposiciona la bola.
+10. Cambiar de nivel reinicia el progreso.
 
-1. Se reemplaza temporalmente `E_MODEL_BOWLING_BALL` por `E_MODEL_SPINY_BALL`, el modelo 3D usado por el ejemplo oficial de pelota.
-2. El empuje corporal queda limitado a velocidad moderada.
-3. Un press explícito de botón B cerca de la bola aplica impulso fuerte y componente vertical.
-4. El HUD muestra velocidad aproximada.
-5. Cuando se detecta el golpe fuerte, el HUD muestra `GOLPE FUERTE!` durante varios frames.
-6. D-Pad abajo sigue reposicionando la bola.
+Criterios de PASS:
 
-Criterio de PASS:
+- la bola detecta al menos un Goomba estándar al contacto/proximidad inmediata;
+- el Goomba desaparece sin crash;
+- el contador aumenta exactamente una vez por Goomba;
+- el crecimiento visual es claramente perceptible;
+- la colisión/hitbox acompaña al crecimiento;
+- tras varios Goombas la bola sigue siendo empujable;
+- no se producen absorciones repetidas del mismo Goomba ni spam infinito.
 
-- el objeto se percibe claramente tridimensional al rodearlo;
-- rueda y colisiona de forma estable sobre suelo y pendientes;
-- empuje normal es controlable;
-- B cerca del objeto produce un salto/impulso perceptiblemente mayor y el HUD confirma `GOLPE FUERTE!`;
-- no hay crash ni spam de objetos.
+## Limitaciones aceptadas en este gate
 
-### Limitación conocida: escaleras
+- El Goomba absorbido desaparece; todavía no se representa pegado a la superficie.
+- Sólo se absorben Goombas estándar.
+- No existe todavía un umbral de tamaño por categoría.
+- El sistema aún no está validado para multiplayer.
+- Puede haber casos de absorción a través de geometría muy fina porque el gate usa distancia simple.
+- Escaleras siguen fuera de alcance.
 
-`object_step_without_floor_orient()` no proporciona por sí solo un comportamiento de subida de escalones comparable al controlador de Mario. La bola puede caer hacia atrás al intentar subir peldaños. No bloquea A1-A3; se reevaluará después de validar la mecánica Katamari.
-
-Si A1-A3.1 = PASS, el siguiente gate será A4-A6: detectar Goombas, absorber el primero y hacer crecer la bola.
+Si A4-A6 = PASS, el siguiente trabajo será A7-A8: clases de objetos/umbrales de tamaño, progresión más rica y feedback visual de absorción.
 
 ## Stack autorizado para A0–A9
 
