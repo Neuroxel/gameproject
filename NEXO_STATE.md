@@ -2,88 +2,128 @@
 
 Última actualización: 2026-10-12
 
-## Gates confirmados
+## Estado verificado
 
 - A0 — PASS.
 - A1-A3.1 — PASS.
 - A4-A5 — PASS.
-- A6 — PASS: crecimiento visual.
-- A6.5 — FAIL: bola como autoridad física rompía navegación.
-- **A6.6 — PASS:** Mario vuelve a ser la autoridad física; el usuario confirma que puede entrar correctamente al escenario y navegar sin los bloqueos anteriores.
+- A6 — PASS: crecimiento.
+- A6.5 — FAIL: bola como collider/autoridad física rompía navegación.
+- A6.6 — PASS: Mario vuelve a ser autoridad física; navegación y entrada a niveles funcionan.
+- A6.7 — PASS PARCIAL: velocidad de giro ya es mucho más natural y navegación sigue estable.
 
-## Evidencia A6.6
+## Evidencia nueva
 
 El usuario confirma:
 
-- navegación mucho mejor;
-- entrada al escenario funciona;
-- crecimiento continúa funcionando;
-- Goombas absorbidos quedan visibles asociados a la bola;
-- ya no aparecen los bloqueos graves de puertas/superficies de A6.5.
+- la bola ahora rueda mucho mejor y más lento;
+- la navegación sigue funcionando;
+- al crecer, el centro visual no sube y la esfera se hunde progresivamente en el piso;
+- los Goombas ya están más cerca, pero quedan demasiado embebidos en la esfera;
+- quiere preservar exactamente la física/navegación actual y avanzar A7-A8.
 
-Quedan dos defectos visuales, no estructurales:
+## A6.8 — ACTIVE: grounding visual y contacto de attachments
 
-1. los Goombas aparecen demasiado separados de la superficie;
-2. la esfera/attachments giran demasiado rápido al avanzar.
+### Corrección vertical
 
-La arquitectura de navegación **no se toca**.
+El modelo provisional tiene:
 
-## A6.7 — ACTIVE: pegado visual + giro natural
+- radio visible aproximado = `24 * visual_scale`;
+- desplazamiento interno Y de `-34` bajo `GEO_SCALE 0.25`, equivalente a ~`8.5 * visual_scale`.
 
-### Causa identificada
+La altura visual ahora se calcula:
 
-El actor `spiny_ball_geo` tiene un `GEO_SCALE(..., 16384)`, equivalente a una escala interna de 0.25. La aproximación anterior del radio visible (`48 * escala + 28`) sobredimensionaba fuertemente la superficie utilizada para posicionar attachments.
+`Y = floor + radio_visible + offset_centro_modelo`
 
-Además, la rotación anterior era:
+Por tanto, al crecer, la bola también sube y su parte inferior permanece cerca del suelo en vez de hundirse.
 
-`pitch += distancia * 420`
+### Corrección de objetos pegados
 
-lo que no dependía del radio y producía un giro visual excesivo.
+Los objetos ya no se colocan dentro de la esfera.
 
-### Correcciones
+Posición radial:
 
-1. Radio visual del cuerpo rojo:
-   `radio = 24 * visual_scale`.
-2. Los Goombas adheridos se colocan ligeramente dentro de la superficie:
-   `radio_attachment = radio - 7`.
-3. El radio de absorción se mantiene cómodo con padding independiente (+62), para no hacer más difícil capturar enemigos.
-4. El giro se calcula desde la relación física:
-   `ángulo ~= distancia / radio`.
-5. Conversión a unidades angulares SM64:
-   `65536 / (2π) ~= 10430.378`.
-6. Se aplica un factor visual 0.35 para que el giro sea deliberadamente más lento y legible.
-7. El yaw visual deja de saltar instantáneamente con cada giro de Mario; aproxima lentamente con paso `0x180`.
-8. La distancia visual Mario-bola se reajusta al nuevo radio, sin devolver colisiones a la bola.
+`radio_attachment = radio_bola + offset_por_tipo`
 
-### Criterios de PASS
+Offsets iniciales:
 
-- navegación debe permanecer igual de buena que A6.6;
-- Goombas deben verse tocando/incrustados en la esfera, no flotando separados;
-- al avanzar, la rotación debe ser notoriamente más lenta;
-- al girar Mario, attachments no deben orbitar bruscamente alrededor de la bola;
-- crecimiento sigue funcionando;
-- absorción sigue siendo fácil;
-- no reaparecen bloqueos de puertas/superficies.
+- moneda: +8;
+- Goomba: +28;
+- Bob-omb: +25.
 
-## Decisión de arquitectura preservada
+Además, los attachments del hemisferio inferior reciben un clamp visual contra el piso para evitar desaparecer profundamente bajo el terreno.
 
-Mario = autoridad física y navegación.
+## A7-A8 — ACTIVE: primera progresión por tamaños
 
-Bola = visual + absorción + crecimiento + attachments.
+Se introduce un sistema de specs por categoría.
 
-No restaurar hitbox rígida de la bola durante esta fase.
+### Tier 1 — disponible desde el inicio
 
-## Próximo gate
+**Moneda**
+- threshold: 1.80
+- crecimiento: +0.08
+- attachment visual pasivo
 
-Si A6.7 = PASS, A7-A8:
-- clases de objetos;
-- umbrales de tamaño;
-- Bob-ombs, Koopas y objetos pequeños;
-- feedback "demasiado grande";
-- attachments por categoría.
+**Goomba**
+- threshold: 1.80
+- crecimiento: +0.35
+- attachment visual pasivo
 
-## Reglas
+### Tier 2 — bloqueado inicialmente
 
-- No versionar ROMs.
-- No instalar tooling pesado sin necesidad.
-- Priorizar evidencia nueva.
+**Bob-omb**
+- threshold: 2.70
+- crecimiento: +0.50
+- attachment visual pasivo
+
+Si la bola toca/se acerca a un objeto que supera su tier, el HUD muestra:
+
+`DEMASIADO GRANDE: BOB-OMB requiere TAM 2.70`
+
+No se elimina ni modifica el enemigo.
+
+### HUD A8
+
+Muestra:
+
+- total de objetos;
+- tamaño;
+- contador de monedas;
+- contador de Goombas;
+- contador de Bob-ombs;
+- feedback de absorción;
+- feedback de bloqueo por tamaño.
+
+## Criterios de PASS A6.8 + A7/A8 slice 1
+
+1. La bola no se hunde progresivamente al crecer.
+2. Su base visual permanece aproximadamente apoyada en el terreno.
+3. Goombas quedan pegados/sobre la superficie y no profundamente fusionados.
+4. Objetos en la parte inferior no desaparecen completamente bajo el piso.
+5. Navegación A6.6 no regresa.
+6. Monedas pueden absorberse desde el inicio.
+7. Goombas pueden absorberse desde el inicio.
+8. Bob-ombs no pueden absorberse bajo tamaño 2.70.
+9. El HUD avisa correctamente del bloqueo.
+10. Al alcanzar 2.70, Bob-ombs sí pueden absorberse y quedan visibles pegados.
+11. El crecimiento continúa suave.
+12. No hay crash ni soft-lock.
+
+## Próximo slice A7-A8
+
+Después de PASS:
+
+- Koopa / shell;
+- un tier mayor;
+- objetos estáticos seleccionados;
+- puntuación y bonus por cadena;
+- feedback visual más rico;
+- evaluar reemplazo del modelo con puntas por esfera propia.
+
+## Restricción arquitectónica
+
+Mario = física y navegación.
+
+Bola = visual, absorción, crecimiento y attachments.
+
+No reintroducir collider rígido de la bola en niveles SM64.
