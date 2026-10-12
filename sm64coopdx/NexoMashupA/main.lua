@@ -834,6 +834,19 @@ end
 -- Mario / level hooks
 -- ============================================================================
 
+local function is_m1_world()
+    -- Do NOT use the C global gCurrCourseNum here. NetworkPlayer location
+    -- fields are explicitly exposed/read-only to Lua and are the canonical
+    -- runtime source for the local player's current world.
+    local np = gNetworkPlayers[0]
+    if np == nil then
+        return false
+    end
+
+    return np.currCourseNum == COURSE_BOB
+        or np.currLevelNum == LEVEL_BOB
+end
+
 local function remove_runtime_objects_outside_mission()
     local ball = get_ball()
     if ball ~= nil then obj_mark_for_deletion(ball) end
@@ -851,7 +864,7 @@ local function mario_update(m)
     if lock_flash > 0 then lock_flash = lock_flash - 1 end
 
     -- M1 is intentionally scoped to Bob-omb Battlefield.
-    if gCurrCourseNum ~= COURSE_BOB then
+    if not is_m1_world() then
         remove_runtime_objects_outside_mission()
         return
     end
@@ -900,7 +913,7 @@ end
 
 local function on_hud_render()
     -- No project HUD in castle/hub yet.
-    if gCurrCourseNum ~= COURSE_BOB then
+    if not is_m1_world() then
         return
     end
 
@@ -1005,4 +1018,4 @@ hook_event(HOOK_ON_LEVEL_INIT, on_level_init)
 hook_event(HOOK_ON_OBJECT_UNLOAD, on_object_unload)
 hook_event(HOOK_ON_HUD_RENDER, on_hud_render)
 
-print("[NEXO] M1 vertical slice active: rigid attachments + compact mode + NEXO Gate")
+print("[NEXO] M1.1 active: robust BOB detection + rigid attachments + compact mode + NEXO Gate")
