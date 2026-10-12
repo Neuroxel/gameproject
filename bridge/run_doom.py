@@ -30,6 +30,8 @@ MOD_SRC = ROOT / "doom" / "mod_src"
 PK3 = ROOT / ".runtime" / "doom" / "nexo_doom.pk3"
 LOCAL_MARIO_SFX = ROOT / "assets_local" / "mario_sfx"
 LOCAL_MARIO_BODY = ROOT / "assets_local" / "mario_avatar"
+OPENAL_SOFT_LIB = ROOT / ".runtime" / "doom" / "openal-soft" / "install" / "lib"
+OPENAL_LOG = BRIDGE / "runtime" / "openal-soft.log"
 
 MARIO_SFX_NAMES = ("jump", "hurt", "death", "use")
 MARIO_SFX_EXTS = (".ogg", ".wav", ".flac")
@@ -337,6 +339,8 @@ def main() -> int:
     print(f"[NEXO] Third-person Mario body: {'READY' if avatar_body_ready else 'PENDING local avatar assets'}")
     if runtime_kind == "sdl":
         print("[NEXO] Renderer: desktop OpenGL forced (vid_preferbackend=0)")
+        openal_local = list(OPENAL_SOFT_LIB.glob("libopenal*.dylib")) if OPENAL_SOFT_LIB.exists() else []
+        print(f"[NEXO] OpenAL Soft runtime: {'READY' if openal_local else 'MISSING'}")
     print("[NEXO] Controller: joystick/gamepad forced ON")
     if args.controller_setup:
         print("[NEXO] Controller setup menu: requested")
@@ -352,6 +356,7 @@ def main() -> int:
         # Extra safety for locally built macOS runtime dependencies. The setup
         # script also bundles libzmusic.1.dylib next to the executable.
         dyld_paths = [
+            str(OPENAL_SOFT_LIB),
             str(gzdoom.parent),
             str(ROOT / ".runtime/doom/gzdoom-sdl/build/zmusic/lib"),
 
@@ -364,7 +369,12 @@ def main() -> int:
         if existing:
             dyld_paths.append(existing)
         launch_env["DYLD_LIBRARY_PATH"] = ":".join(dyld_paths)
+        launch_env["ALSOFT_DRIVERS"] = "core"
+        launch_env["ALSOFT_LOGLEVEL"] = "3"
+        launch_env["ALSOFT_LOGFILE"] = str(OPENAL_LOG)
         print(f"[NEXO] DYLD_LIBRARY_PATH: {launch_env['DYLD_LIBRARY_PATH']}")
+        print(f"[NEXO] OpenAL backend forced: CoreAudio")
+        print(f"[NEXO] OpenAL log: {OPENAL_LOG}")
 
     subprocess.Popen(cmd, cwd=str(ROOT), env=launch_env)
     print("[NEXO] GZDoom launched.")
