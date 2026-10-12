@@ -71,3 +71,15 @@ Do not re-enable the default Vulkan preference unless Vulkan is actually built.
 On the macOS SDL runtime, mapped controllers must use the NEXO
 SDL_GameController backport. Triggers must never participate in pitch/yaw.
 Avoid raw `Joy:JS:*` axis assumptions for the final control baseline.
+
+
+## Avatar identity invariant
+
+Read PERSPECTIVE_NEXO.md and AUDIO_IDENTITY_NEXO.md.
+
+Do not conflate player identity with camera mode.
+Do not commit Nintendo/Mario audio or visual assets.
+Local identity assets belong only under gitignored assets_local/.
+
+DOOM remains first-person during native combat; a third-person body reveal is
+enabled only when a real local Mario avatar package is available.
