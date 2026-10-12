@@ -31,3 +31,14 @@ Never clear a completed handoff on level initialization/reset.
 Portal state crosses process boundaries and must remain durable until explicitly consumed or superseded.
 
 Bridge v0.2 supports recovery from the legacy pending-reset bug.
+
+
+## Current baseline
+
+M2 and DOOM -> NEXO_HUB outbound handoff are PASS.
+
+Important regression fixed:
+M2 must run only on MAP01. Never reapply SM64 handoff on MAP02+.
+
+Control continuity is now a project invariant. Read CONTROLS_NEXO.md before
+changing controller mappings.
