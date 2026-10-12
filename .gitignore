@@ -1,0 +1,30 @@
+# Game data / ROMs / dumps
+*.z64
+*.n64
+*.v64
+*.rom
+*.wad
+*.WAD
+*.pk3
+*.iso
+*.bin
+*.cue
+
+# Executables / libraries
+*.exe
+*.dll
+*.dylib
+*.so
+
+# macOS
+.DS_Store
+
+# Logs / local captures
+*.log
+captures/
+recordings/
+
+# Local agent/editor state
+.claude/settings.local.json
+.vscode/
+.idea/
