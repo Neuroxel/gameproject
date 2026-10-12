@@ -5,5 +5,6 @@ server noarchive int nexo_goombas = 0;
 server noarchive int nexo_bobombs = 0;
 server noarchive int nexo_score = 0;
 server noarchive bool nexo_mario_sfx = false;
+server noarchive bool nexo_mario_movement = true;
 server noarchive bool nexo_perspective_transition = true;
 server noarchive bool nexo_avatar_body_ready = false;
