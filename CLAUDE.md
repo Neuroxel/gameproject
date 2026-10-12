@@ -42,3 +42,11 @@ M2 must run only on MAP01. Never reapply SM64 handoff on MAP02+.
 
 Control continuity is now a project invariant. Read CONTROLS_NEXO.md before
 changing controller mappings.
+
+
+## GZDoom compatibility
+
+Pinned runtime: GZDoom 4.14.2.
+
+For case-insensitive String comparison in ZScript use `~==`.
+Do not use `String.CompareNoCase()` for the current runtime.
