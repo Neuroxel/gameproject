@@ -1,20 +1,23 @@
 # AGENTS.md
 
-Estado canónico: `NEXO_STATE.md`.
+## Gate activo: A6.6
 
-## Gate activo
+A6.5 está formalmente rechazado.
 
-A6.5.
+No restaurar:
 
-La arquitectura de empuje libre anterior fue descartada. No restaurarla.
+- direct-drive de bola;
+- Mario follower;
+- hitbox/wall hitbox de bola;
+- step-assist personalizado.
 
-### Debe validarse
+La autoridad física es Mario nativo.
 
-1. direct-drive con m.intendedYaw / m.intendedMag;
-2. Mario follower detrás de la bola;
-3. dash B;
-4. step-assist moderado;
-5. Goomba activo -> cascarón visual pasivo pegado;
-6. múltiples attachments sin crash.
+La bola es:
+- visual;
+- intangible;
+- sin hitbox;
+- detector de absorción;
+- portadora de attachments visuales.
 
-No comenzar A7 hasta A6.5 PASS.
+Validar puertas/superficies antes de A7.
