@@ -432,7 +432,7 @@ class NexoMarioDoomPlayer : DoomPlayer
         if (NexoHandMotionTics > 0 && NexoHandMotionDuration > 0)
         {
             double motion =
-                NexoHandMotionTics / double(NexoHandMotionDuration);
+                NexoHandMotionTics / (NexoHandMotionDuration * 1.0);
 
             if (NexoHandMotionKind == 1)       // backflip
             {
