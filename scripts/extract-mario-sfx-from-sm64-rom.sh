@@ -144,6 +144,15 @@ convert_sample() {
 
 # Core profile used by the DOOM adapter.
 convert_sample "sound/samples/sfx_mario/00_mario_jump_hoo.aiff" "jump"
+
+# Mario locomotion identity. These remain optional at runtime; generated
+# SNDINFO falls back safely when an older local extraction only has the core set.
+convert_sample "sound/samples/sfx_mario/01_mario_jump_wah.aiff" "jump2"
+convert_sample "sound/samples/sfx_mario/02_mario_yah.aiff" "jump3"
+convert_sample "sound/samples/sfx_mario/18_mario_waha.aiff" "backflip"
+convert_sample "sound/samples/sfx_mario/19_mario_yippee.aiff" "longjump"
+convert_sample "sound/samples/sfx_mario/0B_mario_ooof.aiff" "stomp"
+convert_sample "sound/samples/sfx_mario/08_mario_whoa.aiff" "dive"
 convert_sample "sound/samples/sfx_mario/0A_mario_attacked.aiff" "hurt"
 convert_sample "sound/samples/sfx_mario_peach/03_mario_dying.aiff" "death"
 convert_sample "sound/samples/sfx_mario/05_mario_uh.aiff" "use"
