@@ -92,3 +92,10 @@ upstream GZDoom commit c3fb744f47fe. Full setup must apply it before build.
 
 On DOOM PlayerEntered, center pitch exactly once; never continuously override
 right-stick look.
+
+
+## SDL first-window invariant
+
+On macOS 26, NEXO SDL defaults to the isolated windowed-safe config. Do not make
+fullscreen startup the default while black-screen/delayed-focus behavior is
+unresolved. Fullscreen tests require explicit `--fullscreen`.
