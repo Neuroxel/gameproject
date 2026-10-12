@@ -407,3 +407,30 @@ Or provide your own ROM explicitly:
 ```bash
 bash scripts/extract-mario-sfx-from-sm64-rom.sh /path/to/baserom.us.z64 us
 ```
+
+
+### macOS SDL black-screen safe startup
+
+The NEXO SDL launcher now defaults to an isolated **windowed-safe** startup
+profile because fullscreen startup can produce a black window with delayed
+controller focus on macOS 26.
+
+Normal test:
+
+```bash
+git pull
+python3 bridge/run_doom.py --runtime sdl
+```
+
+The launcher creates `bridge/runtime/gzdoom-nexo.ini`, seeded once from the
+user's normal `~/Library/Preferences/gzdoom.ini` when present, and forces
+windowed OpenGL before SDL constructs its first window.
+
+Fullscreen remains available only as an explicit test:
+
+```bash
+python3 bridge/run_doom.py --runtime sdl --fullscreen
+```
+
+Do not use `--fullscreen` as the baseline until the macOS first-present/focus
+regression is closed.
