@@ -131,13 +131,19 @@ Semantic combinations:
 - fresh CROUCH press in air -> ground pound/stomp.
 
 Important:
-the physical controller binding for CROUCH/MOVEMENT MODIFIER is not yet a
-validated cross-world invariant. Do not steal any already-validated binding:
+GZDoom 4.14.2's common gamepad defaults bind `lthumb` (left-stick click / L3)
+to crouch. NEXO therefore uses L3 as the **provisional Mario movement
+modifier** for the first runtime test without stealing any already-validated
+binding:
 - RT remains fire;
 - LT remains secondary action;
 - A remains use/context;
 - Y remains jump;
-- LB remains weapon cycle.
+- LB remains weapon cycle;
+- L3 is provisional crouch / Mario movement modifier.
+
+This L3 behavior must still be confirmed on the user's patched SDL
+GameController runtime before it becomes a cross-world invariant.
 
 A controller crouch binding must be tested explicitly before
 `MARIOMOVE-1` is PASS.
