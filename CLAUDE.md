@@ -185,3 +185,29 @@ reskin and call first-person embodiment complete.
 
 `nexo_mario_hands_ready` must remain false until a coherent local grip pack
 exists for multiple weapons.
+
+
+## Runtime-v2 DOOM embodiment invariant
+
+Read the latest sections of:
+- `NEXO_STATE.md`;
+- `AVATAR_MOVEMENT_NEXO.md`;
+- `AUDIO_IDENTITY_NEXO.md`;
+- `MARIO_FIRST_PERSON_NEXO.md`;
+- `NEXO_MASTER_PLAN.md`.
+
+Current non-negotiable facts:
+- user has runtime-confirmed wall kick;
+- FP-MARIO v1 screenshots are evidence of visual failure, not PASS;
+- do not restore v1 glove scales (~0.48-0.68);
+- current v2 grip scales are ~0.20-0.26 pending user QA;
+- Mario player class uses +NOSKIN so destination skins cannot override semantic
+  avatar audio;
+- triple jump uses SM64-family 42/52/69 launch ratios with live ceiling
+  clamping and canonical voice pools;
+- native Fist visual is hidden through reversible PSprite scale while mechanics
+  remain native;
+- Fire/Hold hand animation is required; static hands are no longer acceptable.
+
+Do not mark AUDIO-ID-2, MARIOMOVE-2 or FP-MARIO-1 PASS without new user runtime
+evidence.
