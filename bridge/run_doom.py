@@ -80,11 +80,30 @@ def build_pk3() -> Path:
     if not MOD_SRC.exists():
         raise FileNotFoundError(f"DOOM mod source missing: {MOD_SRC}")
 
+    required = {
+        "CVARINFO",
+        "MAPINFO",
+        "zscript.zc",
+        "zscript/nexo_handoff.zs",
+    }
+
     PK3.parent.mkdir(parents=True, exist_ok=True)
+    members: list[str] = []
+
     with zipfile.ZipFile(PK3, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for path in sorted(MOD_SRC.rglob("*")):
             if path.is_file():
-                zf.write(path, path.relative_to(MOD_SRC).as_posix())
+                arcname = path.relative_to(MOD_SRC).as_posix()
+                zf.write(path, arcname)
+                members.append(arcname)
+
+    missing = sorted(required.difference(members))
+    if missing:
+        raise RuntimeError(
+            "NEXO DOOM PK3 is incomplete; missing: " + ", ".join(missing)
+        )
+
+    print("[NEXO] PK3 members: " + ", ".join(members))
     return PK3
 
 
