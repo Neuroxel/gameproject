@@ -195,6 +195,11 @@ def main() -> int:
     parser.add_argument("--gzdoom", help="Path to gzdoom executable")
     parser.add_argument("--iwad", help="Path to Doom II compatible IWAD")
     parser.add_argument("--map", default="MAP01", help="Starting map")
+    parser.add_argument(
+        "--controller-setup",
+        action="store_true",
+        help="Open GZDoom joystick/gamepad configuration menu on launch",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Print command only")
     args = parser.parse_args()
 
@@ -212,9 +217,19 @@ def main() -> int:
         "+logfile", str(DOOM_LOG),
         "-iwad", str(iwad),
         "-file", str(pk3),
+
+        # Keep controls continuous across worlds. GZDoom has native
+        # joystick/gamepad support on macOS; explicitly enable it so the
+        # adapter does not silently fall back to keyboard/mouse.
+        "+set", "use_joystick", "true",
+        "+set", "m_blockcontrollers", "false",
+
         "+map", args.map,
     ]
     cmd += cvar_args(handoff)
+
+    if args.controller_setup:
+        cmd += ["+menu_joystick"]
 
     print("[NEXO] Portal Fabric P1.2")
     print(f"[NEXO] Source: {handoff['source']['world']}")
@@ -223,6 +238,9 @@ def main() -> int:
     print(f"[NEXO] IWAD: {iwad}")
     print(f"[NEXO] PK3: {pk3}")
     print(f"[NEXO] Mission log: {DOOM_LOG}")
+    print("[NEXO] Controller: joystick/gamepad forced ON")
+    if args.controller_setup:
+        print("[NEXO] Controller setup menu: requested")
     print("[NEXO] Command:")
     print(" ".join(shlex.quote(x) for x in cmd))
 
