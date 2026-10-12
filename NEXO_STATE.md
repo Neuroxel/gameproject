@@ -243,3 +243,31 @@ Fix:
 
 Expected next boot:
 ZScript parsing must be non-zero or at least progress to actual ZScript diagnostics instead of `unknown event handler class`.
+
+
+## P1.2 macOS checkout regression — case collision identified
+
+A dry-run after the ZScript entry-point fix reported:
+
+`NEXO DOOM PK3 is incomplete; missing: zscript/nexo_handoff.zs`
+
+Remote `main` was verified to contain:
+- `doom/mod_src/zscript.zc`;
+- `doom/mod_src/zscript/nexo_handoff.zs`;
+- `doom/mod_src/MAPINFO`;
+- `doom/mod_src/CVARINFO`.
+
+Root cause:
+the earlier repository state contained both an extensionless file named
+`doom/mod_src/ZSCRIPT` and a directory named `doom/mod_src/zscript/`.
+On default case-insensitive macOS filesystems these paths collide, so Git could
+store both remotely while the Mac working tree could not materialize both.
+
+The rename `ZSCRIPT -> zscript.zc` permanently removes the collision.
+Older local checkouts may require one explicit restore of the previously omitted
+nested file:
+
+`git restore --source=origin/main -- doom/mod_src/zscript/nexo_handoff.zs`
+
+Do not pop/drop prior autostashes until P1.2 is validated; they may contain
+pre-fix local edits.
