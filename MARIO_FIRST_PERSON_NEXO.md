@@ -143,3 +143,81 @@ PASS requires:
 Do not activate a visible overlay before at least pistol + shotgun + rocket
 launcher poses are available locally. A partial Fist-only implementation would
 misrepresent the intended avatar embodiment.
+
+
+## Local prototype pipeline
+
+The first functional hand pipeline is now repository-driven but asset-local:
+
+1. validate the existing local Mario hand geometry source:
+   ```bash
+   bash scripts/probe-mario-hands-local.sh
+   ```
+2. reconstruct left/right open/closed hand meshes from the user's validated US
+   SM64 ROM:
+   ```bash
+   python3 scripts/extract-mario-hand-meshes-from-sm64-rom.py
+   ```
+3. render the 18 weapon-overlay layers without external Python packages:
+   ```bash
+   python3 scripts/render-mario-weapon-hands-local.py
+   ```
+4. visual prototype activation is explicit:
+   ```bash
+   python3 scripts/render-mario-weapon-hands-local.py --activate
+   ```
+5. instant rollback:
+   ```bash
+   rm -f assets_local/mario_hands/READY
+   ```
+
+The renderer is intentionally a **prototype art generator**. It uses a
+repository pose manifest, low-poly glove geometry, simple local shading and
+transparent 320x200 weapon-space layers.
+
+Pose transforms:
+`doom/mario_hands_pose_manifest.json`.
+
+The launcher refuses to enable `nexo_mario_hands_ready` unless:
+- `assets_local/mario_hands/READY` exists; and
+- all 18 expected back/front PNG layers exist.
+
+This prevents a Fist-only or partially rendered pack from being mistaken for
+complete first-person embodiment.
+
+## Runtime layer map
+
+GZDoom native weapon PSprite remains layer 1.
+
+NEXO uses:
+- layer -2 = Mario hand component behind the weapon;
+- layer 2 = Mario hand component in front of the weapon.
+
+Both inherit weapon bob/position through the PSprite system.
+
+Current families:
+- Fist: NHFB / NHFF;
+- Chainsaw: NHCB / NHCF;
+- Pistol: NHPB / NHPF;
+- Shotgun: NHSB / NHSF;
+- SuperShotgun: NH2B / NH2F;
+- Chaingun: NHGB / NHGF;
+- Rocket: NHRB / NHRF;
+- Plasma/Incinerator: NHEB / NHEF;
+- BFG/Calamity: NHBB / NHBF.
+
+Unknown/mod weapons clear the Mario overlays instead of showing a misleading
+generic grip.
+
+## Baked destination-hand issue
+
+Many DOOM/Freedoom weapon sprites contain the marine's hand as part of the
+weapon image itself.
+
+The prototype therefore uses the front Mario layer to cover those baked hand
+pixels where possible. FP-MARIO-1 is not PASS until runtime visual QA confirms
+that no obvious Doom-marine hand remains visible.
+
+If overlay occlusion is insufficient for a weapon, the next refinement is a
+local runtime mask/reconstruction of that weapon sprite, not removal of the
+native weapon logic.
