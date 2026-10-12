@@ -1,73 +1,74 @@
 {
-  "schema": "nexo.mario_hands.pose_manifest.v1",
+  "schema": "nexo.mario_hands.pose_manifest.v2",
   "canvas": [320, 200],
   "grab_offset": [0, 52],
   "notes": [
-    "Prototype first-person Mario glove poses for GZDoom PSprite overlays.",
-    "Coordinates are 320x200 virtual weapon-space.",
-    "Front layers deliberately cover the destination player's baked-in hand pixels where practical.",
-    "Tune transforms after runtime visual QA; do not treat this manifest as final art."
+    "Runtime-v2 poses tuned from user screenshots captured 2026-10-12.",
+    "The v1 glove scale was approximately 2-3x too large and obscured the destination weapon.",
+    "These layers are now grip-sized; runtime ZScript provides Fire/Hold recoil and Mario movement response.",
+    "Fist keeps two low ready gloves; native brown Fist presentation is hidden while its mechanics remain active.",
+    "Coordinates are 320x200 virtual weapon-space."
   ],
   "layers": {
     "NHFBA0.png": [
-      {"mesh":"left_hand_closed","tx":92,"ty":205,"scale":0.68,"rx":-8,"ry":18,"rz":68}
+      {"mesh":"left_hand_closed","tx":112,"ty":190,"scale":0.24,"rx":-8,"ry":18,"rz":70}
     ],
     "NHFFA0.png": [
-      {"mesh":"right_hand_closed","tx":228,"ty":205,"scale":0.68,"rx":-8,"ry":-18,"rz":112}
+      {"mesh":"right_hand_closed","tx":190,"ty":190,"scale":0.24,"rx":-8,"ry":-18,"rz":110}
     ],
 
     "NHCBA0.png": [
-      {"mesh":"right_hand_closed","tx":222,"ty":203,"scale":0.60,"rx":-8,"ry":-25,"rz":102}
+      {"mesh":"right_hand_closed","tx":193,"ty":188,"scale":0.24,"rx":-8,"ry":-25,"rz":100}
     ],
     "NHCFA0.png": [
-      {"mesh":"left_hand_closed","tx":105,"ty":194,"scale":0.58,"rx":-12,"ry":22,"rz":72}
+      {"mesh":"left_hand_closed","tx":120,"ty":181,"scale":0.22,"rx":-12,"ry":22,"rz":74}
     ],
 
     "NHPBA0.png": [],
     "NHPFA0.png": [
-      {"mesh":"right_hand_closed","tx":205,"ty":204,"scale":0.62,"rx":-12,"ry":-28,"rz":103}
+      {"mesh":"right_hand_closed","tx":169,"ty":191,"scale":0.26,"rx":-12,"ry":-28,"rz":101}
     ],
 
     "NHSBA0.png": [
-      {"mesh":"right_hand_closed","tx":214,"ty":204,"scale":0.58,"rx":-10,"ry":-24,"rz":102}
+      {"mesh":"right_hand_closed","tx":190,"ty":190,"scale":0.23,"rx":-10,"ry":-24,"rz":101}
     ],
     "NHSFA0.png": [
-      {"mesh":"left_hand_closed","tx":118,"ty":191,"scale":0.53,"rx":-8,"ry":25,"rz":74}
+      {"mesh":"left_hand_closed","tx":126,"ty":181,"scale":0.22,"rx":-8,"ry":25,"rz":75}
     ],
 
     "NH2BA0.png": [
-      {"mesh":"right_hand_closed","tx":218,"ty":204,"scale":0.59,"rx":-10,"ry":-24,"rz":102}
+      {"mesh":"right_hand_closed","tx":193,"ty":190,"scale":0.23,"rx":-10,"ry":-24,"rz":101}
     ],
     "NH2FA0.png": [
-      {"mesh":"left_hand_open","tx":112,"ty":192,"scale":0.48,"rx":-18,"ry":30,"rz":72}
+      {"mesh":"left_hand_open","tx":119,"ty":180,"scale":0.20,"rx":-18,"ry":30,"rz":73}
     ],
 
     "NHGBA0.png": [
-      {"mesh":"right_hand_closed","tx":226,"ty":205,"scale":0.58,"rx":-10,"ry":-24,"rz":102}
+      {"mesh":"right_hand_closed","tx":197,"ty":191,"scale":0.23,"rx":-10,"ry":-24,"rz":101}
     ],
     "NHGFA0.png": [
-      {"mesh":"left_hand_closed","tx":104,"ty":194,"scale":0.55,"rx":-10,"ry":24,"rz":72}
+      {"mesh":"left_hand_closed","tx":117,"ty":183,"scale":0.21,"rx":-10,"ry":24,"rz":73}
     ],
 
     "NHRBA0.png": [
-      {"mesh":"right_hand_closed","tx":229,"ty":204,"scale":0.60,"rx":-10,"ry":-24,"rz":101}
+      {"mesh":"right_hand_closed","tx":202,"ty":190,"scale":0.23,"rx":-10,"ry":-24,"rz":100}
     ],
     "NHRFA0.png": [
-      {"mesh":"left_hand_open","tx":91,"ty":185,"scale":0.54,"rx":-20,"ry":30,"rz":70}
+      {"mesh":"left_hand_open","tx":102,"ty":174,"scale":0.22,"rx":-20,"ry":30,"rz":71}
     ],
 
     "NHEBA0.png": [
-      {"mesh":"right_hand_closed","tx":230,"ty":205,"scale":0.60,"rx":-12,"ry":-24,"rz":102}
+      {"mesh":"right_hand_closed","tx":201,"ty":191,"scale":0.23,"rx":-12,"ry":-24,"rz":101}
     ],
     "NHEFA0.png": [
-      {"mesh":"left_hand_closed","tx":94,"ty":195,"scale":0.57,"rx":-10,"ry":24,"rz":72}
+      {"mesh":"left_hand_closed","tx":107,"ty":184,"scale":0.21,"rx":-10,"ry":24,"rz":73}
     ],
 
     "NHBBA0.png": [
-      {"mesh":"right_hand_closed","tx":236,"ty":207,"scale":0.62,"rx":-12,"ry":-25,"rz":102}
+      {"mesh":"right_hand_closed","tx":205,"ty":191,"scale":0.24,"rx":-12,"ry":-25,"rz":101}
     ],
     "NHBFA0.png": [
-      {"mesh":"left_hand_open","tx":82,"ty":190,"scale":0.57,"rx":-18,"ry":30,"rz":70}
+      {"mesh":"left_hand_open","tx":96,"ty":178,"scale":0.22,"rx":-18,"ry":30,"rz":71}
     ]
   }
 }
