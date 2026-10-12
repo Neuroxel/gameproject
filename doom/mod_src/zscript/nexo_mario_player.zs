@@ -53,33 +53,27 @@ class NexoMarioDoomPlayer : DoomPlayer
         A_StartSound(soundName, CHAN_BODY);
     }
 
-    void NexoPlayJumpVoice(int jumpStage)
+    void NexoPlayGenericJumpVoice()
     {
         if (!NexoCVarBool('nexo_mario_sfx')) return;
         if (player != null && (player.cheats & CF_PREDICTING)) return;
 
-        if (jumpStage <= 1)
-        {
-            // SM64 generic jump voice: random Yah / Wah / Hoo.
-            int roll = random[NexoMarioJumpVoice](0, 2);
-            if (roll == 0)
-                A_StartSound("nexo/mario/jump1_yah", CHAN_BODY);
-            else if (roll == 1)
-                A_StartSound("nexo/mario/jump1_wah", CHAN_BODY);
-            else
-                A_StartSound("nexo/mario/jump1_hoo", CHAN_BODY);
-            return;
-        }
+        // SM64 play_mario_jump_sound(): random Yah / Wah / Hoo.
+        int roll = random[NexoMarioJumpVoice](0, 2);
+        if (roll == 0)
+            A_StartSound("nexo/mario/jump1_yah", CHAN_BODY);
+        else if (roll == 1)
+            A_StartSound("nexo/mario/jump1_wah", CHAN_BODY);
+        else
+            A_StartSound("nexo/mario/jump1_hoo", CHAN_BODY);
+    }
 
-        if (jumpStage == 2)
-        {
-            // SM64 double jump has its own Hoo-hoo call.
-            A_StartSound("nexo/mario/jump2_hoohoo", CHAN_BODY);
-            return;
-        }
+    void NexoPlayTripleJumpVoice()
+    {
+        if (!NexoCVarBool('nexo_mario_sfx')) return;
+        if (player != null && (player.cheats & CF_PREDICTING)) return;
 
-        // SM64 triple jump selects from Yahoo / Waha / Yippee with a
-        // 60/20/20 distribution.
+        // SM64 CHAR_SOUND_YAHOO_WAHA_YIPPEE: 60/20/20.
         int tripleRoll = random[NexoMarioTripleVoice](0, 4);
         if (tripleRoll <= 2)
             A_StartSound("nexo/mario/jump3_yahoo", CHAN_BODY);
@@ -87,6 +81,24 @@ class NexoMarioDoomPlayer : DoomPlayer
             A_StartSound("nexo/mario/jump3_waha", CHAN_BODY);
         else
             A_StartSound("nexo/mario/jump3_yippee", CHAN_BODY);
+    }
+
+    void NexoPlayJumpVoice(int jumpStage)
+    {
+        if (jumpStage <= 1)
+        {
+            NexoPlayGenericJumpVoice();
+            return;
+        }
+
+        if (jumpStage == 2)
+        {
+            // SM64 double jump is the dedicated Hoo-hoo call.
+            NexoPlayMovementSound("nexo/mario/jump2_hoohoo");
+            return;
+        }
+
+        NexoPlayTripleJumpVoice();
     }
 
     bool NexoCanStand()
@@ -755,7 +767,8 @@ class NexoMarioDoomPlayer : DoomPlayer
                 NexoWallKickCooldown = 9;
                 NexoSetHandMotion(3, 8);
 
-                NexoPlayMovementSound("nexo/mario/wallkick");
+                // SM64 wall kick calls play_mario_jump_sound(): Yah/Wah/Hoo.
+                NexoPlayGenericJumpVoice();
                 return;
             }
         }
@@ -779,7 +792,8 @@ class NexoMarioDoomPlayer : DoomPlayer
                 Vel.Z += NexoCeilingSafeLaunch(baseJump * (30.0 / 42.0));
                 Thrust(7.5, Angle);
                 NexoSetHandMotion(6, 9);
-                NexoPlayMovementSound("nexo/mario/longjump");
+                // SM64 long jump uses CHAR_SOUND_YAHOO.
+                NexoPlayMovementSound("nexo/mario/jump3_yahoo");
             }
             else
             {
@@ -788,7 +802,8 @@ class NexoMarioDoomPlayer : DoomPlayer
                 Vel.Z += NexoCeilingSafeLaunch(baseJump * (62.0 / 42.0));
                 Thrust(5.0, Angle + 180.0);
                 NexoSetHandMotion(1, 12);
-                NexoPlayMovementSound("nexo/mario/backflip");
+                // SM64 backflip uses the generic Yah/Wah/Hoo family.
+                NexoPlayGenericJumpVoice();
             }
 
             bOnMobj = false;
@@ -822,7 +837,8 @@ class NexoMarioDoomPlayer : DoomPlayer
             NexoSlideTicks = 0;
             NexoSetHandMotion(2, 10);
 
-            NexoPlayMovementSound("nexo/mario/sideflip");
+            // SM64 side flip begins with the generic jump voice family.
+            NexoPlayGenericJumpVoice();
             return;
         }
 
@@ -920,7 +936,8 @@ class NexoMarioDoomPlayer : DoomPlayer
                     NexoSlideTicks = 0;
                     NexoSetHandMotion(4, 10);
 
-                    NexoPlayMovementSound("nexo/mario/dive");
+                    // Initial SM64 dive uses CHAR_SOUND_HOOHOO.
+                    NexoPlayMovementSound("nexo/mario/jump2_hoohoo");
                     return;
                 }
 
@@ -937,7 +954,8 @@ class NexoMarioDoomPlayer : DoomPlayer
                     NexoSlideTicks = 0;
                     NexoSetHandMotion(5, 8);
 
-                    NexoPlayMovementSound("nexo/mario/stomp");
+                    // SM64 ground pound transitions into its dedicated Wah.
+                    NexoPlayMovementSound("nexo/mario/ground_pound_wah");
                     return;
                 }
             }
