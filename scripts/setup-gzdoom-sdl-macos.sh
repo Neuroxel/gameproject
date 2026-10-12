@@ -84,6 +84,9 @@ if [ -f "$PATCH_DIR/i_joystick.cpp" ] && [ -f "$PATCH_DIR/i_input.cpp" ]; then
   cp "$PATCH_DIR/i_input.cpp" "$SRC/src/common/platform/posix/sdl/i_input.cpp"
 fi
 
+echo "[NEXO] Applying canonical SDL startup-window backport before build..."
+python3 "$ROOT/scripts/apply-gzdoom-sdl-startup-source.py" "$SRC"
+
 rm -rf "$BUILD"
 mkdir -p "$BUILD"
 
