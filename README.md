@@ -265,3 +265,40 @@ python3 bridge/run_doom.py --runtime sdl --controller-setup
 
 The patch rebuilds only the changed input objects plus relinking and then
 re-runs the runtime dylib repair.
+
+
+## Persistent Mario identity across worlds
+
+NEXO now separates:
+- avatar identity;
+- camera perspective;
+- world mechanics;
+- audio identity.
+
+SM64 -> DOOM is formally:
+`Mario / third person -> Mario identity / first person`.
+
+See:
+- `PERSPECTIVE_NEXO.md`
+- `AUDIO_IDENTITY_NEXO.md`
+
+### Restore audio in the SDL runtime
+
+```bash
+git pull
+bash scripts/patch-gzdoom-sdl-audio.sh
+python3 bridge/run_doom.py --runtime sdl
+```
+
+### Local Mario action/voice SFX
+
+The repository does not distribute Nintendo audio.
+
+Provide your own local core set and import it:
+
+```bash
+bash scripts/import-mario-sfx-local.sh /path/to/mario_sfx
+python3 bridge/run_doom.py --runtime sdl
+```
+
+Required names: `jump`, `hurt`, `death`, `use` in OGG/WAV/FLAC.
