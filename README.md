@@ -172,3 +172,29 @@ Level.MapName ~== "MAP01"
 ```
 
 Avoid newer String helper APIs unless tested against 4.14.2.
+
+
+## macOS 26 controller workaround
+
+The official GZDoom 4.14.2 Cocoa backend has a known upstream controller bug on
+macOS 26 affecting triggers and D-pad.
+
+Probe the controller:
+
+```bash
+python3 bridge/controller_probe.py
+```
+
+Build the same GZDoom version with its SDL2 backend:
+
+```bash
+bash scripts/setup-gzdoom-sdl-macos.sh
+```
+
+Then test:
+
+```bash
+python3 bridge/run_doom.py --runtime sdl --controller-setup
+```
+
+Normal `--runtime auto` prefers SDL once that build exists.
