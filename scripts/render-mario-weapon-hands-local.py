@@ -191,6 +191,47 @@ def render_layer(width, height, instances, meshes):
     return pixels
 
 
+def add_glove_outline(pixels, width: int, height: int, radius: int = 1):
+    """Add a small dark silhouette edge so the low-poly white glove reads as
+    Mario's glove instead of an unbounded white polygon mass.
+
+    The outline is added only outside the existing alpha mask; internal
+    low-poly shading is preserved.
+    """
+    if radius <= 0:
+        return pixels
+
+    source = list(pixels)
+    output = list(pixels)
+    outline = (54, 54, 54, 255)
+
+    for y in range(height):
+        for x in range(width):
+            pos = y * width + x
+            if source[pos][3] != 0:
+                continue
+
+            found = False
+            for dy in range(-radius, radius + 1):
+                yy = y + dy
+                if yy < 0 or yy >= height:
+                    continue
+                for dx in range(-radius, radius + 1):
+                    xx = x + dx
+                    if xx < 0 or xx >= width or (dx == 0 and dy == 0):
+                        continue
+                    if source[yy * width + xx][3] != 0:
+                        found = True
+                        break
+                if found:
+                    break
+
+            if found:
+                output[pos] = outline
+
+    return output
+
+
 def png_chunk(kind: bytes, payload: bytes) -> bytes:
     body = kind + payload
     return (
@@ -262,6 +303,7 @@ def main() -> int:
         output = DEST / filename
         instances = layers[filename]
         pixels = render_layer(width, height, instances, meshes)
+        pixels = add_glove_outline(pixels, width, height, radius=1)
         write_png(output, width, height, pixels, grab)
 
         visible = sum(1 for px in pixels if px[3])
