@@ -214,3 +214,48 @@ extracted local sample tree without copying the ROM again.
 
 Generated SNDINFO contains compatibility aliases when an older local asset
 folder has not yet been refreshed.
+
+
+## USE semantic correction — no raw-button vocal
+
+Runtime evidence and code review identified a second source of the perceived
+"DOOM complaint" on the A/USE button: the NEXO EventHandler itself played
+`nexo/mario/use` (the local 05_mario_uh sample) on every raw BT_USE rising
+edge.
+
+That was semantically wrong even when the resource was genuinely Mario:
+opening a destination-world door should not make Mario grunt every time.
+
+The handler no longer plays any avatar vocal from raw BT_USE input.
+
+Final ownership:
+- usable door/switch -> destination world sound;
+- failed use -> `*usefail/*puzzfail = DSEMPTY`;
+- no automatic Mario grunt;
+- the local `nexo/mario/use` resource remains available for diagnostics or
+  future explicitly authored/contextual interactions.
+
+Together with `+NOSKIN`, this removes both known paths for an unwanted player
+complaint on A.
+
+Status: runtime confirmation required.
+
+## Exact voice semantics for additional SM64 movements
+
+Source-game airborne action behavior is now mirrored more closely:
+- normal jump -> random Yah/Wah/Hoo;
+- double jump -> Hoo-hoo;
+- triple jump -> Yahoo/Waha/Yippee weighted 60/20/20;
+- backflip -> generic Yah/Wah/Hoo;
+- side flip -> generic Yah/Wah/Hoo;
+- wall kick -> generic Yah/Wah/Hoo;
+- long jump -> Yahoo;
+- initial dive -> Hoo-hoo;
+- ground pound -> dedicated Ground-Pound Wah.
+
+The local extractor now also exposes `ground_pound_wah` from Mario's Wah2
+voice slot.
+
+Spin/terrain action effects are intentionally not faked with unrelated voice
+samples. They may be added later from the user's local SM64 action-sound bank
+if useful, while destination-world environmental audio remains native.
