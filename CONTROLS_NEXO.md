@@ -117,3 +117,27 @@ For mapped controllers the g4.14.2 SDL runtime is patched to use:
 
 Mapped devices use `Joy:GC:*` configuration sections so earlier `Joy:JS:*`
 experiments cannot contaminate the new mapping.
+
+
+## Mario movement modifier
+
+The DOOM avatar adapter now introduces a Mario locomotion layer behind
+`nexo_mario_movement`.
+
+Semantic combinations:
+- TRAVERSAL / Jump -> normal + chained triple jump;
+- CROUCH + Jump near standstill -> backflip;
+- CROUCH + Jump while running forward -> long jump;
+- fresh CROUCH press in air -> ground pound/stomp.
+
+Important:
+the physical controller binding for CROUCH/MOVEMENT MODIFIER is not yet a
+validated cross-world invariant. Do not steal any already-validated binding:
+- RT remains fire;
+- LT remains secondary action;
+- A remains use/context;
+- Y remains jump;
+- LB remains weapon cycle.
+
+A controller crouch binding must be tested explicitly before
+`MARIOMOVE-1` is PASS.
