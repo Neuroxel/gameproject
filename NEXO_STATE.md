@@ -1394,3 +1394,43 @@ FP-MARIO-1 remains **NOT PASS** until user visual QA confirms:
 9. NEXO_HUB/router stabilization;
 10. Source/Portal adapter;
 11. M3 only after that adapter is genuinely ready.
+
+
+### Post-screenshot hardening — USE and special-move voices
+
+Further exact-source review after the runtime-v2 snapshot:
+
+A/use:
+- the EventHandler's unconditional raw-button `PlayMarioUse()` was removed;
+- A now leaves door/switch audio to DOOM/Freedoom;
+- failed-use semantic sounds remain intentionally silent through SNDINFO;
+- `+NOSKIN` still prevents skin-level marine sound overrides;
+- the Mario use resource is retained only as an available explicit asset.
+
+Special movements now use source-game voice families:
+- backflip -> Yah/Wah/Hoo;
+- side flip -> Yah/Wah/Hoo;
+- wall kick -> Yah/Wah/Hoo;
+- long jump -> Yahoo;
+- dive -> Hoo-hoo;
+- ground pound -> dedicated Ground-Pound Wah.
+
+Ceiling governor was hardened:
+- custom ground actions use the capped value as the final vertical target
+  rather than adding it to pre-existing Z speed;
+- normal/double/triple jumps also clamp the final post-GZDoom launch velocity,
+  protecting the ceiling reserve even when base GZDoom adds existing vertical
+  platform motion.
+
+First-person Fist hiding was hardened across weapon switches:
+- save the hidden Fist caller/scale;
+- restore exact scale only when the same caller remains;
+- if a switch already changed the caller, restore neutral per-state scale
+  while the new weapon retains its own baseScale.
+
+Static audit:
+- no illegal PSprite raw Flags access remains;
+- no literal backslash-n include defect;
+- no raw-button PlayMarioUse path remains.
+
+Status remains **runtime-v2 retest required; no new PASS declared**.
