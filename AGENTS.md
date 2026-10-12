@@ -113,3 +113,12 @@ Never place nexo_handoff or nexo_mario_sfx after +map.
 
 The automatic automap prime is a temporary macOS 26 first-present workaround
 and is diagnostic-toggleable with --no-render-prime.
+
+
+## Exact pinned-engine invariants
+
+For GZDoom g4.14.2:
+- PlayerEntered occurs before WorldLoaded during fresh level load.
+- standalone `+wait N` does not delay later independent `+command` argv
+  entries; delayed sequences must be one semicolon-separated command string.
+- keep Mario/NEXO voice cues off native CHAN_VOICE; use dedicated CHAN_5/UI.
