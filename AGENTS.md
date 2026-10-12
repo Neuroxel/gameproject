@@ -33,3 +33,10 @@ Do not hard-code generic Joy1/Joy2 indices globally; device layouts vary.
 
 SM64 -> DOOM handoff and M2 apply only on MAP01.
 MAP02+ must remain native unless assigned a later NEXO mission.
+
+
+## GZDoom 4.14.2 invariant
+
+Case-insensitive map-name comparison must use `~==`.
+Current M2 gate:
+`Level.MapName ~== "MAP01"`.
