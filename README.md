@@ -65,3 +65,15 @@ python3 bridge/nexo_handoff.py --print
 ```
 
 Esto exporta un manifiesto JSON neutral que será la entrada del futuro adapter DOOM.
+
+
+## Siguiente gate: DOOM
+
+```bash
+git pull
+bash scripts/setup-doom-macos.sh
+python3 bridge/run_doom.py --dry-run
+python3 bridge/run_doom.py
+```
+
+El primer adapter usa GZDoom + Freedoom Phase 2 por defecto, o tu propio Doom II IWAD con `--iwad`.
