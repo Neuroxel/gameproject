@@ -47,6 +47,7 @@ MARIO_SFX_OPTIONAL = (
     "sideflip", "wallkick",
     "jump1_hoo", "jump1_wah", "jump1_yah", "jump2_hoohoo",
     "jump3_yahoo", "jump3_waha", "jump3_yippee",
+    "ground_pound_wah",
 )
 MARIO_SFX_EXTS = (".ogg", ".wav", ".flac")
 MARIO_HAND_SPRITES = (
@@ -265,6 +266,7 @@ def build_pk3() -> tuple[Path, bool, bool]:
                     "jump3_yahoo": "celebrate",
                     "jump3_waha": "backflip",
                     "jump3_yippee": "longjump",
+                    "ground_pound_wah": "jump1_wah",
                 }
                 for logical, fallback in fallback_aliases.items():
                     if logical not in mario_sfx:
