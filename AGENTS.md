@@ -122,3 +122,21 @@ For GZDoom g4.14.2:
 - standalone `+wait N` does not delay later independent `+command` argv
   entries; delayed sequences must be one semicolon-separated command string.
 - keep Mario/NEXO voice cues off native CHAN_VOICE; use dedicated CHAN_5/UI.
+
+
+## Canonical continuity additions
+
+Before changing cross-engine architecture, avatar identity, or world order, read:
+- `NEXO_MASTER_PLAN.md`;
+- `NEXO_STATE.md`;
+- `AVATAR_MOVEMENT_NEXO.md` when touching Mario movement/physics;
+- `AUDIO_IDENTITY_NEXO.md` when touching player/world/NEXO sound ownership.
+
+New invariant:
+Mario's recognizable locomotion may persist across worlds through an avatar
+adapter, but it must be adapted to the destination's geometry, camera and
+dominant mechanics. Do not blindly copy SM64 heights/camera behavior into DOOM.
+
+Do not declare `MARIOMOVE-1` PASS until the user has runtime-tested the
+movement slice. Do not restore Doomguy player vocals underneath Mario identity
+audio.
