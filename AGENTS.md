@@ -64,3 +64,10 @@ SDL is used for controller input, not GLES rendering.
 Always launch the macOS SDL runtime with desktop OpenGL:
 `vid_preferbackend=0`, `gl_es=false`.
 Do not re-enable the default Vulkan preference unless Vulkan is actually built.
+
+
+## Controller mapping invariant
+
+On the macOS SDL runtime, mapped controllers must use the NEXO
+SDL_GameController backport. Triggers must never participate in pitch/yaw.
+Avoid raw `Joy:JS:*` axis assumptions for the final control baseline.
