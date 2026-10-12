@@ -1,21 +1,22 @@
 # CLAUDE.md
 
-Lee `NEXO_STATE.md`.
+Lee primero `NEXO_STATE.md`.
 
-A6.6 = PASS. No modificar su arquitectura.
+## Gate activo
 
-Gate activo: **A6.7 visual attachment/roll polish**.
+A6.8 + A7/A8 slice 1.
 
-Preservar:
-- Mario como única autoridad física;
-- bola intangible y sin colisión del mundo;
-- navegación nativa.
+A6.6 (Mario como autoridad física) es una restricción obligatoria.
 
 Validar:
-- attachments tocando la superficie;
-- giro mucho más lento;
-- giros sin órbitas bruscas;
-- puertas/superficies siguen funcionando;
-- absorción y crecimiento no regresionan.
+- esfera sube según radio al crecer;
+- no se hunde;
+- attachments fuera de superficie;
+- moneda y Goomba absorbibles;
+- Bob-omb bloqueado bajo 2.70;
+- feedback de bloqueo;
+- Bob-omb absorbible sobre 2.70;
+- navegación no regresa.
 
-No avanzar a A7 sin PASS.
+No reintroducir colisión rígida de la bola.
+No instalar tooling adicional.
