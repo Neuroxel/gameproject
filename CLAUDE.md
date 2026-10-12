@@ -82,3 +82,10 @@ For macOS SDL GZDoom 4.14.2 always force:
 Reason: without Vulkan compiled, backend 1 can select the GLES renderer; on
 Apple OpenGL 4.1 it generates GLSL 330 with legacy attribute/varying syntax and
 crashes at Default shader compilation.
+
+
+## SDL controller mapping backport
+
+GZDoom g4.14.2 raw SDL axes are not reliable on this macOS controller.
+Use `scripts/patch-gzdoom-sdl-gamecontroller.sh` to backport standardized
+SDL_GameController axes/buttons. Do not return to manual raw-axis remapping.
