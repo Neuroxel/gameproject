@@ -83,3 +83,12 @@ Local identity assets belong only under gitignored assets_local/.
 
 DOOM remains first-person during native combat; a third-person body reveal is
 enabled only when a real local Mario avatar package is available.
+
+
+## SDL startup-window invariant
+
+The macOS SDL runtime uses the g4.14.2 startup-window backport corresponding to
+upstream GZDoom commit c3fb744f47fe. Full setup must apply it before build.
+
+On DOOM PlayerEntered, center pitch exactly once; never continuously override
+right-stick look.
