@@ -1,26 +1,24 @@
 # CLAUDE.md
 
-Lee `NEXO_STATE.md`.
+Lee NEXO_STATE.md y PORTAL_FABRIC.md.
 
 ## Gate actual
 
-M1.1 — recuperación de activación.
+Portal Fabric P1.2 — SM64 handoff -> GZDoom.
 
-La regresión fue causada por usar `gCurrCourseNum` como gate Lua.
+## Baseline confirmado
 
-### Invariante
+M1 SM64 = PASS funcional.
+P1.1 manifest export = PASS.
 
-Usar para localización del jugador:
+## Validar
 
-`gNetworkPlayers[0].currCourseNum`
-`gNetworkPlayers[0].currLevelNum`
+1. setup-doom-macos.sh;
+2. run_doom.py --dry-run;
+3. GZDoom inicia;
+4. nexo_doom.pk3 compila/carga;
+5. ZScript sin errores;
+6. mensaje NEXO HANDOFF;
+7. recursos derivados presentes.
 
-No restaurar `gCurrCourseNum` como fuente del gate M1.
-
-## Validar primero
-
-1. Castillo: sin bola/HUD.
-2. BOB: bola + HUD aparecen.
-3. Sólo después validar compact/attachments/mission gate.
-
-No ampliar features hasta recuperar baseline.
+No tocar física SM64 ni visual QA de attachments durante P1.2.
