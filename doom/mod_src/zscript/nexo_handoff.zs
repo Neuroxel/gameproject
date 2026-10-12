@@ -166,6 +166,11 @@ class NexoHandoffHandler : EventHandler
         // M2 itself is still restricted to MAP01.
         if (IdentityActive && pawn != null)
         {
+            // Cross-engine camera normalization: never inherit a stale/extreme
+            // pitch into the first-person destination. The controller remains
+            // fully live immediately after this one-time center operation.
+            pawn.Pitch = 0.0;
+
             LastHealth = pawn.health;
             LastButtons = players[e.PlayerNumber].cmd.buttons;
 
