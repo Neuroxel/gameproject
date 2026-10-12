@@ -72,3 +72,13 @@ Canonical repair:
 `scripts/repair-gzdoom-sdl-macos.sh`.
 
 Do not trigger a full rebuild for this packaging-only failure.
+
+
+## SDL renderer invariant
+
+For macOS SDL GZDoom 4.14.2 always force:
+`vid_preferbackend=0` and `gl_es=false`.
+
+Reason: without Vulkan compiled, backend 1 can select the GLES renderer; on
+Apple OpenGL 4.1 it generates GLSL 330 with legacy attribute/varying syntax and
+crashes at Default shader compilation.
