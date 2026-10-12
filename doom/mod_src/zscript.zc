@@ -1,4 +1,5 @@
 version "4.14"
 
-#include "zscript/nexo_mario_hands.zs"\n#include "zscript/nexo_mario_player.zs"
+#include "zscript/nexo_mario_hands.zs"
+#include "zscript/nexo_mario_player.zs"
 #include "zscript/nexo_handoff.zs"
