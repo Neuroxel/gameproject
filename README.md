@@ -358,3 +358,18 @@ bash scripts/patch-gzdoom-sdl-audio.sh
 
 The OpenAL builder now forces Apple Clang and the active macOS SDK, and removes
 only the stale OpenAL build cache created with the wrong compiler.
+
+
+### AppleClang 21 / OpenAL Soft 1.25.2
+
+On macOS 26 with AppleClang 21, OpenAL Soft 1.25.2 may fail in
+`coreaudio.cpp` with:
+
+```
+attribute 'nonblocking' should not be added via type conversion
+[-Werror,-Wfunction-effects]
+```
+
+The project setup now disables OpenAL Soft's optional
+`-Wfunction-effects` diagnostic for this pinned build and explicitly keeps
+`ALSOFT_WERROR=OFF`. No source-code behavior is changed.
