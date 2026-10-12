@@ -53,17 +53,29 @@ No copyrighted voice files are versioned.
 
 ## DOOM behavior
 
-With the local core set present:
-- Mario jump voice on jump rising edge;
-- action voice on Use rising edge;
-- hurt voice when health drops, with cooldown;
-- death voice on player death.
+With the local core set present, avatar voice now **replaces** equivalent Doom
+player vocals rather than playing on top of them.
 
-DOOM weapon audio remains DOOM audio. Mario voice sits above it as the persistent
-avatar identity layer.
+Semantic ownership:
+- jump: Doom's native `*jump` player sound is silenced; the Mario player
+  adapter emits jump1/2/3 only after a real engine jump is confirmed;
+- hurt: native `*pain100/*pain75/*pain50/*pain25` resolve directly to Mario
+  hurt audio;
+- death/xdeath: native player death events resolve directly to Mario death;
+- use/action: NEXO retains a Mario cue on Use rising edge while native
+  `*usefail` is silenced;
+- grunt/land: use the local Mario stomp cue when available, otherwise remain
+  silent rather than leaking Doomguy voice;
+- portal and campaign celebration remain explicit NEXO events.
 
-This separation is intentional: the world owns environmental/weapon sound;
-the avatar owns voice/action identity.
+DOOM weapon, enemy, environment and music audio remain DOOM/Freedoom audio.
+
+This is the intended split:
+- WORLD AUDIO belongs to the destination;
+- AVATAR AUDIO belongs to Mario;
+- NEXO AUDIO belongs to portal/handoff/meta-state.
+
+Do not restore Doomguy player vocals underneath Mario.
 
 
 ## Local extraction from the user's own SM64 ROM
@@ -92,3 +104,44 @@ These files remain under gitignored `assets_local/mario_sfx/`.
 
 The DOOM adapter uses the first four as the mandatory core profile. Portal and
 celebration are optional enhancements, with safe aliases when absent.
+
+
+## DMX runtime bridge
+
+The user confirmed that Mario becomes audible when local PCM16LE WAV sources are
+converted only at PK3 build time to native Doom DMX.
+
+Why:
+- GZDoom 4.14.2 resolves the resources correctly;
+- the generic WAV route enters ZMusic decoding;
+- in the current runtime that route produced zero-length loads;
+- native DMX bypasses the optional decoder and reaches GZDoom's raw sound path.
+
+Source WAV files remain unchanged and gitignored.
+
+Current functional bridge:
+`local WAV -> generated DMX8 mono -> runtime PK3`.
+
+Quality debt:
+DMX is unsigned 8-bit mono. Once semantic behavior is stable, a later audio
+quality pass may restore PCM16/OGG by shipping or locating a known-working
+libsndfile/decoder path. Do not reopen the functional loader diagnosis merely
+because a higher-fidelity format is desired.
+
+## Movement audio extension
+
+Optional local movement cues:
+- jump2;
+- jump3;
+- backflip;
+- longjump;
+- stomp;
+- dive.
+
+Refresh from already-extracted local SM64 samples:
+```bash
+bash scripts/extend-mario-movement-sfx-local.sh
+```
+
+If absent, SNDINFO aliases them to existing Mario core cues so gameplay remains
+functional.
