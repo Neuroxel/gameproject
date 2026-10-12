@@ -43,6 +43,7 @@ MARIO_SFX_NAMES = ("jump", "hurt", "death", "use")
 MARIO_SFX_OPTIONAL = (
     "portal", "celebrate",
     "jump2", "jump3", "backflip", "longjump", "stomp", "dive",
+    "sideflip", "wallkick",
 )
 MARIO_SFX_EXTS = (".ogg", ".wav", ".flac")
 
@@ -224,6 +225,8 @@ def build_pk3() -> tuple[Path, bool]:
                     "longjump": "jump3",
                     "stomp": "use",
                     "dive": "use",
+                    "sideflip": "backflip",
+                    "wallkick": "jump2",
                 }
                 for logical, fallback in fallback_aliases.items():
                     if logical not in mario_sfx:
@@ -240,35 +243,43 @@ def build_pk3() -> tuple[Path, bool]:
                 death_target = runtime_targets["death"]
                 stomp_target = runtime_targets.get("stomp")
 
-                for gender in ("male", "female", "neutral", "other"):
-                    sndinfo_lines.append(
-                        f"$playersound player {gender} *jump DSEMPTY"
-                    )
-                    sndinfo_lines.append(
-                        f"$playersound player {gender} *usefail DSEMPTY"
-                    )
-                    for pain_name in ("*pain100", "*pain75", "*pain50", "*pain25"):
+                # Define both the inherited generic class and the dedicated
+                # NEXO class. NexoMarioDoomPlayer sets SoundClass=nexo_mario;
+                # keeping player too makes the dedupe resilient to skins or
+                # temporary player-class transitions.
+                for sound_class in ("player", "nexo_mario"):
+                    for gender in ("male", "female", "neutral", "other"):
                         sndinfo_lines.append(
-                            f'$playersound player {gender} {pain_name} "{hurt_target}"'
-                        )
-                    for death_name in ("*death", "*xdeath"):
-                        sndinfo_lines.append(
-                            f'$playersound player {gender} {death_name} "{death_target}"'
-                        )
-                    if stomp_target:
-                        sndinfo_lines.append(
-                            f'$playersound player {gender} *grunt "{stomp_target}"'
+                            f"$playersound {sound_class} {gender} *jump DSEMPTY"
                         )
                         sndinfo_lines.append(
-                            f'$playersound player {gender} *land "{stomp_target}"'
-                        )
-                    else:
-                        sndinfo_lines.append(
-                            f"$playersound player {gender} *grunt DSEMPTY"
+                            f"$playersound {sound_class} {gender} *usefail DSEMPTY"
                         )
                         sndinfo_lines.append(
-                            f"$playersound player {gender} *land DSEMPTY"
+                            f"$playersound {sound_class} {gender} *puzzfail DSEMPTY"
                         )
+                        for pain_name in ("*pain100", "*pain75", "*pain50", "*pain25"):
+                            sndinfo_lines.append(
+                                f'$playersound {sound_class} {gender} {pain_name} "{hurt_target}"'
+                            )
+                        for death_name in ("*death", "*xdeath", "*crazydeath", "*wimpydeath"):
+                            sndinfo_lines.append(
+                                f'$playersound {sound_class} {gender} {death_name} "{death_target}"'
+                            )
+                        if stomp_target:
+                            sndinfo_lines.append(
+                                f'$playersound {sound_class} {gender} *grunt "{stomp_target}"'
+                            )
+                            sndinfo_lines.append(
+                                f'$playersound {sound_class} {gender} *land "{stomp_target}"'
+                            )
+                        else:
+                            sndinfo_lines.append(
+                                f"$playersound {sound_class} {gender} *grunt DSEMPTY"
+                            )
+                            sndinfo_lines.append(
+                                f"$playersound {sound_class} {gender} *land DSEMPTY"
+                            )
 
             zf.writestr("SNDINFO", "\n".join(sndinfo_lines) + "\n")
             members.append("SNDINFO")
@@ -293,7 +304,7 @@ def build_pk3() -> tuple[Path, bool]:
     print("[NEXO] PK3 members: " + ", ".join(members))
     if mario_sfx_ready:
         print("[NEXO] Mario identity SFX: core set embedded (jump/hurt/death/use)")
-        print("[NEXO] Mario locomotion adapter: ON (triple/backflip/longjump/stomp)")
+        print("[NEXO] Mario locomotion adapter: ON (triple/backflip/longjump/stomp/sideflip/wallkick/dive)")
     elif mario_sfx:
         missing_sfx = [name for name in MARIO_SFX_NAMES if name not in mario_sfx]
         print("[NEXO] Mario identity SFX: partial; disabled until complete: " + ", ".join(missing_sfx))
