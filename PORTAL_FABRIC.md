@@ -216,3 +216,23 @@ Current campaign values:
 
 World adapters may reinterpret mechanics and visuals, but they should preserve
 recognizable avatar identity unless a mission explicitly transforms it.
+
+
+## P1.3 — NEXO_HUB router
+
+The hub now has an explicit data-level orchestrator:
+
+- `bridge/campaign.json` defines campaign chapter order;
+- `bridge/nexo_router.py` consumes the neutral outbound handoff;
+- `bridge/runtime/route.json` records the resolved next adapter and preserved
+  campaign state.
+
+This removes direct DOOM -> third-engine coupling.
+
+Current route is intentionally:
+`M2_STABILIZE_BREACH -> NEXO_HUB -> M3_PORTAL_LAB`.
+
+`PORTAL_LAB` is a planned adapter target only. Route resolution does not
+imply that Source/Portal is installed or launchable. `launch_allowed` remains
+false until the adapter status becomes `ready` and campaign requirements are
+met.
