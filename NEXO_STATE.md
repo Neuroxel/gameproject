@@ -362,3 +362,24 @@ Canonical cross-world semantics are documented in `CONTROLS_NEXO.md`.
 Decision:
 do not require keyboard-only play for DOOM; controller continuity is a project
 requirement unless a target engine genuinely cannot support it.
+
+
+## GZDoom 4.14.2 compatibility regression — MAP01 gate
+
+Observed compile error:
+`Unknown function CompareNoCase` in `nexo_handoff.zs`.
+
+Root cause:
+the previous MAP01 scope patch used a String method not exposed as used by
+GZDoom 4.14.2 ZScript.
+
+Verified against the exact `g4.14.2` ZScript runtime:
+case-insensitive string comparison is supported through the `~==` operator.
+
+Fix:
+```zscript
+InM2Map = Level.MapName ~== "MAP01";
+```
+
+Do not replace this with newer String helper methods without validating against
+the pinned GZDoom runtime.
