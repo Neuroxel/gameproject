@@ -1,21 +1,20 @@
 # CLAUDE.md
 
-Lee primero `NEXO_STATE.md`, `AGENTS.md` y `README.md`.
+Lee `NEXO_STATE.md` primero.
 
 ## Estado
 
-A0-A6 = PASS.
+A6.5 fue rechazado por bugs de navegación.
 
-Gate activo: **A6.5 — direct-drive control + passive attached Goombas**.
+Gate activo: **A6.6 Mario-authoritative navigation**.
 
-Validar:
+Principio obligatorio:
 
-- stick controla directamente la bola;
-- Mario queda visualmente detrás;
-- B produce dash;
-- pequeños peldaños mejoran con step-assist;
-- Goombas absorbidos siguen visibles como cascarones pasivos;
-- attachments giran/se trasladan con la bola;
-- crecimiento sigue funcionando.
+- NO modificar posición/velocidad/acción de Mario.
+- NO volver a hacer que la bola sea collider/autoridad física.
+- Mario conserva su movimiento nativo.
+- La bola sólo sigue visualmente y absorbe.
 
-No instalar tooling adicional y no avanzar a A7 sin evidencia de PASS.
+Validar castillo, puertas, Bob-omb Battlefield, pendientes, attachments y crecimiento.
+
+No avanzar a A7 sin PASS.
