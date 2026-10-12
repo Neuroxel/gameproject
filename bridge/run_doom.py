@@ -21,6 +21,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import struct
 import sys
 import zipfile
 
@@ -101,6 +102,70 @@ def find_local_mario_sfx() -> dict[str, Path]:
     return found
 
 
+def _wav_pcm16le_to_dmx(path: Path) -> tuple[bytes, int]:
+    """Convert a standard PCM16LE WAV to native Doom DMX sound data.
+
+    GZDoom 4.14.2 recognizes DMX before invoking ZMusic's generic decoder,
+    so this bypasses the optional runtime libsndfile dependency while keeping
+    the user's original local WAV untouched.
+    """
+    data = path.read_bytes()
+    if len(data) < 12 or data[:4] != b"RIFF" or data[8:12] != b"WAVE":
+        raise ValueError(f"{path.name}: expected little-endian RIFF/WAVE")
+
+    off = 12
+    fmt: tuple[int, int, int, int] | None = None
+    pcm = b""
+
+    while off + 8 <= len(data):
+        chunk_id = data[off:off + 4]
+        chunk_size = struct.unpack_from("<I", data, off + 4)[0]
+        start = off + 8
+        end = start + chunk_size
+        if end > len(data):
+            raise ValueError(f"{path.name}: truncated WAV chunk {chunk_id!r}")
+
+        payload = data[start:end]
+        if chunk_id == b"fmt " and len(payload) >= 16:
+            tag, channels, rate, _byte_rate, _align, bits = struct.unpack_from(
+                "<HHIIHH", payload, 0
+            )
+            fmt = (tag, channels, rate, bits)
+        elif chunk_id == b"data":
+            pcm = payload
+
+        off = end + (chunk_size & 1)
+
+    if fmt is None or not pcm:
+        raise ValueError(f"{path.name}: missing fmt/data WAV chunks")
+
+    tag, channels, rate, bits = fmt
+    if tag != 1 or bits != 16 or channels not in (1, 2) or rate <= 0:
+        raise ValueError(
+            f"{path.name}: DMX bridge requires PCM16LE mono/stereo; "
+            f"got tag={tag} channels={channels} rate={rate} bits={bits}"
+        )
+
+    frame_bytes = channels * 2
+    usable = len(pcm) - (len(pcm) % frame_bytes)
+    if usable <= 0:
+        raise ValueError(f"{path.name}: empty PCM payload")
+
+    out = bytearray()
+    if channels == 1:
+        for (sample,) in struct.iter_unpack("<h", pcm[:usable]):
+            out.append((sample + 32768) >> 8)
+    else:
+        for left, right in struct.iter_unpack("<hh", pcm[:usable]):
+            sample = (left + right) // 2
+            out.append((sample + 32768) >> 8)
+
+    # Native Doom DMX sound header:
+    # uint16 format=3, uint16 sample_rate, uint32 payload_length.
+    header = struct.pack("<HHI", 3, rate, len(out))
+    return header + bytes(out), rate
+
+
 def build_pk3() -> tuple[Path, bool]:
     if not MOD_SRC.exists():
         raise FileNotFoundError(f"DOOM mod source missing: {MOD_SRC}")
@@ -127,8 +192,17 @@ def build_pk3() -> tuple[Path, bool]:
         if mario_sfx:
             sndinfo_lines: list[str] = []
             for logical, path in sorted(mario_sfx.items()):
-                arcname = f"sounds/nexo/mario/{path.name}"
-                zf.write(path, arcname)
+                if path.suffix.lower() == ".wav":
+                    dmx, rate = _wav_pcm16le_to_dmx(path)
+                    arcname = f"sounds/nexo/mario/{logical}.dmx"
+                    zf.writestr(arcname, dmx)
+                    print(
+                        f"[NEXO] Mario SFX native bridge: "
+                        f"{path.name} -> {logical}.dmx ({rate} Hz, DMX8)"
+                    )
+                else:
+                    arcname = f"sounds/nexo/mario/{path.name}"
+                    zf.write(path, arcname)
                 members.append(arcname)
                 sndinfo_lines.append(f'nexo/mario/{logical} "{arcname}"')
             if mario_sfx_ready:
