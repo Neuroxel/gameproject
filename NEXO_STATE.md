@@ -324,3 +324,41 @@ Preservar UI nativa de cada mundo + una capa NEXO común y mínima para:
 - progreso;
 - carga/score relevante;
 - portal siguiente.
+
+
+## M2 — PASS and outbound handoff PASS
+
+User completed M2 and exited MAP01.
+
+Verified from log:
+- M2 progressed to 8/8 hostiles;
+- final chained score = 22824;
+- outbound line emitted with target NEXO_HUB;
+- `bridge/doom_handoff.py --print` generated `handoff_from_doom.json`;
+- carried state includes mass 6.1, coins 5, Goombas 4, Bob-ombs 5 and combat_shards 8.
+
+Regression discovered:
+on MAP02 the same SM64 -> DOOM handoff was applied again and M2 restarted.
+
+### Fix
+
+M2 is now explicitly scoped to `MAP01` using `Level.MapName`.
+MAP02 and later maps receive no M2 reinitialization.
+
+## Control continuity — ACTIVE
+
+GZDoom does support joystick/gamepad on macOS.
+
+The launcher now forces:
+- `use_joystick=true`;
+- `m_blockcontrollers=false`.
+
+New one-time diagnostic/setup mode:
+
+`python3 bridge/run_doom.py --controller-setup`
+
+Canonical cross-world semantics are documented in `CONTROLS_NEXO.md`.
+
+Decision:
+do not require keyboard-only play for DOOM; controller continuity is a project
+requirement unless a target engine genuinely cannot support it.
