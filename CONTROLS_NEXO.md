@@ -66,3 +66,26 @@ Keep:
 - native game menus for engine-specific settings;
 - a small shared NEXO mission/status layer;
 - NEXO prompts that use semantic action names where practical.
+
+
+## macOS 26 / GZDoom Cocoa exception
+
+The native Cocoa controller backend in GZDoom 4.14.2 is not accepted as the
+NEXO baseline on macOS 26.
+
+Observed/upstream symptoms include:
+- triggers missing or misreported;
+- D-pad corruption;
+- incorrect button semantics.
+
+NEXO therefore prefers a GZDoom 4.14.2 SDL2 build on macOS.
+
+Commands:
+
+```bash
+python3 bridge/controller_probe.py
+bash scripts/setup-gzdoom-sdl-macos.sh
+python3 bridge/run_doom.py --runtime sdl --controller-setup
+```
+
+Do not manually tune dozens of Cocoa Joy bindings as a permanent workaround.
