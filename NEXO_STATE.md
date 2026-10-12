@@ -127,3 +127,50 @@ Próximo gate técnico:
 
 Después:
 **P1.2 — elegir/instalar runtime DOOM y crear doom_adapter mínimo**.
+
+
+## Portal Fabric P1.1 — PASS
+
+El usuario ejecutó `bridge/nexo_handoff.py --print` tras completar M1.
+
+Resultado:
+- pending handoff encontrado;
+- target DOOM correcto;
+- manifest JSON generado correctamente.
+
+## Portal Fabric P1.2 — ACTIVE: DOOM adapter mínimo
+
+Runtime seleccionado: **GZDoom 4.14.2**.
+
+IWAD de prueba legal: **Freedoom Phase 2 0.13.0**.
+
+Componentes:
+- `scripts/setup-doom-macos.sh`
+- `bridge/run_doom.py`
+- `doom/mod_src/CVARINFO`
+- `doom/mod_src/MAPINFO`
+- `doom/mod_src/ZSCRIPT`
+- `doom/mod_src/zscript/nexo_handoff.zs`
+- `doom/README.md`
+
+### Semántica v0.1
+
+- monedas -> ArmorBonus;
+- Goombas -> HealthBonus;
+- Bob-ombs -> RocketAmmo;
+- >=2 Bob-ombs -> RocketLauncher;
+- masa >=4.0 -> Backpack;
+- score/carga -> mensaje NEXO visible.
+
+### Gate P1.2
+
+PASS si:
+1. setup localiza/prepara GZDoom e IWAD;
+2. dry-run genera comando válido;
+3. GZDoom abre MAP01;
+4. PK3 carga sin error;
+5. aparece NEXO HANDOFF;
+6. recursos recibidos corresponden al manifest;
+7. jugar DOOM sigue siendo normal.
+
+No iniciar transición visual P2/P3 antes de P1.2 PASS.
