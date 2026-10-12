@@ -58,6 +58,20 @@ class NexoHandoffHandler : EventHandler
         IdentityActive = CVarBool('nexo_handoff');
     }
 
+    void LogMarioSfxResource(String label, String path)
+    {
+        int lump = Wads.CheckNumForFullName(path);
+        int bytes = lump >= 0 ? Wads.GetLumpLength(lump) : -1;
+
+        Console.Printf(
+            "[NEXO] Mario SFX resource: %s path=%s lump=%d bytes=%d\n",
+            label,
+            path,
+            lump,
+            bytes
+        );
+    }
+
     void LogMarioSfxProbe()
     {
         if (!CVarBool('nexo_mario_sfx'))
@@ -65,6 +79,15 @@ class NexoHandoffHandler : EventHandler
             Console.Printf("[NEXO] Mario SFX probe: disabled by CVAR\n");
             return;
         }
+
+        // This distinguishes PK3/filesystem resolution from decoder failure
+        // using APIs exposed by the exact pinned g4.14.2 ZScript runtime.
+        LogMarioSfxResource("jump", "sounds/nexo/mario/jump.wav");
+        LogMarioSfxResource("hurt", "sounds/nexo/mario/hurt.wav");
+        LogMarioSfxResource("death", "sounds/nexo/mario/death.wav");
+        LogMarioSfxResource("use", "sounds/nexo/mario/use.wav");
+        LogMarioSfxResource("portal", "sounds/nexo/mario/portal.wav");
+        LogMarioSfxResource("celebrate", "sounds/nexo/mario/celebrate.wav");
 
         Console.Printf(
             "[NEXO] Mario SFX probe seconds: jump=%.3f hurt=%.3f death=%.3f use=%.3f portal=%.3f celebrate=%.3f\n",
