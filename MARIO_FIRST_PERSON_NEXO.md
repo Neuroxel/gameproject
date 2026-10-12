@@ -221,3 +221,95 @@ that no obvious Doom-marine hand remains visible.
 If overlay occlusion is insufficient for a weapon, the next refinement is a
 local runtime mask/reconstruction of that weapon sprite, not removal of the
 native weapon logic.
+
+
+## Runtime-v2 visual correction from user screenshots
+
+Three user screenshots on 2026-10-12 invalidated the first visual prototype as
+a final presentation:
+- glove meshes were approximately 2-3x too large;
+- pistol grip obscured the weapon instead of reading as a hand on the grip;
+- two-handed weapons had oversized disconnected white forms;
+- Fist still showed the destination brown fist in the center;
+- Mario overlays had no attack/recoil animation.
+
+Therefore FP-MARIO-1 remains **NOT PASS**.
+
+### Grip-scale correction
+
+`doom/mario_hands_pose_manifest.json` is now schema
+`nexo.mario_hands.pose_manifest.v2`.
+
+Typical glove scales were reduced from roughly 0.48-0.68 to roughly 0.20-0.26.
+Grip positions were moved lower and closer to each weapon's actual hand area.
+
+Fist now uses two small low ready gloves rather than two large blocks.
+
+The local renderer adds a one-pixel dark outer silhouette so the white,
+low-poly SM64 glove reads as a glove rather than an unbounded white/crystal
+shape.
+
+### Native Fist presentation
+
+When:
+- Mario hand assets are ready; and
+- `ReadyWeapon is Fist`;
+
+NEXO hides only the native **Fist PSprite presentation** by forcing its alpha to
+zero.
+
+Native Fist:
+- damage;
+- timing;
+- ammo semantics;
+- weapon state logic
+
+remain untouched.
+
+Switching away from Fist or disabling the hand gate restores native weapon
+alpha immediately.
+
+### Procedural weapon-hand animation
+
+The hand controller now inspects the native weapon PSprite and detects
+`Fire/Hold/AltFire/AltHold` state sequences.
+
+Presentation response is weapon-specific:
+- Fist: alternating left/right Mario punch toward the center/up;
+- Chainsaw: vibration;
+- Pistol: short trigger-hand recoil;
+- Shotgun: stronger two-hand recoil;
+- SuperShotgun: larger two-hand recoil/recovery;
+- Chaingun: continuous alternating vibration;
+- RocketLauncher: backward/downward recoil response;
+- Plasma/Incinerator: continuous energy-weapon vibration;
+- BFG/Calamity: heavy recoil response.
+
+The overlays retain GZDoom's native `PSPF_ADDWEAPON` and `PSPF_ADDBOB`
+semantics, so Raise/Lower and weapon bob remain inherited from the destination
+weapon.
+
+### Mario movement coupling
+
+First-person hands now also give a modest presentation response to:
+- backflip;
+- side flip;
+- wall kick;
+- long jump;
+- dive;
+- stomp.
+
+No full-camera somersault is introduced.
+
+### Remaining FP-MARIO work after runtime-v2
+
+The next visual pass, after scale/animation QA, is state-specific art rather
+than merely larger procedural offsets:
+- dedicated Ready/Fire/Reload/Raise/Lower grip variants where useful;
+- local masking/reconstruction for destination weapon sprites whose baked
+  marine hand remains visible outside the Mario glove;
+- improved forearm/cuff presentation;
+- movement-specific hand poses instead of only offsets;
+- full-body Mario for external/death/portal views.
+
+Status: **runtime-v2 ready for QA / NOT PASS**.
