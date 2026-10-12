@@ -369,6 +369,15 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--no-render-prime",
+        action="store_true",
+        help=(
+            "Disable NEXO's SDL first-frame automap prime. The prime is a "
+            "temporary macOS 26 workaround for a black 3D view that wakes "
+            "after the automap is toggled."
+        ),
+    )
+    parser.add_argument(
         "--controller-setup",
         action="store_true",
         help="Open GZDoom joystick/gamepad configuration menu on launch",
@@ -428,10 +437,25 @@ def main() -> int:
         # adapter does not silently fall back to keyboard/mouse.
         "+set", "use_joystick", "true",
         "+set", "m_blockcontrollers", "false",
-
-        "+map", args.map,
     ]
+
+    # Identity/campaign CVARs must be queued BEFORE +map. EventHandler
+    # WorldLoaded/PlayerEntered reads them while the destination map starts.
+    # Putting them after +map can leave the first world-load event seeing the
+    # CVAR defaults (notably nexo_handoff=false / nexo_mario_sfx=false).
     cmd += cvar_args(handoff, mario_sfx_ready, avatar_body_ready)
+
+    cmd += ["+map", args.map]
+
+    # Empirical macOS 26 / SDL / Apple OpenGL workaround:
+    # the 3D scene is black from startup, while entering automap renders
+    # immediately and returning from it permanently wakes the normal 3D view.
+    # Prime exactly that engine transition automatically after the map has had
+    # a few tics to initialize. "wait" is GZDoom's delayed-console primitive,
+    # so the automap remains visible for only two tics.
+    render_prime = runtime_kind == "sdl" and not args.no_render_prime
+    if render_prime:
+        cmd += ["+wait", "8", "+togglemap", "+wait", "2", "+togglemap"]
 
     if args.controller_setup:
         cmd += ["+menu_joystick"]
@@ -459,6 +483,11 @@ def main() -> int:
         openal_local = list(OPENAL_SOFT_LIB.glob("libopenal*.dylib")) if OPENAL_SOFT_LIB.exists() else []
         print(f"[NEXO] OpenAL Soft runtime: {'READY' if openal_local else 'MISSING'}")
     print("[NEXO] Controller: joystick/gamepad forced ON")
+    if runtime_kind == "sdl":
+        print(
+            "[NEXO] Renderer wake-up prime: "
+            + ("OFF (--no-render-prime)" if args.no_render_prime else "ON (automap 2-tic prime)")
+        )
     if args.controller_setup:
         print("[NEXO] Controller setup menu: requested")
     print("[NEXO] Command:")
