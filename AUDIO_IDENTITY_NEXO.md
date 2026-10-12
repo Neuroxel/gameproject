@@ -166,3 +166,51 @@ For both classes and all supported genders:
 
 This specifically addresses the observed residual Doom-player voice on the
 Use/action button while preserving actual door/switch/world sounds.
+
+
+## Skin-precedence audio fix
+
+User runtime evidence still contained a DOOM-player complaint on the Use/A
+button even though generated SNDINFO mapped `*usefail` and `*puzzfail` to
+`DSEMPTY`.
+
+Exact GZDoom 4.14.2 source inspection showed why:
+- player sound resolution can prefer the active player skin;
+- that skin selection happens before the default actor `Player.SoundClass`
+  when skins are allowed;
+- therefore a correct `nexo_mario` mapping can still be bypassed;
+- `DSEMPTY` itself is correctly marked by GZDoom as an intentionally silent
+  player sound and is not the defect.
+
+Runtime-v2 makes NEXO Mario a non-skin player class:
+
+```text
++NOSKIN
+Player.SoundClass "nexo_mario";
+```
+
+This has two purposes:
+1. prevent the destination marine skin from becoming Mario's audible identity;
+2. force `*usefail/*puzzfail/*pain/*death/*jump` through the NEXO sound class.
+
+The explicit Mario Use identity cue remains separate from destination
+door/switch/world sounds.
+
+Status: **prepared; A/use regression retest required**.
+
+## Canonical SM64 triple-jump voice assets
+
+The local extractor now additionally derives from the user's own validated ROM:
+- `jump1_hoo.wav` <- 00_mario_jump_hoo;
+- `jump1_wah.wav` <- 01_mario_jump_wah;
+- `jump1_yah.wav` <- 02_mario_yah;
+- `jump2_hoohoo.wav` <- 03_mario_haha (the SM64 Hoo-hoo voice slot);
+- `jump3_yahoo.wav` <- 04_mario_yahoo;
+- `jump3_waha.wav` <- 18_mario_waha;
+- `jump3_yippee.wav` <- 19_mario_yippee.
+
+`scripts/extend-mario-movement-sfx-local.sh` can create these from the already
+extracted local sample tree without copying the ROM again.
+
+Generated SNDINFO contains compatibility aliases when an older local asset
+folder has not yet been refreshed.
