@@ -1136,3 +1136,116 @@ Immediate order remains:
 AUDIO-ID-2 semantic validation -> MARIOMOVE validation -> Mario first-person
 hands/weapons -> full-body local pipeline -> visible 3P/1P portal grammar ->
 router stabilization -> Source/Portal adapter -> M3.
+
+
+## 2026-10-12 — MARIOMOVE-1 user validation + MARIOMOVE-2 prepared
+
+### User runtime evidence
+
+The user confirmed the first movement slice is materially improved:
+- ordinary Mario jump audio/behavior feels better;
+- long jump works;
+- backflip works;
+- stomp/ground-pound works;
+- Mario audio now plays at runtime through the generated DMX bridge.
+
+Observed remaining issues:
+- Use/action still leaks a Doom-player voice while the action itself works;
+- backflip needs to feel more like Mario's higher somersault;
+- triple jump does not trigger;
+- broader Mario locomotion should continue before first-person hands.
+
+### Triple-jump root cause and correction
+
+The first implementation used a 14-tic chain window while GZDoom keeps
+`jumpTics` locked for more than 18 tics after the preceding jump. Therefore a
+legal second jump could not occur before NEXO had already reset the chain.
+
+Correction:
+- a confirmed landing clears the inherited long DOOM jump cooldown;
+- every ground jump now requires a fresh Jump press;
+- held Jump cannot auto-hop;
+- airborne Jump spam cannot emit extra jump cues;
+- chain window = 24 tics after landing;
+- jump factors = 1.00 / 1.10 / 1.24 for jump 1/2/3.
+
+Status: **prepared, runtime retest required**.
+
+### Backflip correction
+
+Backflip vertical component increased to ~1.35x base jump.
+
+The FPS camera still does not rotate through a literal 360-degree somersault.
+That visual rotation belongs to future Mario hand/weapon animation and
+third-person/full-body views.
+
+### MARIOMOVE-2 — prepared
+
+Added directional traversal:
+- side flip / turnaround jump:
+  - strong direction reversal + fresh Jump;
+  - ~1.22x vertical component;
+  - momentum redirected to the new input;
+- wall kick:
+  - airborne + fresh Jump;
+  - requires GZDoom `MovementBlockingLine` collision evidence;
+  - moderate upward restore + push away from attempted approach;
+  - 9-tic anti-abuse cooldown;
+- dive:
+  - airborne + strong forward motion + fresh crouch/L3;
+  - strong forward impulse + modest downward component;
+- dive landing -> short 14-tic slide;
+- airborne crouch without strong forward intent remains stomp.
+
+No proximity-only wall jump and no infinite slide acceleration.
+
+Status: **ACTIVE / runtime validation pending**.
+
+### Avatar audio dedupe — hardened
+
+`NexoMarioDoomPlayer` now has a dedicated sound namespace:
+
+`Player.SoundClass "nexo_mario"`.
+
+Generated SNDINFO defines both `nexo_mario` and fallback `player` mappings
+for all supported genders:
+- jump silent at native layer;
+- usefail/puzzfail silent;
+- pain -> Mario hurt;
+- death variants -> Mario death;
+- grunt/land -> Mario stomp cue.
+
+This specifically targets the remaining Doom-player voice on Use/action.
+
+Status: **runtime retest required**.
+
+### FP-MARIO-1 groundwork
+
+Added `MARIO_FIRST_PERSON_NEXO.md`.
+
+Target is not a Fist-only reskin. Mario must visibly grip the actual destination
+weapons, including at minimum:
+- pistol;
+- shotgun/super shotgun;
+- chaingun;
+- rocket launcher;
+- plasma;
+- BFG;
+- chainsaw;
+- fist.
+
+Preferred implementation: GZDoom PSprite overlay layers that preserve native
+weapon logic and add Mario left/right glove ownership.
+
+Added local readiness gate:
+`nexo_mario_hands_ready=false`.
+
+Launcher detects:
+`assets_local/mario_hands/READY`.
+
+Added:
+`scripts/probe-mario-hands-local.sh`.
+
+The local sm64coopdx source is known to expose Mario hand geometry symbols
+(open/closed left/right). Runtime READY must remain absent until a coherent
+multi-weapon grip pack exists.
