@@ -913,3 +913,25 @@ Fix:
 Expected diagnostic:
 `[NEXO] PlayerEntered: map=MAP01 handoff=1 mario_sfx=1 m2=1`
 followed by positive Mario SFX durations and the portal cue request.
+
+
+## P1.3 — NEXO_HUB ROUTER IMPLEMENTED
+
+Added a world-independent campaign routing layer:
+- `bridge/campaign.json`;
+- `bridge/nexo_router.py`;
+- output `bridge/runtime/route.json`.
+
+The router consumes the validated DOOM outbound handoff addressed to
+`NEXO_HUB`, preserves score/mass/cargo/identity/perspective/derived state,
+and resolves the next campaign chapter.
+
+Current graph:
+`M1_CARGA_IMPOSIBLE -> M2_STABILIZE_BREACH -> HUB_AFTER_M2 -> M3_PORTAL_LAB`.
+
+M3 is **planned**, not ready. Its route requires `combat_shards >= 8`, but
+even with requirements met the router keeps `launch_allowed=false` until the
+destination adapter is explicitly marked `ready`.
+
+This advances Portal Fabric at the data/orchestration layer without pretending
+that a Portal/Source runtime integration already exists.
