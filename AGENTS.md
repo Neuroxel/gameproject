@@ -1,21 +1,18 @@
 # AGENTS.md
 
-## Estado canónico
+## M1.1
 
-Leer `NEXO_STATE.md`.
+Regresión conocida y corregida: detección de mundo.
 
-## Gate actual
+No usar `gCurrCourseNum` para activar M1 desde Lua.
 
-M1 vertical slice.
+Fuente canónica:
+- `gNetworkPlayers[0].currCourseNum`;
+- fallback redundante `currLevelNum == LEVEL_BOB`.
 
-### Invariantes
+Primero recuperar:
+- HUD;
+- bola;
+- misión en BOB.
 
-- Mario = física/navegación.
-- Bola = visual/absorción/progresión.
-- Masa lógica != escala visual.
-- Compact mode sólo cambia presentación.
-- Attachments son rígidos; se ocultan si la geometría los tapa.
-- No floor-clamp individual.
-- NEXO Gate usa handoff persistente.
-
-No ampliar catálogo ni integrar DOOM hasta PASS de M1.
+Preservar física/navegación M1.
