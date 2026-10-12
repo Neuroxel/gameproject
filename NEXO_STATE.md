@@ -699,3 +699,29 @@ Fix:
 - disable unnecessary C++ module scanning;
 - clear only the stale OpenAL build cache configured with the wrong compiler;
 - preserve the already-cloned OpenAL Soft source checkout.
+
+
+## AUDIO-RUNTIME — AppleClang 21 function-effects regression
+
+After the SDK/toolchain fix, OpenAL Soft now progresses normally through
+configuration and compilation and reaches the CoreAudio backend object.
+
+The remaining failure is narrowly isolated to OpenAL Soft 1.25.2 enabling
+`-Wfunction-effects` on AppleClang >=17. AppleClang 21 accepts that warning
+flag, then treats two CoreAudio callback lambda conversions as errors:
+
+- coreaudio.cpp:646
+- coreaudio.cpp:824
+- `attribute 'nonblocking' should not be added via type conversion`
+
+The deprecation warnings around
+`kAudioObjectPropertyElementMaster` are non-fatal.
+
+Canonical workaround for pinned OpenAL Soft 1.25.2:
+- preseed `HAVE_WFUNCTION_EFFECTS=FALSE`;
+- keep `ALSOFT_WERROR=OFF`.
+
+This disables only an optional compiler diagnostic; CoreAudio, ARM64, HRTF and
+the runtime implementation remain unchanged.
+
+Next gate: rerun `scripts/patch-gzdoom-sdl-audio.sh`.
