@@ -482,3 +482,45 @@ Added:
 Next gate:
 run repair script, then launch SDL controller setup. Do not rebuild unless the
 repair reports the ZMusic source library itself is absent.
+
+
+### CONTROL-1B startup regression — renderer root cause identified
+
+After ZMusic repair, the SDL executable itself launches. Runtime evidence:
+- `GZDoom ... SDL version`;
+- Apple M4 OpenGL 4.1 / GLSL 4.10 context created;
+- then fatal shader error:
+  - vertex: `attribute : syntax error`;
+  - fragment: `varying : syntax error`.
+
+Root cause verified in GZDoom g4.14.2 source:
+
+1. `vid_preferbackend` defaults to **1 = Vulkan**.
+2. The local SDL build does not have Vulkan enabled.
+3. SDL framebuffer selection checks `V_GetBackend() != 0` and therefore picks
+   the **OpenGLES renderer** when backend remains 1.
+4. On desktop OpenGL 4.1, GLES runtime selects `GLES_MODE_OGL3` and emits
+   `#version 330`.
+5. Its GLES shader source still contains legacy `attribute` and `varying`,
+   which are invalid in GLSL 330 core.
+
+This exactly explains the observed fatal dialog.
+
+Fix does **not** require another build:
+the SDL launcher now forces:
+- `vid_preferbackend=0` (normal desktop OpenGL);
+- `gl_es=false`.
+
+GZDoom's own menu definition confirms backend values:
+- 0 OpenGL;
+- 1 Vulkan;
+- 2 OpenGLES.
+
+Audio observation:
+the SDL run also reported `Sound init failed. Using nosound.`.
+The launcher now adds the official working Cocoa runtime directory to
+`DYLD_LIBRARY_PATH`; the repair script also copies a bundled OpenAL dylib when
+one is present. Audio is secondary to CONTROL-1B but should be retested.
+
+Next gate:
+launch the existing SDL build again. No rebuild and no repeated M1/M2.
