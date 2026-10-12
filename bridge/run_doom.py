@@ -17,7 +17,9 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import shlex
+import shutil
 import subprocess
 import sys
 import zipfile
@@ -32,6 +34,8 @@ LOCAL_MARIO_SFX = ROOT / "assets_local" / "mario_sfx"
 LOCAL_MARIO_BODY = ROOT / "assets_local" / "mario_avatar"
 OPENAL_SOFT_LIB = ROOT / ".runtime" / "doom" / "openal-soft" / "install" / "lib"
 OPENAL_LOG = BRIDGE / "runtime" / "openal-soft.log"
+NEXO_GZDOOM_CONFIG = BRIDGE / "runtime" / "gzdoom-nexo.ini"
+USER_GZDOOM_CONFIG = Path.home() / "Library" / "Preferences" / "gzdoom.ini"
 
 MARIO_SFX_NAMES = ("jump", "hurt", "death", "use")
 MARIO_SFX_OPTIONAL = ("portal", "celebrate")
@@ -241,6 +245,87 @@ def find_iwad(explicit: str | None) -> Path:
     )
 
 
+def _set_ini_key(text: str, section: str, key: str, value: str) -> str:
+    """Set one key in one GZDoom INI section without destroying other settings."""
+    lines = text.splitlines()
+    section_header = f"[{section}]"
+    section_index: int | None = None
+    next_section = len(lines)
+
+    for idx, line in enumerate(lines):
+        if line.strip().lower() == section_header.lower():
+            section_index = idx
+            break
+
+    if section_index is None:
+        if lines and lines[-1].strip():
+            lines.append("")
+        lines.extend([section_header, f"{key}={value}"])
+        return "\n".join(lines) + "\n"
+
+    for idx in range(section_index + 1, len(lines)):
+        stripped = lines[idx].strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            next_section = idx
+            break
+
+        match = re.match(r"^\s*([^#;][^=]*)=(.*)$", lines[idx])
+        if match and match.group(1).strip().lower() == key.lower():
+            lines[idx] = f"{key}={value}"
+            return "\n".join(lines) + "\n"
+
+    lines.insert(next_section, f"{key}={value}")
+    return "\n".join(lines) + "\n"
+
+
+def prepare_nexo_gzdoom_config(fullscreen: bool) -> Path:
+    """Create an isolated early-load config for the SDL runtime.
+
+    +set commands are intentionally not relied upon for the first SDL window:
+    GZDoom loads GlobalSettings before constructing the video backend, while
+    delayed console commands can run after the first window already exists.
+
+    The first time, seed from the user's normal gzdoom.ini so bindings and
+    preferences are preserved. Subsequent NEXO changes persist in the isolated
+    runtime config.
+    """
+    NEXO_GZDOOM_CONFIG.parent.mkdir(parents=True, exist_ok=True)
+
+    if not NEXO_GZDOOM_CONFIG.exists():
+        if USER_GZDOOM_CONFIG.exists():
+            shutil.copy2(USER_GZDOOM_CONFIG, NEXO_GZDOOM_CONFIG)
+            print(f"[NEXO] Seeded isolated GZDoom config from: {USER_GZDOOM_CONFIG}")
+        else:
+            NEXO_GZDOOM_CONFIG.write_text("[GlobalSettings]\n", encoding="utf-8")
+            print("[NEXO] Created clean isolated GZDoom config")
+
+    text = NEXO_GZDOOM_CONFIG.read_text(encoding="utf-8", errors="replace")
+
+    # These values must exist before SDL creates its first window/context.
+    early_values = {
+        "vid_fullscreen": "true" if fullscreen else "false",
+        "win_maximized": "false",
+        "vid_preferbackend": "0",
+        "gl_es": "false",
+        "use_joystick": "true",
+        "m_blockcontrollers": "false",
+    }
+
+    if not fullscreen:
+        early_values.update({
+            "win_x": "-1",
+            "win_y": "-1",
+            "win_w": "1200",
+            "win_h": "800",
+        })
+
+    for key, value in early_values.items():
+        text = _set_ini_key(text, "GlobalSettings", key, value)
+
+    NEXO_GZDOOM_CONFIG.write_text(text, encoding="utf-8")
+    return NEXO_GZDOOM_CONFIG
+
+
 def cvar_args(data: dict, mario_sfx_ready: bool, avatar_body_ready: bool) -> list[str]:
     cargo = data.get("cargo", {})
     player = data.get("player_state", {})
@@ -276,6 +361,14 @@ def main() -> int:
         help="GZDoom backend: prefer SDL, force SDL, or force official Cocoa build",
     )
     parser.add_argument(
+        "--fullscreen",
+        action="store_true",
+        help=(
+            "Opt in to fullscreen startup. SDL/macOS 26 currently defaults "
+            "to NEXO's isolated windowed-safe startup profile."
+        ),
+    )
+    parser.add_argument(
         "--controller-setup",
         action="store_true",
         help="Open GZDoom joystick/gamepad configuration menu on launch",
@@ -288,6 +381,11 @@ def main() -> int:
     avatar_body_ready = (LOCAL_MARIO_BODY / "READY").exists()
     gzdoom, runtime_kind = find_gzdoom(args.gzdoom, args.runtime)
     iwad = find_iwad(args.iwad)
+    nexo_config = (
+        prepare_nexo_gzdoom_config(fullscreen=args.fullscreen)
+        if runtime_kind == "sdl"
+        else None
+    )
 
     if args.controller_setup and runtime_kind == "cocoa":
         print(
@@ -305,6 +403,12 @@ def main() -> int:
 
     cmd = [
         str(gzdoom),
+    ]
+
+    if nexo_config is not None:
+        cmd += ["-config", str(nexo_config)]
+
+    cmd += [
         "+logfile", str(DOOM_LOG),
         "-iwad", str(iwad),
         "-file", str(pk3),
@@ -317,6 +421,7 @@ def main() -> int:
         # error observed on Apple M4. Force the normal desktop OpenGL renderer.
         "+set", "vid_preferbackend", "0",
         "+set", "gl_es", "false",
+        "+set", "vid_fullscreen", "true" if args.fullscreen else "false",
 
         # Keep controls continuous across worlds. GZDoom has native
         # joystick/gamepad support on macOS; explicitly enable it so the
@@ -339,6 +444,12 @@ def main() -> int:
     print(f"[NEXO] IWAD: {iwad}")
     print(f"[NEXO] PK3: {pk3}")
     print(f"[NEXO] Mission log: {DOOM_LOG}")
+    if nexo_config is not None:
+        print(f"[NEXO] Isolated config: {nexo_config}")
+        print(
+            "[NEXO] Startup display: "
+            + ("FULLSCREEN (explicit opt-in)" if args.fullscreen else "WINDOWED-SAFE")
+        )
     print(f"[NEXO] Avatar identity: MARIO")
     print(f"[NEXO] Perspective: third-person source -> first-person DOOM")
     print(f"[NEXO] Mario voice SFX: {'ON' if mario_sfx_ready else 'OFF (local core set not present)'}")
