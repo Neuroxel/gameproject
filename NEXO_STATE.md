@@ -449,3 +449,36 @@ The SDL setup script now mirrors that upstream procedure exactly.
 The script also no longer performs a broad Homebrew install/upgrade. It only
 installs missing dependencies, avoiding unrelated ffmpeg upgrades and reducing
 exposure to transient ghcr.io failures.
+
+
+### CONTROL-1A — SDL build PASS / runtime packaging regression
+
+The user's full build log confirms:
+- ZMusic was found;
+- CMake configured successfully;
+- all 835 build steps completed;
+- the script reached `[NEXO] SDL2 GZDoom ready`.
+
+The executable then failed before startup with dyld:
+`Library not loaded: @rpath/libzmusic.1.dylib`.
+
+Root cause:
+the prebuilt ZMusic package was sufficient for CMake/linking through
+`libzmusic.dylib`, but the locally generated macOS app bundle did not contain
+the versioned runtime filename required by the Mach-O dependency:
+`libzmusic.1.dylib`.
+
+GZDoom already embeds `@executable_path` as an rpath on Apple builds.
+Therefore the reproducible fix is to copy the resolved ZMusic dylib into
+`gzdoom.app/Contents/MacOS/libzmusic.1.dylib`.
+
+Added:
+- automatic bundling in `setup-gzdoom-sdl-macos.sh`;
+- `scripts/repair-gzdoom-sdl-macos.sh` to repair the already completed build
+  without recompiling 835 targets;
+- SDL launcher adds the app directory and ZMusic lib directory to
+  `DYLD_LIBRARY_PATH` as secondary protection.
+
+Next gate:
+run repair script, then launch SDL controller setup. Do not rebuild unless the
+repair reports the ZMusic source library itself is absent.
