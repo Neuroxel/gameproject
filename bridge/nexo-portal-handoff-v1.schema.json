@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuroxel.local/schemas/nexo-portal-handoff-v1.json",
+  "title": "NEXO Portal Handoff v1",
+  "type": "object",
+  "required": ["schema", "source", "target", "mission", "player_state", "cargo"],
+  "properties": {
+    "schema": {
+      "const": "nexo.portal.handoff.v1"
+    },
+    "source": {
+      "type": "object",
+      "required": ["world", "adapter"],
+      "properties": {
+        "world": {"type": "string"},
+        "adapter": {"type": "string"},
+        "storage_file": {"type": "string"}
+      }
+    },
+    "target": {
+      "type": "object",
+      "required": ["world", "adapter"],
+      "properties": {
+        "world": {"type": "string"},
+        "adapter": {"type": "string"}
+      }
+    },
+    "mission": {
+      "type": "object",
+      "required": ["id", "score"],
+      "properties": {
+        "id": {"type": "string"},
+        "score": {"type": "integer", "minimum": 0}
+      }
+    },
+    "player_state": {
+      "type": "object",
+      "required": ["logical_mass"],
+      "properties": {
+        "logical_mass": {"type": "number", "minimum": 0}
+      }
+    },
+    "cargo": {
+      "type": "object",
+      "required": ["coins", "goombas", "bobombs"],
+      "properties": {
+        "coins": {"type": "integer", "minimum": 0},
+        "goombas": {"type": "integer", "minimum": 0},
+        "bobombs": {"type": "integer", "minimum": 0}
+      }
+    },
+    "derived": {
+      "type": "object"
+    }
+  }
+}
