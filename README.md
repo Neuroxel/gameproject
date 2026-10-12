@@ -472,3 +472,25 @@ present, `nexo_mario_sfx=true`.
 
 The runtime log now prints the identity gate and a line when the portal cue is
 requested.
+
+
+### 2026-10-13: corrected startup prime and EventHandler order
+
+Two exact g4.14.2 semantics matter for the current SDL runtime:
+
+- `wait` delays only the remainder of the same semicolon-separated console
+  string. NEXO therefore runs the renderer wake-up as one runtime cfg line,
+  not as separate `+wait/+togglemap` argv entries.
+- `PlayerEntered` runs before `WorldLoaded` on a fresh level. NEXO derives
+  MAP01/identity state directly in `PlayerEntered` before applying M2 or
+  Mario identity behavior.
+
+Normal retest remains:
+
+```bash
+git pull
+python3 bridge/run_doom.py --runtime sdl
+```
+
+The runtime should now self-toggle automap briefly without user input, and
+MAP01 should log the Mario SFX probe plus play the arrival cue.
