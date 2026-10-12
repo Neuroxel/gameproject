@@ -48,6 +48,31 @@ echo
 echo "[NEXO] Bundled ZMusic dependencies:"
 otool -L "$ZMUSIC_SONAME" || true
 
+# Reuse the proven-working OpenAL runtime from the official GZDoom package
+# when it is bundled there. This is optional for the controller test, but it
+# restores audio without rebuilding the SDL executable.
+COCOA_MACOS="$ROOT/.runtime/doom/gzdoom/GZDoom.app/Contents/MacOS"
+OPENAL_SRC=""
+if [ -d "$COCOA_MACOS" ]; then
+  OPENAL_SRC="$(find "$COCOA_MACOS" -maxdepth 1 \( -name 'libopenal.1.dylib' -o -name 'libopenal.dylib' \) -print -quit 2>/dev/null || true)"
+fi
+
+if [ -n "$OPENAL_SRC" ]; then
+  echo
+  echo "[NEXO] Found working OpenAL runtime in official Cocoa package:"
+  echo "  $OPENAL_SRC"
+  cp -L "$OPENAL_SRC" "$GZ_DIR/libopenal.1.dylib"
+  chmod 755 "$GZ_DIR/libopenal.1.dylib"
+  if command -v install_name_tool >/dev/null 2>&1; then
+    install_name_tool -id "@rpath/libopenal.1.dylib" "$GZ_DIR/libopenal.1.dylib" || true
+  fi
+  echo "[NEXO] OpenAL runtime bundled for SDL."
+else
+  echo
+  echo "[NEXO] NOTE: no bundled libopenal*.dylib found in official runtime."
+  echo "[NEXO] Controller/video testing can continue; audio may remain disabled."
+fi
+
 echo
 echo "[NEXO] Repair complete."
 echo "Test with:"
