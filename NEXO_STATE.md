@@ -1298,3 +1298,99 @@ required; if any native hand remains obvious, that weapon needs a local visual
 mask/reconstruction while preserving native weapon mechanics.
 
 Status: **FP-MARIO-1 PROTOTYPE READY FOR LOCAL GENERATION / NOT PASS**.
+
+
+## 2026-10-12 — User hand screenshots invalidate FP-MARIO v1; runtime-v2 prepared
+
+### Runtime evidence
+
+The user supplied three in-game screenshots after activating the first local
+Mario-hand pack.
+
+Observed:
+- the hand pipeline loads and renders successfully;
+- the weapon-family selector works;
+- white SM64 hand meshes are visible around native weapons;
+- however the v1 scale/placement is clearly unacceptable:
+  - gloves are approximately 2-3x too large;
+  - weapon silhouettes are obscured;
+  - hands do not read as convincing grips;
+  - the native brown Fist remains visible between Mario gloves;
+  - hand overlays do not animate with melee or gun fire.
+
+Movement evidence from the same run:
+- wall kick: user-confirmed OK;
+- A/use: residual DOOM-player complaint still audible;
+- triple jump: voice succession not SM64-faithful;
+- double/triple height distinction remains too weak.
+
+### Audio root cause
+
+GZDoom 4.14.2 sound-class inspection found skin precedence can bypass the
+actor's default `Player.SoundClass`.
+
+`NexoMarioDoomPlayer` now uses:
+- `+NOSKIN`;
+- `Player.SoundClass "nexo_mario"`.
+
+This forces player semantic audio through the NEXO class. Generated
+`*usefail/*puzzfail DSEMPTY` remains the intended silence.
+
+Status: **A/use retest required**.
+
+### Mario jump runtime-v2
+
+Vertical identity now follows source-family ratios:
+- 42 normal;
+- 52 double;
+- 69 triple;
+- 62 backflip/sideflip/wallkick;
+- 30 long-jump vertical family.
+
+Enhanced launch speed is dynamically capped by live ceiling headroom and
+GZDoom effective gravity, with a 5-unit head reserve.
+
+Triple-jump voice grammar now follows:
+- jump 1 random Yah/Wah/Hoo;
+- jump 2 Hoo-hoo;
+- jump 3 Yahoo/Waha/Yippee weighted 60/20/20.
+
+Chain window = 28 tics after real landing, fresh Jump still required.
+
+Status: **runtime retest required**.
+
+### First-person hand runtime-v2
+
+Visual:
+- pose manifest reduced to ~0.20-0.26 glove scales;
+- grips moved lower/closer to weapon contact areas;
+- renderer adds a thin dark silhouette.
+
+Animation:
+- native Fire/Hold/AltFire sequences drive per-weapon recoil/vibration;
+- Fist alternates left/right Mario punches;
+- native Fist presentation is hidden while mechanics remain native;
+- movement actions feed subtle hand offsets for backflip/sideflip/wallkick/
+  longjump/dive/stomp.
+
+FP-MARIO-1 remains **NOT PASS** until user visual QA confirms:
+- weapon remains readable;
+- glove scale is credible;
+- Fist brown hand is gone;
+- firing/melee visibly animate;
+- no obvious destination hand leaks outside Mario overlays.
+
+### Canonical next order after this retest
+
+1. close AUDIO-ID-2 semantic dedupe if A/use is clean;
+2. classify MARIOMOVE-2 components PASS/fix;
+3. FP-MARIO runtime-v2 scale/recoil QA;
+4. FP-MARIO state-specific art + baked-hand masking where needed;
+5. MARIOMOVE-3: crouch/crawl/slope + ledge/hanging/climbing feasibility;
+6. MARIOMOVE-4: contextual Mario melee/aerial/stomp damage/carry semantics
+   only where they do not steal the destination's dominant combat language;
+7. full local Mario body for death/portals/external views;
+8. visible 3P<->1P perspective transition grammar;
+9. NEXO_HUB/router stabilization;
+10. Source/Portal adapter;
+11. M3 only after that adapter is genuinely ready.
