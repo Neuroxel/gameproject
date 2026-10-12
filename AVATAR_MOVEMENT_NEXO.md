@@ -28,10 +28,10 @@ Current slice:
 ### Normal / triple jump
 
 - first jump: native DOOM jump height;
-- second chained jump: ~1.08x JumpZ;
-- third chained jump: ~1.18x JumpZ;
+- second chained jump: ~1.10x JumpZ;
+- third chained jump: ~1.24x JumpZ;
 - chain advancement requires movement intent;
-- the next jump must follow landing promptly (14 tics);
+- the next jump must follow landing promptly (24 tics);
 - staying grounded breaks the chain;
 - after jump 3 the sequence restarts at jump 1;
 - the engine still performs the actual jump legality check.
@@ -50,7 +50,7 @@ Crouch + fresh jump press near standstill:
 
 - requires enough clearance to stand;
 - uncrouches safely;
-- moderate vertical boost (~1.18x base jump);
+- distinctly higher vertical boost (~1.35x base jump);
 - small backward impulse;
 - resets triple-jump chain.
 
@@ -188,3 +188,84 @@ MARIOMOVE-1 is PASS only after the user confirms:
 10. death/respawn does not preserve a broken movement chain.
 
 Do not expand to wall-kick/side-flip/dive until this slice is stable.
+
+
+## MARIOMOVE-2 — directional traversal implementation
+
+### Side flip / turnaround jump
+
+Implemented:
+- requires a strong forward/back or left/right input reversal;
+- requires a fresh Jump press on the reversal;
+- moderate high jump (~1.22x);
+- redirects momentum toward the new input;
+- resets the triple-jump chain;
+- does not spin the first-person camera.
+
+Audio:
+`nexo/mario/sideflip`, currently aliased locally to the backflip cue unless a
+dedicated local cue is added later.
+
+### Wall kick / wall jump
+
+Implemented conservatively:
+- player must be airborne;
+- Jump must be a fresh press;
+- GZDoom's `MovementBlockingLine` must report that a real wall stopped the
+  current XY movement;
+- vertical velocity is restored to a moderate jump;
+- horizontal impulse pushes away from the attempted approach direction;
+- 9-tic cooldown prevents repeated same-frame/same-contact abuse;
+- triple chain, dive and stomp state reset.
+
+Audio:
+`nexo/mario/wallkick`, currently aliased to jump2.
+
+This intentionally does not allow proximity-only wall jumps.
+
+### Dive -> slide
+
+Implemented:
+- airborne + strong forward motion + fresh crouch/L3 = dive;
+- strong forward impulse;
+- modest downward component;
+- landing starts a short 14-tic ground slide;
+- slide receives only a small sustaining thrust and cannot accelerate forever;
+- jumping or leaving the ground ends the slide.
+
+Audio:
+`nexo/mario/dive`.
+
+### Ground pound distinction
+
+Airborne L3 now means:
+- strong forward intent -> dive;
+- otherwise -> stomp/ground pound.
+
+This lets both Mario actions share the existing movement modifier without
+stealing DOOM's fire/use bindings.
+
+## Triple-jump correction
+
+The first implementation could never reach jump 2/3 because GZDoom keeps
+`jumpTics` blocked for more than 18 tics after a jump while the NEXO chain
+window was only 14 tics.
+
+Correction:
+- landing clears the inherited DOOM jump cooldown;
+- every Mario ground jump requires a **fresh Jump press**;
+- held Jump cannot auto-hop;
+- the chain window is now 24 tics after landing;
+- jump 1/2/3 factors are ~1.00 / 1.10 / 1.24;
+- rapid Jump spam while airborne cannot create extra jumps or jump voices.
+
+## First-person rotation rule
+
+Backflip/side-flip/wall-kick mechanics preserve directional physics but do not
+rotate the first-person camera through Mario's full body rotation.
+
+The visual somersault belongs to:
+- first-person Mario hand/weapon animation;
+- eventual third-person/full-body views during portals/cinematics/death.
+
+This preserves Mario identity without inducing FPS camera sickness.
