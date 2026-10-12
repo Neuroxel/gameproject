@@ -4,95 +4,95 @@
 
 ## Objetivo
 
-Construir progresivamente un mashup jugable, divertido y observable, comenzando por SM64CoopDX y evitando complejidad técnica que no aumente el valor del prototipo.
+Construir un mashup jugable y observable partiendo de SM64CoopDX. La prioridad es diversión y legibilidad del sistema, no fidelidad a una simulación física innecesariamente difícil.
 
-## Arquitectura decidida
+## Gates cerrados
 
-### Fase A — SM64CoopDX + Lua
+- A0 — PASS: pipeline del mod.
+- A1-A3.1 — PASS: objeto 3D, física y respuesta diferenciada.
+- A4 — PASS: detección de Goombas.
+- A5 — PASS: absorción/eliminación.
+- A6 — PASS: crecimiento visual real confirmado por el usuario. La bola llegó a escala ~4.00 tras cuatro Goombas.
 
-- A0 — pipeline de mod y HUD visible.
-- A1 — objeto rodante visible en 3D.
-- A2 — física estable.
-- A3 — Mario puede empujarlo y golpearlo con respuestas diferenciadas.
-- A4 — detección de entidades absorbibles.
-- A5 — primer Goomba absorbible.
-- A6 — crecimiento visual + físico real.
-- A7 — umbrales de absorción por tamaño.
-- A8 — HUD/progresión de tamaño y puntuación.
-- A9 — kill gate de diversión.
-- A10 — sistema tipo GTA wanted, sólo si A9 = PASS.
-- A11 — sistema de combos tipo Tony Hawk, sólo si el prototipo sigue siendo divertido.
+## Cambio de arquitectura de control
 
-## Gates confirmados
+La implementación anterior trataba la bola como un prop físico independiente que Mario debía perseguir y empujar. La validación mostró que seguía siendo difícil de manejar.
 
-- A0 = PASS.
-- A1-A3.1 = PASS.
-- A4 = PASS: Goomba detectado.
-- A5 = PASS: Goomba absorbido y eliminado; contador aumenta.
+Se abandona ese modelo.
 
-## A6 — FAIL / causa de revisión
+La referencia Katamari controla el katamari directamente; el personaje visualmente lo empuja. Por eso A6.5 cambia a **direct-drive**:
 
-Evidencia del usuario:
+- stick analógico -> dirección/velocidad objetivo de la bola;
+- Mario se posiciona automáticamente detrás de ella;
+- la cámara sigue a Mario y, por extensión, a la bola;
+- B activa un dash;
+- la bola mantiene física con terreno/paredes, pero deja de depender de colisiones de Mario para moverse;
+- pequeño step-assist para peldaños/relieves bajos.
 
-- `GOOMBAS` aumenta correctamente;
-- `TAM` cambia de 1.15 a 1.33;
-- no se aprecia cambio visual en la esfera;
-- la esfera inicial resulta demasiado pequeña y difícil de controlar.
+## A6.5 — PENDING VALIDATION
 
-No se considera A6 aprobado.
+### Control
 
-## A6.1 — PENDING VALIDATION
+1. `m.intendedYaw` entrega dirección relativa a cámara.
+2. `m.intendedMag` entrega magnitud analógica.
+3. La bola gira suavemente hacia esa dirección con `approach_s16_symmetric`.
+4. Acelera/frena hacia una velocidad objetivo.
+5. Mario es reposicionado detrás de la bola cada frame.
+6. La bola es intangible respecto de Mario para evitar que la física de empuje compita con el control directo.
+7. B = dash.
+8. El crecimiento introduce sólo una penalización de masa suave.
 
-Cambios:
+### Objetos pegados
 
-1. Tamaño inicial sube de 1.15 a **1.80**.
-2. Cada Goomba añade **+0.55** de escala objetivo, deliberadamente exagerado para que la validación sea inequívoca.
-3. Máximo provisional aumenta a 6.00.
-4. La escala se aplica con `obj_scale_xyz()`, que escribe explícitamente X/Y/Z de `header.gfx.scale`.
-5. Se anima gradualmente `visual_scale -> target_scale` para que el crecimiento se vea en movimiento.
-6. El HUD separa:
-   - `OBJ` = escala objetivo lógica;
-   - `VIS` = escala visual que estamos aplicando;
-   - `GFX` = valor leído de `ball.header.gfx.scale.x` desde el objeto real.
-7. Hitbox y wall radius se recalculan usando `visual_scale`.
-8. Se aumenta el radio inicial de empuje.
-9. Se baja velocidad máxima del empuje normal para mejorar control.
-10. El golpe B sigue siendo notablemente más fuerte.
+Al absorber un Goomba:
 
-### Criterio de PASS
+1. se captura su posición relativa;
+2. se crea un Goomba visual con comportamiento propio, sin IA ni daño;
+3. se elimina el enemigo activo;
+4. el cascarón visual queda sobre la superficie de la bola;
+5. su vector radial se actualiza con la rotación incremental de la bola;
+6. el objeto viaja y gira con la bola;
+7. no participa en colisiones ni lógica enemiga.
 
-Después de absorber un Goomba:
+Esto preserva el feedback visual tipo Katamari sin arrastrar IA/hitboxes de los enemigos absorbidos.
 
-- `OBJ` aumenta de 1.80 a 2.35;
-- `VIS` anima progresivamente hasta 2.35;
-- `GFX` acompaña a `VIS`;
-- la esfera aumenta de tamaño de forma visualmente obvia;
-- la esfera inicial resulta sensiblemente más fácil de empujar/controlar;
-- el crecimiento de hitbox acompaña al visual.
+### Criterios de PASS
 
-Si `VIS` sube pero `GFX` no, el problema está en la aplicación de escala al objeto.
-Si `GFX` sube pero el modelo no crece, el problema está en la jerarquía/GeoLayout del modelo provisional y se reemplazará por geometría propia o un actor distinto.
+- mover el stick debe dirigir la bola de forma inmediata y predecible;
+- no debería ser necesario perseguirla o ponerse exactamente detrás para empujarla;
+- Mario debe mantenerse visualmente detrás de la bola la mayor parte del tiempo;
+- B debe producir un dash reconocible;
+- al absorber un Goomba, debe seguir visible pegado a la bola;
+- el Goomba pegado debe desplazarse con la bola sin atacar ni interferir;
+- varios Goombas pegados no deben provocar crash;
+- crecimiento continúa funcionando;
+- pequeños peldaños deben sentirse menos frustrantes.
 
-## Limitaciones aceptadas
+## Próximo gate
 
-- Modelo Spiny Ball provisional.
-- Goomba absorbido desaparece en lugar de quedar pegado.
-- Sólo Goombas.
-- Escaleras fuera de alcance.
-- Multiplayer aún no validado.
+Si A6.5 = PASS:
 
-No comenzar A7 hasta A6.1 PASS.
+A7-A8 — clases de objetos y progresión:
+- objetos diminutos;
+- Goombas;
+- Bob-ombs;
+- Koopas;
+- objetos mayores;
+- umbrales por tamaño;
+- feedback de objetos todavía demasiado grandes.
 
-## Stack autorizado para A0–A9
+No comenzar GTA/Tony Hawk/Crazy Taxi hasta validar el loop Katamari.
 
-- SM64CoopDX
-- Lua API de SM64CoopDX
-- Git/GitHub
-- ChatGPT para arquitectura, código, revisión y trazabilidad
-- Claude Code sólo cuando la ejecución/depuración local aporte valor
+## Limitaciones actuales
+
+- Spiny Ball sigue siendo modelo provisional.
+- Attachments aún son sólo Goombas.
+- Orientación de los cascarones es aproximada, no una simulación rígida exacta.
+- Multiplayer no validado.
+- No se busca reproducir exactamente el esquema twin-stick original: priorizamos control fácil con un stick relativo a cámara.
 
 ## Reglas
 
 - Nunca versionar ROMs ni dumps.
-- Nunca reemplazar originales.
-- Registrar cambios de criterio y evidencia.
+- No instalar tooling pesado sin necesidad.
+- Priorizar evidencia nueva sobre decisiones previas.
