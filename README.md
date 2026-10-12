@@ -198,3 +198,14 @@ python3 bridge/run_doom.py --runtime sdl --controller-setup
 ```
 
 Normal `--runtime auto` prefers SDL once that build exists.
+
+
+### SDL build dependency note
+
+For GZDoom 4.14.2, ZMusic is supplied exactly as in upstream CI:
+`zmusic-1.1.14-macos-arm.tar.xz` from the GZDoom `ci_deps` release, with
+`CMAKE_PREFIX_PATH` pointed at the extracted package.
+
+The setup script deliberately avoids upgrading already-installed Homebrew
+formulae. A temporary ghcr.io/Homebrew outage therefore should not block the
+build when cmake, ninja, SDL2, and libvpx are already present.
