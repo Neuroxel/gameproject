@@ -98,3 +98,15 @@ bash scripts/setup-doom-macos.sh
 python3 bridge/run_doom.py --dry-run
 python3 bridge/run_doom.py
 ```
+
+
+### GZDoom ZScript entry point
+
+The DOOM PK3 now uses a root `zscript.zc` entry point and validates these members before launch:
+
+- `CVARINFO`
+- `MAPINFO`
+- `zscript.zc`
+- `zscript/nexo_handoff.zs`
+
+This prevents launching a PK3 whose handler class cannot be discovered.
