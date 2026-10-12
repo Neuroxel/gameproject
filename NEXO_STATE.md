@@ -1249,3 +1249,52 @@ Added:
 The local sm64coopdx source is known to expose Mario hand geometry symbols
 (open/closed left/right). Runtime READY must remain absent until a coherent
 multi-weapon grip pack exists.
+
+
+### FP-MARIO-1 prototype pipeline prepared
+
+The first-person embodiment groundwork has advanced beyond documentation.
+
+Runtime:
+- `zscript/nexo_mario_hands.zs` defines weapon-compatible static hand states;
+- `NexoMarioDoomPlayer` selects a per-weapon back/front grip pair;
+- PSprite layer -2 renders behind the native weapon;
+- PSprite layer 2 renders in front;
+- selector remains dormant unless `nexo_mario_hands_ready=true`;
+- unknown/mod weapons clear the overlays rather than reuse a false generic grip.
+
+Validated weapon families:
+Fist, Chainsaw, Pistol, Shotgun, SuperShotgun, Chaingun, RocketLauncher,
+PlasmaRifle/ID24Incinerator, BFG9000/ID24CalamityBlade.
+
+Local asset pipeline:
+- `scripts/probe-mario-hands-local.sh`;
+- `scripts/extract-mario-hand-meshes-from-sm64-rom.py`;
+- `doom/mario_hands_pose_manifest.json`;
+- `scripts/render-mario-weapon-hands-local.py`.
+
+The project state already records that the user's SM64 ROM is validated US, so
+the direct ROM geometry extractor matches the current pinned physical segment
+layout.
+
+The mesh extractor reconstructs:
+- left closed;
+- right closed;
+- left open;
+- right open;
+from the user's own ROM into gitignored OBJ files.
+
+The renderer creates all 18 expected transparent PNG layers with no external
+Python dependency. It does not activate them unless called with `--activate`.
+
+Launcher gate is hardened:
+`nexo_mario_hands_ready` becomes true only when READY exists **and all 18
+expected PNGs exist**.
+
+Important visual debt:
+destination weapon sprites may include baked Doom/Freedoom hands. The prototype
+front layers are positioned to cover them where possible. Runtime visual QA is
+required; if any native hand remains obvious, that weapon needs a local visual
+mask/reconstruction while preserving native weapon mechanics.
+
+Status: **FP-MARIO-1 PROTOTYPE READY FOR LOCAL GENERATION / NOT PASS**.
