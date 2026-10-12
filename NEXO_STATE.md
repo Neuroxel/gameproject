@@ -818,3 +818,50 @@ after the first successful frame.
 
 Audio remains PASS. Controller mapping remains PASS; current delayed input is
 classified as startup/focus behavior until this gate is tested.
+
+
+## SDL BLACK 3D VIEW — deterministic automap prime workaround
+
+Windowed-safe startup disproved fullscreen as the sole cause:
+the 1200x800 SDL window still starts with a black 3D view, while input/audio
+remain alive. Manually opening automap renders correctly; closing automap then
+makes the 3D renderer remain correct.
+
+This gives a deterministic engine-level recovery action.
+
+The SDL launcher now queues after `+map`:
+- wait 8 tics;
+- `togglemap`;
+- wait 2 tics;
+- `togglemap`.
+
+This is a temporary first-frame renderer prime and should be nearly
+imperceptible. It can be disabled with `--no-render-prime` for diagnosis.
+
+The earlier fullscreen/windowed isolation remains useful, but the current bug
+classification is now **3D first-present/render-state initialization**, not
+fullscreen-only and not controller mapping.
+
+## MARIO-SFX — extraction PASS; launch-order bug corrected
+
+The user's local US ROM was validated by SHA-1 and extraction completed:
+jump, hurt, death, use, portal and celebrate WAV files were created under
+`assets_local/mario_sfx`.
+
+The generated DOOM PK3 contains 11 lumps, which matches:
+- 4 base NEXO mod lumps;
+- 6 Mario WAV files;
+- 1 SNDINFO.
+
+A launch ordering flaw remained: `+map` was queued before NEXO CVARs.
+The EventHandler may therefore observe default
+`nexo_handoff=false` / `nexo_mario_sfx=false` during WorldLoaded.
+
+Canonical order is now:
+1. renderer/controller CVARs;
+2. NEXO handoff + Mario identity CVARs;
+3. `+map`;
+4. renderer prime.
+
+WorldLoaded now logs the identity gate values and PlayerEntered logs when the
+Mario portal cue is requested.
