@@ -801,7 +801,10 @@ class NexoMarioDoomPlayer : DoomPlayer
             {
                 // SM64 long jump vertical ratio is ~30/42, with horizontal
                 // velocity doing most of the work.
-                Vel.Z += NexoCeilingSafeLaunch(baseJump * (30.0 / 42.0));
+                Vel.Z = max(
+                    Vel.Z,
+                    NexoCeilingSafeLaunch(baseJump * (30.0 / 42.0))
+                );
                 Thrust(7.5, Angle);
                 NexoSetHandMotion(6, 9);
                 // SM64 long jump uses CHAR_SOUND_YAHOO.
@@ -811,7 +814,10 @@ class NexoMarioDoomPlayer : DoomPlayer
             {
                 // SM64 backflip ratio is ~62/42. No literal 360° FPS camera
                 // rotation: hands/body communicate the somersault instead.
-                Vel.Z += NexoCeilingSafeLaunch(baseJump * (62.0 / 42.0));
+                Vel.Z = max(
+                    Vel.Z,
+                    NexoCeilingSafeLaunch(baseJump * (62.0 / 42.0))
+                );
                 Thrust(5.0, Angle + 180.0);
                 NexoSetHandMotion(1, 12);
                 // SM64 backflip uses the generic Yah/Wah/Hoo family.
@@ -836,7 +842,10 @@ class NexoMarioDoomPlayer : DoomPlayer
 
             Vel.X *= 0.45;
             Vel.Y *= 0.45;
-            Vel.Z += NexoCeilingSafeLaunch(baseJump * (62.0 / 42.0));
+            Vel.Z = max(
+                Vel.Z,
+                NexoCeilingSafeLaunch(baseJump * (62.0 / 42.0))
+            );
             Thrust(5.5, jumpAngle);
 
             bOnMobj = false;
