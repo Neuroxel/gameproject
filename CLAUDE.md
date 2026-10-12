@@ -1,22 +1,34 @@
 # CLAUDE.md
 
-Lee primero `NEXO_STATE.md`.
+Lee `NEXO_STATE.md` primero.
 
 ## Gate activo
 
-A6.8 + A7/A8 slice 1.
+M1 vertical slice:
 
-A6.6 (Mario como autoridad física) es una restricción obligatoria.
+- rigid attachments;
+- compact mode;
+- mission objectives;
+- return gate;
+- persistent DOOM handoff.
 
-Validar:
-- esfera sube según radio al crecer;
-- no se hunde;
-- attachments fuera de superficie;
-- moneda y Goomba absorbibles;
-- Bob-omb bloqueado bajo 2.70;
-- feedback de bloqueo;
-- Bob-omb absorbible sobre 2.70;
-- navegación no regresa.
+## Restricciones arquitectónicas
 
-No reintroducir colisión rígida de la bola.
-No instalar tooling adicional.
+- Mario es la única autoridad de navegación/física.
+- NO reintroducir collider rígido de la bola.
+- Masa lógica y escala visual son variables diferentes.
+- Attachments no deben floor-clampearse individualmente.
+- No añadir Koopa/otros mundos hasta validar M1.
+
+## Validar
+
+1. Sin bola en castillo.
+2. Bola al entrar BOB.
+3. Attachments rígidos/ocultables.
+4. COMPACT cerca de paredes/techo.
+5. Masa lógica preservada.
+6. Requisitos M1.
+7. Gate en spawn.
+8. Mission complete al tocarlo.
+9. handoff_target=DOOM guardado.
+10. navegación sin regresión.
