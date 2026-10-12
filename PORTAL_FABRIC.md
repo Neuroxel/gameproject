@@ -188,3 +188,31 @@ Examples:
 - 2D chapter: projected avatar + carried mission state.
 
 This prevents the project becoming a pile of unrelated gimmicks.
+
+
+## Perspective adapter
+
+Portal Fabric now carries perspective metadata in addition to gameplay state.
+
+The invariant is:
+**avatar persists; perspective belongs to the destination world**.
+
+Examples:
+- SM64 -> DOOM: third_person -> first_person;
+- DOOM -> third-person world: first_person -> third_person;
+- 3D -> 2D: perspective -> projected_2d.
+
+See `PERSPECTIVE_NEXO.md`.
+
+## Identity adapter
+
+The handoff also carries:
+- `identity.avatar`;
+- `identity.audio_profile`.
+
+Current campaign values:
+- avatar = MARIO;
+- audio_profile = mario_voice_v1.
+
+World adapters may reinterpret mechanics and visuals, but they should preserve
+recognizable avatar identity unless a mission explicitly transforms it.
