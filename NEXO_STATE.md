@@ -2,97 +2,114 @@
 
 Última actualización: 2026-10-12
 
-## Objetivo
+## Gates confirmados
 
-Construir un mashup jugable y observable partiendo de SM64CoopDX. La prioridad es diversión y legibilidad del sistema, no fidelidad a una simulación física innecesariamente difícil.
+- A0 — PASS.
+- A1-A3.1 — PASS.
+- A4-A5 — PASS.
+- A6 — PASS: crecimiento visual confirmado.
 
-## Gates cerrados
+## A6.5 — FAIL
 
-- A0 — PASS: pipeline del mod.
-- A1-A3.1 — PASS: objeto 3D, física y respuesta diferenciada.
-- A4 — PASS: detección de Goombas.
-- A5 — PASS: absorción/eliminación.
-- A6 — PASS: crecimiento visual real confirmado por el usuario. La bola llegó a escala ~4.00 tras cuatro Goombas.
+Nueva evidencia del usuario:
 
-## Cambio de arquitectura de control
+- Mario se mantenía pegado a la bola;
+- el sistema se bugueaba en superficies/espacios estrechos;
+- costó entrar al castillo;
+- no se pudo atravesar correctamente la puerta hacia la primera etapa;
+- el volumen/espacio de la bola interfería con navegación.
 
-La implementación anterior trataba la bola como un prop físico independiente que Mario debía perseguir y empujar. La validación mostró que seguía siendo difícil de manejar.
+Conclusión: el modelo **bola = autoridad física + Mario follower** es incorrecto para SM64CoopDX. No se seguirá ajustando con más parches de radios o step-assist.
 
-Se abandona ese modelo.
+## A6.6 — ACTIVE
 
-La referencia Katamari controla el katamari directamente; el personaje visualmente lo empuja. Por eso A6.5 cambia a **direct-drive**:
+### Cambio arquitectónico
 
-- stick analógico -> dirección/velocidad objetivo de la bola;
-- Mario se posiciona automáticamente detrás de ella;
-- la cámara sigue a Mario y, por extensión, a la bola;
-- B activa un dash;
-- la bola mantiene física con terreno/paredes, pero deja de depender de colisiones de Mario para moverse;
-- pequeño step-assist para peldaños/relieves bajos.
+Se invierte la autoridad:
 
-## A6.5 — PENDING VALIDATION
+**Mario = física/navegación real**
 
-### Control
+**Bola = representación visual + detector de absorción**
 
-1. `m.intendedYaw` entrega dirección relativa a cámara.
-2. `m.intendedMag` entrega magnitud analógica.
-3. La bola gira suavemente hacia esa dirección con `approach_s16_symmetric`.
-4. Acelera/frena hacia una velocidad objetivo.
-5. Mario es reposicionado detrás de la bola cada frame.
-6. La bola es intangible respecto de Mario para evitar que la física de empuje compita con el control directo.
-7. B = dash.
-8. El crecimiento introduce sólo una penalización de masa suave.
+El mod ya NO modifica:
 
-### Objetos pegados
+- `m.pos`;
+- `m.vel`;
+- `m.forwardVel`;
+- acciones de Mario;
+- colisión de Mario.
 
-Al absorber un Goomba:
+Mario conserva íntegramente su controlador nativo para:
 
-1. se captura su posición relativa;
-2. se crea un Goomba visual con comportamiento propio, sin IA ni daño;
-3. se elimina el enemigo activo;
-4. el cascarón visual queda sobre la superficie de la bola;
-5. su vector radial se actualiza con la rotación incremental de la bola;
-6. el objeto viaja y gira con la bola;
-7. no participa en colisiones ni lógica enemiga.
+- puertas;
+- escaleras;
+- pendientes;
+- pasillos;
+- transiciones;
+- habitaciones;
+- saltos y movimiento.
 
-Esto preserva el feedback visual tipo Katamari sin arrastrar IA/hitboxes de los enemigos absorbidos.
+### Bola
 
-### Criterios de PASS
+La bola:
 
-- mover el stick debe dirigir la bola de forma inmediata y predecible;
-- no debería ser necesario perseguirla o ponerse exactamente detrás para empujarla;
-- Mario debe mantenerse visualmente detrás de la bola la mayor parte del tiempo;
-- B debe producir un dash reconocible;
-- al absorber un Goomba, debe seguir visible pegado a la bola;
-- el Goomba pegado debe desplazarse con la bola sin atacar ni interferir;
-- varios Goombas pegados no deben provocar crash;
-- crecimiento continúa funcionando;
-- pequeños peldaños deben sentirse menos frustrantes.
+- sigue visualmente delante de Mario;
+- se posiciona después del update nativo de Mario;
+- se ajusta visualmente al suelo bajo ella;
+- no tiene hitbox, hurtbox, wall hitbox ni interacción;
+- es intangible;
+- no ejecuta física propia;
+- gira visualmente según distancia recorrida;
+- mantiene crecimiento;
+- mantiene radio de absorción creciente.
+
+Por diseño, el tamaño visual ya no agranda la colisión del mundo. Esto sacrifica fidelidad física para preservar jugabilidad y navegación. Más adelante, si se necesita, podremos introducir colisiones contextuales sólo en arenas abiertas.
+
+### Attachments
+
+Se preserva la arquitectura:
+
+enemigo activo -> cascarón visual pasivo pegado -> enemigo activo eliminado.
+
+Los Goombas adheridos no tienen IA, daño ni colisión.
+
+### Criterios de PASS A6.6
+
+1. Mario vuelve a moverse exactamente como SM64 normal.
+2. Puede entrar al castillo.
+3. Puede atravesar puertas y entrar a Bob-omb Battlefield.
+4. Puede subir/bajar superficies y escalones normales sin quedar pegado a la bola.
+5. La bola permanece visualmente delante de Mario.
+6. La bola no bloquea puertas/paredes.
+7. Goombas siguen absorbiéndose.
+8. Goombas absorbidos quedan visibles pegados.
+9. La bola sigue creciendo visualmente.
+10. No aparecen nuevos crashes o soft-locks.
+
+## Decisión de diseño
+
+Para este prototipo, **jugabilidad > colisión física literal del katamari**.
+
+No se intentará que una esfera visual de gran tamaño actúe como collider rígido dentro de niveles diseñados para el hitbox pequeño de Mario. Ese enfoque rompe puertas y geometría del juego anfitrión.
+
+Si A6.6 pasa, A7-A8 añadirá categorías y umbrales de absorción sin tocar la navegación de Mario.
 
 ## Próximo gate
 
-Si A6.5 = PASS:
+A7-A8:
 
-A7-A8 — clases de objetos y progresión:
-- objetos diminutos;
+- monedas/objetos pequeños;
 - Goombas;
 - Bob-ombs;
 - Koopas;
 - objetos mayores;
-- umbrales por tamaño;
-- feedback de objetos todavía demasiado grandes.
-
-No comenzar GTA/Tony Hawk/Crazy Taxi hasta validar el loop Katamari.
-
-## Limitaciones actuales
-
-- Spiny Ball sigue siendo modelo provisional.
-- Attachments aún son sólo Goombas.
-- Orientación de los cascarones es aproximada, no una simulación rígida exacta.
-- Multiplayer no validado.
-- No se busca reproducir exactamente el esquema twin-stick original: priorizamos control fácil con un stick relativo a cámara.
+- umbrales de tamaño;
+- feedback de "demasiado grande";
+- attachments visuales por categoría.
 
 ## Reglas
 
-- Nunca versionar ROMs ni dumps.
-- No instalar tooling pesado sin necesidad.
-- Priorizar evidencia nueva sobre decisiones previas.
+- No versionar ROMs.
+- No instalar tooling pesado.
+- Priorizar evidencia nueva.
+- No restaurar A6.5.
