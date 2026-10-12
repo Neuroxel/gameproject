@@ -47,3 +47,12 @@ Current M2 gate:
 On macOS 26, prefer the SDL2 GZDoom build.
 The official Cocoa GZDoom 4.14.2 controller backend has known trigger/D-pad
 breakage. Do not treat per-button Cocoa remapping as a final solution.
+
+
+## SDL ZMusic packaging invariant
+
+For the local SDL GZDoom app, ensure
+`gzdoom.app/Contents/MacOS/libzmusic.1.dylib` exists.
+
+Use the repair script for an already completed build; do not rebuild 835 targets
+for a missing runtime dylib.
