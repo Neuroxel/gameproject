@@ -4,22 +4,18 @@ Lee primero `NEXO_STATE.md`, `AGENTS.md` y `README.md`.
 
 ## Estado
 
-A0-A5 = PASS.
+A0-A6 = PASS.
 
-Gate activo: **A6.1 — crecimiento visual verificable y mejor control.**
+Gate activo: **A6.5 — direct-drive control + passive attached Goombas**.
 
-## Qué validar
+Validar:
 
-- bola inicial más grande;
-- absorción de Goomba sigue funcionando;
-- OBJ sube;
-- VIS anima hacia OBJ;
-- GFX leído desde header.gfx.scale.x acompaña VIS;
-- modelo crece visualmente;
-- control pasivo mejora.
+- stick controla directamente la bola;
+- Mario queda visualmente detrás;
+- B produce dash;
+- pequeños peldaños mejoran con step-assist;
+- Goombas absorbidos siguen visibles como cascarones pasivos;
+- attachments giran/se trasladan con la bola;
+- crecimiento sigue funcionando.
 
-No avanzar a A7 sin PASS.
-
-## Restricciones
-
-No instalar tooling adicional. No tocar ROMs. Hacer sólo correcciones mínimas basadas en evidencia exacta.
+No instalar tooling adicional y no avanzar a A7 sin evidencia de PASS.
