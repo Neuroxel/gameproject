@@ -117,3 +117,16 @@ Do not remove it when rebuilding the SDL runtime.
 
 DOOM arrival also centers player pitch once. This is required cross-engine
 camera normalization, not a persistent camera lock.
+
+
+## macOS SDL startup profile
+
+Until fullscreen startup is proven stable, `bridge/run_doom.py` must use the
+isolated early-load config `bridge/runtime/gzdoom-nexo.ini` and default SDL to
+windowed mode.
+
+Reason: `+set vid_fullscreen false` may be processed after the first SDL
+window is already constructed. Use GZDoom's `-config` path so
+`GlobalSettings` is loaded before video initialization.
+
+Fullscreen is explicit opt-in only.
