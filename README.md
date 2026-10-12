@@ -77,3 +77,10 @@ python3 bridge/run_doom.py
 ```
 
 El primer adapter usa GZDoom + Freedoom Phase 2 por defecto, o tu propio Doom II IWAD con `--iwad`.
+
+
+### Handoff durability fix
+
+Portal handoffs are now durable across SM64 level reloads.
+
+For older saves affected by the previous bug, `nexo_handoff.py` can recover the last complete payload even if `handoff_pending` was reset to 0. `run_doom.py` can also reuse an existing validated `bridge/runtime/handoff.json`.
