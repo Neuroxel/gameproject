@@ -46,3 +46,22 @@ Si eso vuelve, la regresión está recuperada y continúa la prueba normal de M1
 - masa 3.80;
 - regreso al NEXO Gate;
 - handoff preparado a DOOM.
+
+
+## Portal Fabric bridge
+
+M1 ya alcanza `HANDOFF PREPARADO -> DOOM`.
+
+El siguiente componente está en:
+
+```
+bridge/nexo_handoff.py
+```
+
+Después de completar M1:
+
+```bash
+python3 bridge/nexo_handoff.py --print
+```
+
+Esto exporta un manifiesto JSON neutral que será la entrada del futuro adapter DOOM.
