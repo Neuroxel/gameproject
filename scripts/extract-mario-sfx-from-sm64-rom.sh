@@ -147,6 +147,20 @@ convert_sample "sound/samples/sfx_mario/00_mario_jump_hoo.aiff" "jump"
 
 # Mario locomotion identity. These remain optional at runtime; generated
 # SNDINFO falls back safely when an older local extraction only has the core set.
+#
+# Canonical SM64 jump voice grammar:
+# - jump 1: random Yah/Wah/Hoo;
+# - jump 2: Hoo-hoo;
+# - jump 3: Yahoo/Waha/Yippee (weighted in ZScript).
+convert_sample "sound/samples/sfx_mario/00_mario_jump_hoo.aiff" "jump1_hoo"
+convert_sample "sound/samples/sfx_mario/01_mario_jump_wah.aiff" "jump1_wah"
+convert_sample "sound/samples/sfx_mario/02_mario_yah.aiff" "jump1_yah"
+convert_sample "sound/samples/sfx_mario/03_mario_haha.aiff" "jump2_hoohoo"
+convert_sample "sound/samples/sfx_mario/04_mario_yahoo.aiff" "jump3_yahoo"
+convert_sample "sound/samples/sfx_mario/18_mario_waha.aiff" "jump3_waha"
+convert_sample "sound/samples/sfx_mario/19_mario_yippee.aiff" "jump3_yippee"
+
+# Backward-compatible movement cue names.
 convert_sample "sound/samples/sfx_mario/01_mario_jump_wah.aiff" "jump2"
 convert_sample "sound/samples/sfx_mario/02_mario_yah.aiff" "jump3"
 convert_sample "sound/samples/sfx_mario/18_mario_waha.aiff" "backflip"
