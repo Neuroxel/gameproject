@@ -109,3 +109,43 @@ Cada mundo o mecánica debe aportar una función:
 - GTA: caos/dificultad dinámica.
 - Portal: tránsito/puzzles espaciales.
 - DOOM: combate/conversión de carga en recursos.
+
+
+## Campaign layer — mission continuity
+
+Portal Fabric no trata cada juego como un minijuego independiente.
+
+La campaña se compone de capítulos:
+
+```
+M1 / SM64
+CARGA IMPOSIBLE
+  -> produce cargo + masa + score
+  -> portal
+
+M2 / DOOM
+ESTABILIZA LA BRECHA
+  -> consume/convierte cargo en recursos
+  -> 8 hostiles
+  -> salida MAP01
+  -> produce combat_shards + score acumulado
+  -> NEXO_HUB
+
+M3 / WORLD ADAPTER
+  -> se decidirá después de validar M2
+```
+
+El target `NEXO_HUB` es un estado de orquestación, no necesariamente un mundo 3D.
+Permite elegir el próximo adapter sin acoplar DOOM directamente a Portal/Source.
+
+### Shared UI principle
+
+Cada mundo conserva su HUD nativo.
+
+NEXO añade una capa meta pequeña:
+- nombre de misión;
+- objetivo;
+- progreso;
+- estado de portal/handoff.
+
+No se reemplazan los menús completos de Mario/DOOM salvo que una misión lo justifique.
