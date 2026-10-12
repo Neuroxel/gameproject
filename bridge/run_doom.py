@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """
-NEXO Portal Fabric - DOOM launcher/adapter v0.1
+NEXO Portal Fabric - DOOM launcher/adapter v0.2
 
 Pipeline:
 SM64CoopDX mod_storage -> handoff.json -> GZDoom command line -> NEXO DOOM PK3.
 
-Does not alter SM64 saves. The handoff remains replayable during prototyping.
+Robustness:
+- First try to refresh handoff.json from SM64 storage.
+- If refresh fails but a previously validated handoff.json exists, reuse it.
+- Never modify SM64 saves during prototyping.
 """
 
 from __future__ import annotations
@@ -26,9 +29,51 @@ MOD_SRC = ROOT / "doom" / "mod_src"
 PK3 = ROOT / ".runtime" / "doom" / "nexo_doom.pk3"
 
 
-def export_handoff() -> None:
+def export_handoff() -> bool:
     cmd = [sys.executable, str(BRIDGE / "nexo_handoff.py")]
-    subprocess.run(cmd, check=True)
+    proc = subprocess.run(cmd, text=True, capture_output=True)
+
+    if proc.returncode == 0:
+        if proc.stdout:
+            print(proc.stdout, end="")
+        return True
+
+    if proc.stderr:
+        print(proc.stderr, end="", file=sys.stderr)
+
+    return False
+
+
+def validate_handoff(path: Path) -> dict:
+    data = json.loads(path.read_text(encoding="utf-8"))
+
+    if data.get("schema") != "nexo.portal.handoff.v1":
+        raise RuntimeError("Unsupported handoff schema")
+
+    target = data.get("target", {}).get("world")
+    if target != "DOOM":
+        raise RuntimeError(f"Handoff target is {target!r}, expected 'DOOM'")
+
+    return data
+
+
+def load_handoff() -> dict:
+    refreshed = export_handoff()
+
+    if refreshed:
+        return validate_handoff(HANDOFF)
+
+    if HANDOFF.exists():
+        print(
+            "[NEXO] WARNING: could not refresh from SM64 storage; "
+            "using existing validated bridge/runtime/handoff.json."
+        )
+        return validate_handoff(HANDOFF)
+
+    raise RuntimeError(
+        "No current SM64 handoff and no cached handoff.json are available. "
+        "Complete M1 and cross the NEXO Gate first."
+    )
 
 
 def build_pk3() -> Path:
@@ -58,7 +103,6 @@ def find_gzdoom(explicit: str | None) -> Path:
         Path.home() / "Applications/GZDoom.app/Contents/MacOS/gzdoom",
     ]
 
-    # Setup archive can have an extra wrapper directory.
     runtime = ROOT / ".runtime/doom/gzdoom"
     if runtime.exists():
         candidates.extend(runtime.glob("**/GZDoom.app/Contents/MacOS/gzdoom"))
@@ -90,22 +134,9 @@ def find_iwad(explicit: str | None) -> Path:
             return path
 
     raise FileNotFoundError(
-        "No Doom-compatible IWAD found. Run setup-doom-macos.sh or pass --iwad /path/to/DOOM2.WAD"
+        "No Doom-compatible IWAD found. Run setup-doom-macos.sh "
+        "or pass --iwad /path/to/DOOM2.WAD"
     )
-
-
-def load_handoff() -> dict:
-    if not HANDOFF.exists():
-        export_handoff()
-
-    data = json.loads(HANDOFF.read_text(encoding="utf-8"))
-    if data.get("schema") != "nexo.portal.handoff.v1":
-        raise RuntimeError("Unsupported handoff schema")
-    if data.get("target", {}).get("world") != "DOOM":
-        raise RuntimeError(
-            f"Handoff target is {data.get('target', {}).get('world')!r}, expected 'DOOM'"
-        )
-    return data
 
 
 def cvar_args(data: dict) -> list[str]:
@@ -136,7 +167,6 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true", help="Print command only")
     args = parser.parse_args()
 
-    export_handoff()
     handoff = load_handoff()
     pk3 = build_pk3()
     gzdoom = find_gzdoom(args.gzdoom)
