@@ -1,23 +1,18 @@
 # AGENTS.md
 
-## Gate activo: A6.6
+## Gate activo: A6.7
 
-A6.5 está formalmente rechazado.
+A6.6 está aprobado y es una restricción arquitectónica.
 
-No restaurar:
+No tocar:
+- m.pos / m.vel para controlar la bola;
+- hitbox rígida de bola;
+- navegación nativa de Mario.
 
-- direct-drive de bola;
-- Mario follower;
-- hitbox/wall hitbox de bola;
-- step-assist personalizado.
+A6.7 sólo corrige:
+- radio visual;
+- offset de attachments;
+- velocidad angular;
+- yaw visual.
 
-La autoridad física es Mario nativo.
-
-La bola es:
-- visual;
-- intangible;
-- sin hitbox;
-- detector de absorción;
-- portadora de attachments visuales.
-
-Validar puertas/superficies antes de A7.
+No comenzar A7 hasta PASS.
