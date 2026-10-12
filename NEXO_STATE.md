@@ -563,3 +563,69 @@ Added:
 - `scripts/patch-gzdoom-sdl-gamecontroller.sh`.
 
 This is an incremental rebuild, not a full 835-step rebuild.
+
+
+## CONTROL-1 — PASS practical
+
+User confirmed the standardized SDL GameController backport now behaves normally:
+- left stick = movement;
+- right stick = look;
+- RT = fire;
+- Y = jump;
+- A = use/action;
+- LB = weapon change;
+- D-pad neutral/no phantom input.
+
+This closes the structural controller blocker. Fine tuning may continue, but
+controller continuity is no longer blocking world integration.
+
+## PERSPECTIVE-1 — ACTIVE
+
+Canonical rule:
+the avatar persists; camera perspective is world-owned.
+
+SM64 handoff now records:
+- avatar: MARIO;
+- audio_profile: mario_voice_v1;
+- perspective source: third_person;
+- target: first_person;
+- transition: portal_push_in.
+
+DOOM outbound records:
+- source: first_person;
+- target: adaptive;
+- transition: portal_pull_out.
+
+DOOM ZScript now has a perspective transition state. Third-person chase-body
+reveal is gated behind `nexo_avatar_body_ready`; until an actual local Mario
+body/skin exists, NEXO will not show Doomguy as a fake Mario proxy.
+
+## AUDIO-ID-1 — ACTIVE
+
+Persistent avatar identity is now separated from world audio.
+
+DOOM hooks implemented for local Mario voice/action SFX:
+- jump;
+- use/action;
+- hurt;
+- death.
+
+Nintendo audio is not committed. User-local files live under the gitignored
+`assets_local/mario_sfx` directory and are embedded only into the locally
+generated PK3 when the complete core set is present.
+
+Added:
+- `AUDIO_IDENTITY_NEXO.md`;
+- `PERSPECTIVE_NEXO.md`;
+- `scripts/import-mario-sfx-local.sh`.
+
+## AUDIO-RUNTIME — correction prepared
+
+The SDL build previously reported `Sound init failed. Using nosound.`.
+
+GZDoom g4.14.2 upstream macOS CI uses `DYN_OPENAL=OFF`.
+The canonical full SDL setup now mirrors that setting.
+
+For the already-built runtime:
+`scripts/patch-gzdoom-sdl-audio.sh` reconfigures/relinks incrementally against
+macOS OpenAL without rebuilding from scratch.
