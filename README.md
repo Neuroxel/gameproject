@@ -373,3 +373,37 @@ attribute 'nonblocking' should not be added via type conversion
 The project setup now disables OpenAL Soft's optional
 `-Wfunction-effects` diagnostic for this pinned build and explicitly keeps
 `ALSOFT_WERROR=OFF`. No source-code behavior is changed.
+
+
+### Fix black SDL startup window + centered arrival view
+
+The pinned GZDoom 4.14.2 runtime now carries a narrow backport of upstream
+commit `c3fb744f47fe` ("Fix phantom window freezing desktop on some systems").
+
+For an existing build:
+
+```bash
+git pull
+bash scripts/patch-gzdoom-sdl-startup.sh
+python3 bridge/run_doom.py --runtime sdl
+```
+
+The DOOM adapter also centers Mario's first-person pitch once on arrival so a
+previous/stale extreme view angle cannot start the mission looking at the
+ceiling.
+
+### Mario SFX extractor on stock macOS Bash
+
+`scripts/extract-mario-sfx-from-sm64-rom.sh` is now compatible with Apple's
+Bash 3.2. With no arguments it scans common local folders and auto-detects a
+known vanilla SM64 region by SHA-1:
+
+```bash
+bash scripts/extract-mario-sfx-from-sm64-rom.sh
+```
+
+Or provide your own ROM explicitly:
+
+```bash
+bash scripts/extract-mario-sfx-from-sm64-rom.sh /path/to/baserom.us.z64 us
+```
