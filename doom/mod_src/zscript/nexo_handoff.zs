@@ -81,6 +81,18 @@ class NexoHandoffHandler : EventHandler
         pawn.A_StartSound("nexo/mario/death", CHAN_VOICE, CHANF_DEFAULT, 1.0, ATTN_NONE);
     }
 
+    void PlayMarioPortal(Actor pawn)
+    {
+        if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
+        pawn.A_StartSound("nexo/mario/portal", CHAN_VOICE, CHANF_DEFAULT, 1.0, ATTN_NONE);
+    }
+
+    void PlayMarioCelebrate(Actor pawn)
+    {
+        if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
+        pawn.A_StartSound("nexo/mario/celebrate", CHAN_VOICE, CHANF_DEFAULT, 1.0, ATTN_NONE);
+    }
+
     void BeginPerspectiveTransition(int playerNum)
     {
         if (!CVarBool('nexo_perspective_transition')) return;
@@ -159,6 +171,7 @@ class NexoHandoffHandler : EventHandler
 
             if (InM2Map)
             {
+                PlayMarioPortal(pawn);
                 BeginPerspectiveTransition(e.PlayerNumber);
             }
         }
@@ -321,6 +334,8 @@ class NexoHandoffHandler : EventHandler
                 ),
                 8.0
             );
+
+            PlayMarioCelebrate(players[consoleplayer].mo);
 
             Console.Printf(
                 "[NEXO] M2 COMPLETE: kills=%d score=%d. Reach MAP01 exit.\n",
