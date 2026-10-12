@@ -140,6 +140,34 @@ if [ -z "$GZ_BIN" ]; then
   exit 1
 fi
 
+# Bundle the ZMusic runtime dependency next to the executable. GZDoom on macOS
+# links it as @rpath/libzmusic.1.dylib and already includes @executable_path in
+# its rpath. The upstream CI dependency package is sufficient for linking but
+# the locally generated app bundle does not copy the versioned dylib for us.
+GZ_DIR="$(dirname "$GZ_BIN")"
+ZMUSIC_BASE="$BUILD/zmusic/lib/libzmusic.dylib"
+ZMUSIC_SONAME="$GZ_DIR/libzmusic.1.dylib"
+
+if [ ! -e "$ZMUSIC_BASE" ]; then
+  echo "[NEXO] ERROR: linked ZMusic library disappeared after build:"
+  echo "  $ZMUSIC_BASE"
+  ls -la "$BUILD/zmusic/lib" 2>/dev/null || true
+  exit 1
+fi
+
+echo "[NEXO] Bundling libzmusic.1.dylib into the app runtime..."
+cp -L "$ZMUSIC_BASE" "$ZMUSIC_SONAME"
+chmod 755 "$ZMUSIC_SONAME"
+
+if command -v install_name_tool >/dev/null 2>&1; then
+  install_name_tool -id "@rpath/libzmusic.1.dylib" "$ZMUSIC_SONAME" || true
+fi
+
+if [ ! -f "$ZMUSIC_SONAME" ]; then
+  echo "[NEXO] ERROR: failed to bundle ZMusic runtime dependency."
+  exit 1
+fi
+
 echo
 echo "[NEXO] SDL2 GZDoom ready."
 echo "[NEXO] Executable: $GZ_BIN"
