@@ -262,6 +262,15 @@ def main() -> int:
         "-iwad", str(iwad),
         "-file", str(pk3),
 
+        # SDL controller runtime is compiled without Vulkan. GZDoom's global
+        # default is vid_preferbackend=1 (Vulkan); if Vulkan is not compiled,
+        # the SDL platform code otherwise falls through to the GLES renderer.
+        # On macOS OpenGL 4.1 that renderer emits GLSL 330 while still using
+        # legacy 'attribute'/'varying' tokens, causing the fatal Default shader
+        # error observed on Apple M4. Force the normal desktop OpenGL renderer.
+        "+set", "vid_preferbackend", "0",
+        "+set", "gl_es", "false",
+
         # Keep controls continuous across worlds. GZDoom has native
         # joystick/gamepad support on macOS; explicitly enable it so the
         # adapter does not silently fall back to keyboard/mouse.
@@ -283,6 +292,8 @@ def main() -> int:
     print(f"[NEXO] IWAD: {iwad}")
     print(f"[NEXO] PK3: {pk3}")
     print(f"[NEXO] Mission log: {DOOM_LOG}")
+    if runtime_kind == "sdl":
+        print("[NEXO] Renderer: desktop OpenGL forced (vid_preferbackend=0)")
     print("[NEXO] Controller: joystick/gamepad forced ON")
     if args.controller_setup:
         print("[NEXO] Controller setup menu: requested")
@@ -300,6 +311,11 @@ def main() -> int:
         dyld_paths = [
             str(gzdoom.parent),
             str(ROOT / ".runtime/doom/gzdoom-sdl/build/zmusic/lib"),
+
+            # The official Cocoa runtime already proved OpenAL works on this
+            # machine. Expose its bundled runtime directory to the SDL build
+            # as a compatibility source for libopenal and any sibling dylibs.
+            str(ROOT / ".runtime/doom/gzdoom/GZDoom.app/Contents/MacOS"),
         ]
         existing = launch_env.get("DYLD_LIBRARY_PATH")
         if existing:
