@@ -89,3 +89,17 @@ python3 bridge/run_doom.py --runtime sdl --controller-setup
 ```
 
 Do not manually tune dozens of Cocoa Joy bindings as a permanent workaround.
+
+
+## SDL video/controller coexistence
+
+The controller workaround requires only SDL input; it does **not** require
+GZDoom's OpenGLES renderer.
+
+For the local SDL runtime NEXO forces:
+- SDL platform/input backend;
+- desktop OpenGL renderer (`vid_preferbackend=0`);
+- `gl_es=false`.
+
+This avoids the macOS GLSL 330 `attribute`/`varying` crash while preserving
+SDL joystick handling.
