@@ -34,6 +34,7 @@ OPENAL_SOFT_LIB = ROOT / ".runtime" / "doom" / "openal-soft" / "install" / "lib"
 OPENAL_LOG = BRIDGE / "runtime" / "openal-soft.log"
 
 MARIO_SFX_NAMES = ("jump", "hurt", "death", "use")
+MARIO_SFX_OPTIONAL = ("portal", "celebrate")
 MARIO_SFX_EXTS = (".ogg", ".wav", ".flac")
 
 
@@ -86,7 +87,7 @@ def load_handoff() -> dict:
 
 def find_local_mario_sfx() -> dict[str, Path]:
     found: dict[str, Path] = {}
-    for logical in MARIO_SFX_NAMES:
+    for logical in MARIO_SFX_NAMES + MARIO_SFX_OPTIONAL:
         for ext in MARIO_SFX_EXTS:
             candidate = LOCAL_MARIO_SFX / f"{logical}{ext}"
             if candidate.exists():
@@ -125,6 +126,11 @@ def build_pk3() -> tuple[Path, bool]:
                 zf.write(path, arcname)
                 members.append(arcname)
                 sndinfo_lines.append(f"nexo/mario/{logical} {arcname}")
+            if mario_sfx_ready:
+                if "portal" not in mario_sfx:
+                    sndinfo_lines.append("$alias nexo/mario/portal nexo/mario/use")
+                if "celebrate" not in mario_sfx:
+                    sndinfo_lines.append("$alias nexo/mario/celebrate nexo/mario/jump")
             zf.writestr("SNDINFO", "\n".join(sndinfo_lines) + "\n")
             members.append("SNDINFO")
 
