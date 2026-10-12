@@ -269,3 +269,75 @@ The visual somersault belongs to:
 - eventual third-person/full-body views during portals/cinematics/death.
 
 This preserves Mario identity without inducing FPS camera sickness.
+
+
+## MARIOMOVE-2 runtime-v2 — SM64 proportions
+
+User evidence on 2026-10-12 confirmed:
+- wall kick is functional;
+- the first triple-jump implementation still felt too flat;
+- the jump voice succession did not match SM64 closely enough.
+
+The adapter is now anchored to the source-game vertical families instead of
+small arbitrary multipliers.
+
+SM64 source-family launch values used as ratios:
+- normal jump: ~42;
+- double jump: ~52;
+- triple jump: ~69;
+- backflip: ~62;
+- side flip: ~62;
+- wall kick: ~62;
+- long jump: ~30 plus strong horizontal travel.
+
+NEXO therefore targets:
+- normal: 1.000x;
+- double: 52/42 (~1.238x);
+- triple: 69/42 (~1.643x);
+- backflip/side flip/wall kick: 62/42 (~1.476x);
+- long jump: 30/42 (~0.714x) vertically.
+
+These are **launch-speed ratios**, not unconstrained map-height multipliers.
+
+### Ceiling-aware jump governor
+
+Every enhanced vertical launch is passed through
+`NexoCeilingSafeLaunch()`.
+
+The governor:
+1. measures live headroom from Mario's full standing height to `CeilingZ`;
+2. reserves 5 map units of head clearance;
+3. reads GZDoom's effective `GetGravity()`;
+4. solves the discrete ballistic apex estimate for the maximum safe launch
+   speed;
+5. uses the smaller of the Mario target and that safe speed.
+
+Result:
+- in tall rooms Mario gets the strong double/triple/backflip distinction;
+- in ordinary DOOM rooms the jump rises as high as the room safely permits;
+- low ceilings dynamically compress the jump instead of causing routine head
+  collisions;
+- there is no one global low multiplier that makes Mario feel flat everywhere.
+
+### Canonical jump voice grammar
+
+The previous fixed `jump/jump2/jump3` mapping was not faithful enough.
+
+Runtime-v2 follows SM64's voice grammar:
+- jump 1: random Yah / Wah / Hoo;
+- jump 2: dedicated Hoo-hoo;
+- jump 3: Yahoo / Waha / Yippee with 60/20/20 weighting.
+
+Local logical cues:
+- `jump1_hoo`;
+- `jump1_wah`;
+- `jump1_yah`;
+- `jump2_hoohoo`;
+- `jump3_yahoo`;
+- `jump3_waha`;
+- `jump3_yippee`.
+
+The chain window is 28 tics after a real landing and still requires a fresh
+Jump press. Held Jump and airborne button spam remain invalid.
+
+Status: **runtime-v2 prepared; user retest required**.
