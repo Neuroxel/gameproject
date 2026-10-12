@@ -1020,3 +1020,119 @@ runtime.
 
 AUDIO-ID-2 is still NOT PASS until user runtime confirms positive
 `S_GetLength()` and audible Mario cues.
+
+
+## 2026-10-12 — AUDIO-ID-2 audible; semantic dedupe + MARIOMOVE-1 ACTIVE
+
+### New user evidence
+
+The native DMX bridge changed the runtime result materially:
+- Mario voice is now audible in DOOM;
+- jump produces Mario audio;
+- hurt produces Mario audio;
+- Doom/Freedoom world audio still works.
+
+This proves:
+- PK3 resource lookup PASS;
+- native DMX load/decode path PASS;
+- OpenAL/CoreAudio playback PASS for Mario runtime assets.
+
+The earlier six-zero-length WAV blocker is therefore functionally bypassed.
+
+### Newly observed audio regressions
+
+The user reported:
+- jump played both Mario and Doom-player vocal audio;
+- hurt played both Mario and Doom-player vocal audio;
+- rapid repeated Jump presses could replay Mario even when no new physical
+  jump occurred;
+- firing a gun did not produce Mario voice, which is currently correct:
+  weapon audio belongs to the destination world.
+
+Root cause:
+the first Mario identity implementation inferred jump from raw button edges and
+hurt from health deltas, then layered Mario on top of GZDoom's own semantic
+player sounds.
+
+### AUDIO-ID-2B — semantic replacement prepared
+
+The adapter now uses engine semantics instead of duplicate inference:
+- generated SNDINFO silences native `*jump` and `*usefail`;
+- native pain slots map directly to Mario hurt;
+- native death/xdeath map directly to Mario death;
+- native grunt/land map to Mario stomp when that local cue exists, otherwise
+  silence rather than Doomguy voice;
+- custom EventHandler jump/hurt/death overlays were removed;
+- Use, portal and M2 celebration remain explicit NEXO cues;
+- jump audio is owned by the Mario player class and only emits after a real
+  engine jump is confirmed.
+
+AUDIO-ID-2 overall remains **ACTIVE / not final PASS** until the user verifies:
+- no Doom-player voice under Mario;
+- jump button spam does not create false jump cues;
+- hurt/death/use/portal/celebrate remain correct;
+- DMX8 quality is acceptable for the functional gate.
+
+### MARIOMOVE-1 — ACTIVE
+
+Added `NexoMarioDoomPlayer : DoomPlayer` as a reusable avatar movement adapter,
+separate from M2 mission logic.
+
+Feature gate:
+`nexo_mario_movement=true`.
+
+First slice:
+- normal jump remains native-height baseline;
+- moving chained jump 2 ~= 1.08x JumpZ;
+- moving chained jump 3 ~= 1.18x JumpZ;
+- chain continuation window = 14 tics after landing;
+- standing too long resets chain;
+- crouch + stationary jump = moderate backflip;
+- crouch + running-forward jump = moderate long jump;
+- fresh crouch in air = one ground-pound/stomp per airborne cycle;
+- stomp damage is intentionally deferred until traversal safety is proven.
+
+Movement voices are local-only:
+- jump2;
+- jump3;
+- backflip;
+- longjump;
+- stomp;
+- dive.
+
+The existing extraction pipeline was expanded and
+`scripts/extend-mario-movement-sfx-local.sh` can reuse already-extracted AIFF
+samples without requiring another ROM copy.
+
+### Required Mario movement scope
+
+User explicitly requires the broader Mario movement language to be preserved
+where compatible with destination engines, including at minimum:
+- triple jump;
+- stomp/ground pound;
+- crouch backflip;
+- long jump;
+- side flip/turnaround jump;
+- wall kick;
+- dive/slide;
+- ledge grab/climb;
+- crouch/crawl;
+- swimming/environment traversal where applicable;
+- contextual melee/aerial actions where they do not replace the destination's
+  dominant combat language.
+
+Canonical contract:
+`AVATAR_MOVEMENT_NEXO.md`.
+
+Do not copy exact SM64 heights/camera behavior blindly into FPS worlds.
+The goal is Mario identity with destination-world authority.
+
+### Master continuity
+
+Added `NEXO_MASTER_PLAN.md` so the full project order/invariants no longer
+depend on one conversation window.
+
+Immediate order remains:
+AUDIO-ID-2 semantic validation -> MARIOMOVE validation -> Mario first-person
+hands/weapons -> full-body local pipeline -> visible 3P/1P portal grammar ->
+router stabilization -> Source/Portal adapter -> M3.
