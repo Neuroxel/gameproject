@@ -2,13 +2,22 @@
 -- description: A6.6 uses Mario's native physics/navigation and a visual Katamari follower.
 
 local TITLE = "NEXO MASHUP LAB"
-local STATUS = "A6.6 MARIO = FISICA / BOLA = KATAMARI"
+local STATUS = "A6.7 PEGADO + GIRO NATURAL"
 local RESET_HINT = "DPAD ABAJO: reiniciar progreso"
 
 local BASE_SCALE = 1.80
 local SCALE_PER_GOOMBA = 0.55
 local MAX_SCALE = 6.00
 local GROWTH_SPEED = 0.075
+
+-- A6.7 visual tuning. The Spiny Ball GeoLayout has an internal 0.25 scale,
+-- so its visible body radius is much smaller than the previous approximation.
+local MODEL_BODY_RADIUS = 24.0
+local ATTACH_INSET = 7.0
+local PICKUP_PADDING = 62.0
+local ROLL_VISUAL_FACTOR = 0.35
+local YAW_VISUAL_STEP = 0x180
+local ANGLE_UNITS_PER_RADIAN = 10430.378
 
 local absorbed_count = 0
 local target_scale = BASE_SCALE
@@ -27,8 +36,10 @@ local function get_ball()
 end
 
 local function ball_surface_radius()
-    -- Approximation for the provisional Spiny Ball actor.
-    return 48.0 * visual_scale + 28.0
+    -- Visible red body radius, intentionally excluding the yellow spikes.
+    -- At scale 4 this is ~96 world units, which matches the actor far better
+    -- than the old ~220-unit estimate.
+    return MODEL_BODY_RADIUS * visual_scale
 end
 
 local function normalize3(x, y, z)
@@ -129,7 +140,8 @@ local function bhv_attached_goomba_loop(obj)
     data.lastYaw = ball.oFaceAngleYaw
     data.lastPitch = ball.oFaceAnglePitch
 
-    local r = ball_surface_radius() + 24
+    -- Slightly embed the shell so it visually reads as "stuck" rather than floating.
+    local r = math.max(ball_surface_radius() - ATTACH_INSET, 12)
 
     obj.oPosX = ball.oPosX + data.dx * r
     obj.oPosY = ball.oPosY + data.dy * r
@@ -205,7 +217,7 @@ local function bhv_nexo_ball_init(obj)
 end
 
 local function absorb_nearby_goombas(obj)
-    local absorb_radius = ball_surface_radius() + 35
+    local absorb_radius = ball_surface_radius() + PICKUP_PADDING
 
     local goomba = obj_get_first_with_behavior_id(id_bhvGoomba)
     local safety = 0
@@ -290,7 +302,7 @@ local function update_ball_from_mario(m, ball)
 
     -- Keep the visual katamari close enough that it reads as being pushed,
     -- but cap the distance so very large visual growth does not break doors/corridors.
-    local offset = math.min(105 + ball_surface_radius() * 0.30, 180)
+    local offset = math.min(112 + ball_surface_radius() * 0.25, 155)
 
     local x = m.pos.x + sins(yaw) * offset
     local z = m.pos.z + coss(yaw) * offset
@@ -310,8 +322,21 @@ local function update_ball_from_mario(m, ball)
         local dist = math.sqrt(dx * dx + dz * dz)
 
         if dist > 0.05 then
-            ball.oFaceAngleYaw = yaw
-            ball.oFaceAnglePitch = ball.oFaceAnglePitch + dist * 420
+            -- Rolling angle is proportional to distance / radius.
+            -- A deliberate visual factor (<1) makes the motion readable instead
+            -- of the previous hyper-fast spin.
+            local radius = math.max(ball_surface_radius(), 24)
+            local roll_delta = (dist / radius) * ANGLE_UNITS_PER_RADIAN * ROLL_VISUAL_FACTOR
+
+            ball.oFaceAnglePitch = ball.oFaceAnglePitch + math.floor(roll_delta)
+
+            -- Turning is visual only and deliberately very slow. This prevents
+            -- attached objects from orbiting around the sphere when Mario turns.
+            ball.oFaceAngleYaw = approach_s16_symmetric(
+                ball.oFaceAngleYaw,
+                yaw,
+                YAW_VISUAL_STEP
+            )
         end
     else
         ball.oFaceAngleYaw = yaw
@@ -406,8 +431,8 @@ local function on_hud_render()
     djui_hud_print_text("CONTROL: Mario normal (puertas/escaleras/pendientes nativas)", x, y + 96, 0.22)
 
     djui_hud_set_color(180, 180, 180, 255)
-    djui_hud_print_text("La bola es visual + absorcion; NO bloquea superficies", x, y + 114, 0.22)
-    djui_hud_print_text("Modelo con puntas = provisional", x, y + 130, 0.22)
+    djui_hud_print_text("Goombas: incrustados en superficie | giro lento por radio real", x, y + 114, 0.22)
+    djui_hud_print_text("Navegacion A6.6 preservada | modelo con puntas = provisional", x, y + 130, 0.22)
 end
 
 hook_event(HOOK_MARIO_UPDATE, mario_update)
@@ -415,4 +440,4 @@ hook_event(HOOK_ON_LEVEL_INIT, on_level_init)
 hook_event(HOOK_ON_OBJECT_UNLOAD, on_object_unload)
 hook_event(HOOK_ON_HUD_RENDER, on_hud_render)
 
-print("[NEXO] A6.5 rejected; A6.6 Mario-authoritative navigation active")
+print("[NEXO] A6.6 PASS; A6.7 attachment radius + natural roll active")
