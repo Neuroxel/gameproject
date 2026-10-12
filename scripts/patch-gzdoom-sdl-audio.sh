@@ -11,7 +11,10 @@ if [ ! -d "$SRC/.git" ] || [ ! -d "$BUILD" ]; then
   exit 1
 fi
 
-echo "[NEXO] Reconfiguring existing SDL build to use macOS OpenAL at link time..."
+echo "[NEXO] Building project-local OpenAL Soft first..."
+bash "$ROOT/scripts/setup-openal-soft-macos.sh"
+
+echo "[NEXO] Reconfiguring GZDoom to dynamically load project-local OpenAL Soft..."
 cmake \
   -S "$SRC" \
   -B "$BUILD" \
@@ -20,17 +23,17 @@ cmake \
   -DCMAKE_PREFIX_PATH="$BUILD/zmusic" \
   -DPK3_QUIET_ZIPDIR=ON \
   -DOSX_COCOA_BACKEND=OFF \
-  -DDYN_OPENAL=OFF
+  -DDYN_OPENAL=ON
 
 CPU_COUNT="$(sysctl -n hw.logicalcpu 2>/dev/null || echo 4)"
 
-echo "[NEXO] Incremental audio rebuild..."
+echo "[NEXO] Incremental GZDoom audio rebuild..."
 cmake --build "$BUILD" --target gzdoom --parallel "$CPU_COUNT"
 
-echo "[NEXO] Restoring runtime dylibs after relink..."
+echo "[NEXO] Bundling runtime dylibs..."
 bash "$ROOT/scripts/repair-gzdoom-sdl-macos.sh"
 
 echo
-echo "[NEXO] Audio runtime patch complete."
+echo "[NEXO] SDL audio runtime patch complete."
 echo "Test:"
 echo "  python3 bridge/run_doom.py --runtime sdl"
