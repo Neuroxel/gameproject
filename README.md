@@ -434,3 +434,41 @@ python3 bridge/run_doom.py --runtime sdl --fullscreen
 
 Do not use `--fullscreen` as the baseline until the macOS first-present/focus
 regression is closed.
+
+
+### SDL black 3D view: automatic first-frame prime
+
+The remaining macOS 26 SDL issue is no longer fullscreen-specific: even the
+windowed-safe profile can start with a black 3D view, while automap renders and
+returning from automap fixes the view permanently.
+
+NEXO now automates that proven recovery immediately after map startup:
+
+```
+wait 8
+togglemap
+wait 2
+togglemap
+```
+
+Normal launch:
+
+```bash
+git pull
+python3 bridge/run_doom.py --runtime sdl
+```
+
+Disable only for diagnosis:
+
+```bash
+python3 bridge/run_doom.py --runtime sdl --no-render-prime
+```
+
+### Mario SFX launch-order correction
+
+NEXO identity CVARs are now queued before `+map`. This ensures
+`WorldLoaded` sees `nexo_handoff=true` and, when the local core WAV set is
+present, `nexo_mario_sfx=true`.
+
+The runtime log now prints the identity gate and a line when the portal cue is
+requested.
