@@ -28,3 +28,7 @@ recordings/
 .claude/settings.local.json
 .vscode/
 .idea/
+
+
+# User-local identity assets (never commit copyrighted/personal game assets)
+assets_local/
