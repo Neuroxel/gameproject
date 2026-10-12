@@ -1,49 +1,54 @@
 # NEXO Mashup Lab
 
-Laboratorio incremental de mashups sistémicos de videojuegos.
-
-## Estado
+## Estado actual
 
 - A0 — PASS
 - A1-A3.1 — PASS
-- A4 — PASS
-- A5 — PASS
-- **A6.1 — VALIDACIÓN ACTIVA: crecimiento visible y control**
-- A7+ — bloqueado hasta A6.1 PASS
+- A4-A5 — PASS
+- A6 — PASS: crecimiento visible
+- **A6.5 — VALIDACIÓN ACTIVA: control directo + Goombas pegados**
 
-## Prueba actual
+## Cambio importante
 
-La bola ahora parte considerablemente más grande y el HUD muestra:
+La bola ya no se controla empujándola físicamente con Mario.
 
-```
-GOOMBAS: 0 | OBJ: 1.80 | VIS: 1.80
-GFX: 1.80 | VEL: ...
-```
-
-Al absorber el primer Goomba:
+Ahora:
 
 ```
-OBJ: 2.35
-VIS: 1.80 -> ... -> 2.35
-GFX: debe acompañar a VIS
+stick analogico
+      ↓
+control directo de la bola
+      ↓
+Mario se mantiene detrás visualmente
 ```
 
-La esfera debería crecer de forma inequívoca mientras aparece:
+Esto está inspirado en la lógica de Katamari, pero simplificado a un stick relativo a cámara para hacerlo más accesible.
 
-`CRECIENDO! GOOMBA +1`
+### B
 
-La velocidad pasiva se redujo y el radio de empuje aumentó para hacerla más controlable.
+B activa un **DASH**.
 
-## Actualizar e instalar
+### Absorción
 
+Los Goombas ya no deberían simplemente desaparecer. El enemigo activo se reemplaza por un **cascarón visual pasivo** que queda pegado a la superficie y gira/se desplaza con la bola.
+
+## Prueba recomendada
+
+1. Actualiza e instala:
 ```bash
 cd ~/Documents/gameproject
 git pull
 bash scripts/install-macos.sh
 ```
+2. Reinicia SM64CoopDX.
+3. En Bob-omb Battlefield:
+   - mueve el stick sin intentar empujar manualmente la bola;
+   - cambia de dirección varias veces;
+   - prueba detenerte;
+   - pulsa B para dash;
+   - absorbe 2-4 Goombas;
+   - comprueba que quedan visibles pegados.
 
-Reinicia SM64CoopDX.
+Lo más importante de esta versión no es la física perfecta: es comprobar si **por fin se siente controlable y divertido**.
 
-Usa Bob-omb Battlefield y absorbe uno o más Goombas. Si el modelo no crece, anota especialmente los valores **VIS** y **GFX** del HUD; éstos permiten localizar exactamente dónde falla la escala.
-
-> No incluir ROMs ni assets comerciales en este repositorio.
+> El modelo con puntas sigue siendo provisional.
