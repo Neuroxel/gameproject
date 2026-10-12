@@ -61,3 +61,14 @@ Preferred runtime after local setup: GZDoom 4.14.2 SDL2 backend
 (`OSX_COCOA_BACKEND=OFF`).
 
 Do not waste time hard-coding Cocoa Joy indices.
+
+
+## SDL runtime packaging
+
+A completed macOS SDL build may link against `@rpath/libzmusic.1.dylib`
+without copying that versioned dylib into the app bundle.
+
+Canonical repair:
+`scripts/repair-gzdoom-sdl-macos.sh`.
+
+Do not trigger a full rebuild for this packaging-only failure.
