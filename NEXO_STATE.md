@@ -2,128 +2,167 @@
 
 Última actualización: 2026-10-12
 
-## Estado verificado
+## Estado previo confirmado
 
-- A0 — PASS.
-- A1-A3.1 — PASS.
-- A4-A5 — PASS.
-- A6 — PASS: crecimiento.
-- A6.5 — FAIL: bola como collider/autoridad física rompía navegación.
-- A6.6 — PASS: Mario vuelve a ser autoridad física; navegación y entrada a niveles funcionan.
-- A6.7 — PASS PARCIAL: velocidad de giro ya es mucho más natural y navegación sigue estable.
+- A0-A6 — PASS funcional.
+- A6.5 — FAIL: bola como autoridad física/collider rompía navegación.
+- A6.6 — PASS: Mario conserva física y navegación nativa.
+- A6.7 — PASS funcional: giro visual mucho más natural.
+- A6.8 / A7-A8 slice 1 — PASS lógico:
+  - crecimiento funciona;
+  - monedas se absorben;
+  - Goombas se absorben;
+  - Bob-ombs pequeños se bloquean y grandes se absorben;
+  - navegación se preserva.
+- Fallos visuales pendientes observados:
+  - attachments no forman un cuerpo rígido coherente respecto al escenario;
+  - algunos atraviesan suelo/paredes;
+  - esfera visual atraviesa geometría porque deliberadamente no tiene collider;
+  - crecimiento sin objetivo todavía no constituye un juego.
 
-## Evidencia nueva
+## Decisión de producto
 
-El usuario confirma:
+No se seguirá expandiendo el catálogo de enemigos hasta validar un loop jugable completo.
 
-- la bola ahora rueda mucho mejor y más lento;
-- la navegación sigue funcionando;
-- al crecer, el centro visual no sube y la esfera se hunde progresivamente en el piso;
-- los Goombas ya están más cerca, pero quedan demasiado embebidos en la esfera;
-- quiere preservar exactamente la física/navegación actual y avanzar A7-A8.
+El proyecto deja de ser "Katamari dentro de Mario" y pasa a probar una gramática propia:
 
-## A6.8 — ACTIVE: grounding visual y contacto de attachments
+**recolectar -> construir carga -> aumentar caos/capacidad -> regresar -> portal -> siguiente mundo**
 
-### Corrección vertical
+Katamari aporta carga/masa.
+Crazy Taxi aportará entrega/destino.
+Tony Hawk/Skate aportará estilo/riesgo.
+GTA aportará director de caos/wanted.
+DOOM será el primer runtime/mundo externo.
+Portal se incorpora conceptualmente como lenguaje de transición entre mundos.
 
-El modelo provisional tiene:
+## A8.1 — RIGID ATTACHMENTS
 
-- radio visible aproximado = `24 * visual_scale`;
-- desplazamiento interno Y de `-34` bajo `GEO_SCALE 0.25`, equivalente a ~`8.5 * visual_scale`.
+Se elimina el floor-clamp individual.
 
-La altura visual ahora se calcula:
+Regla nueva:
 
-`Y = floor + radio_visible + offset_centro_modelo`
+- cada objeto absorbido conserva un vector radial rígido;
+- sólo la rotación de la bola cambia ese vector;
+- si una pared/suelo queda entre el centro de la bola y el attachment, el attachment se oculta temporalmente con `GRAPH_RENDER_INVISIBLE`;
+- al emerger vuelve a mostrarse;
+- no se mueve arbitrariamente para "salvarlo" del suelo.
 
-Por tanto, al crecer, la bola también sube y su parte inferior permanece cerca del suelo en vez de hundirse.
+Esto preserva la ilusión de un cuerpo rígido.
 
-### Corrección de objetos pegados
+## A8.2 — COMPACT MODE
 
-Los objetos ya no se colocan dentro de la esfera.
+Se separan tres conceptos:
 
-Posición radial:
+1. **masa lógica**: progresión real y umbrales;
+2. **escala visual**: tamaño dibujado;
+3. **clearance**: espacio disponible alrededor.
 
-`radio_attachment = radio_bola + offset_por_tipo`
+La masa lógica nunca disminuye.
 
-Offsets iniciales:
+La escala visual usa raycasts `collision_find_surface_on_ray()` en 8 direcciones horizontales + techo.
 
-- moneda: +8;
-- Goomba: +28;
-- Bob-omb: +25.
+Si el escenario no admite el diámetro lógico:
 
-Además, los attachments del hemisferio inferior reciben un clamp visual contra el piso para evitar desaparecer profundamente bajo el terreno.
+- la bola entra en `COMPACT`;
+- se encoge visualmente de forma suave;
+- la progresión/masa se mantiene;
+- al volver a espacio abierto recupera su tamaño;
+- Mario sigue siendo la única autoridad física.
 
-## A7-A8 — ACTIVE: primera progresión por tamaños
+Esto evita volver a romper puertas y pasillos, pero hace visible que la bola está respondiendo al escenario.
 
-Se introduce un sistema de specs por categoría.
+## M1 — CARGA IMPOSIBLE
 
-### Tier 1 — disponible desde el inicio
+Misión limitada por ahora a Bob-omb Battlefield (`COURSE_BOB`).
 
-**Moneda**
-- threshold: 1.80
-- crecimiento: +0.08
-- attachment visual pasivo
+### Requisitos
 
-**Goomba**
-- threshold: 1.80
-- crecimiento: +0.35
-- attachment visual pasivo
+- 5 monedas;
+- 4 Goombas;
+- 2 Bob-ombs;
+- masa lógica >= 3.80.
 
-### Tier 2 — bloqueado inicialmente
+Cuando se cumplen:
 
-**Bob-omb**
-- threshold: 2.70
-- crecimiento: +0.50
-- attachment visual pasivo
+- estado pasa a `RETURN`;
+- aparece el **NEXO GATE** en el punto inicial;
+- el jugador debe volver al gate.
 
-Si la bola toca/se acerca a un objeto que supera su tier, el HUD muestra:
+El gate usa por ahora `E_MODEL_TRANSPARENT_STAR` como placeholder visual, no como diseño final.
 
-`DEMASIADO GRANDE: BOB-OMB requiere TAM 2.70`
+Al cruzarlo:
 
-No se elimina ni modifica el enemigo.
+- misión termina;
+- se calcula score + bonus de tiempo;
+- se guarda best score;
+- se escribe un estado persistente de handoff con destino `DOOM`.
 
-### HUD A8
+### Handoff persistente
 
-Muestra:
+Se guardan mediante `mod_storage_*`:
 
-- total de objetos;
-- tamaño;
-- contador de monedas;
-- contador de Goombas;
-- contador de Bob-ombs;
-- feedback de absorción;
-- feedback de bloqueo por tamaño.
+- handoff_pending;
+- handoff_source = SM64_BOB;
+- handoff_target = DOOM;
+- scale;
+- monedas;
+- Goombas;
+- Bob-ombs;
+- score.
 
-## Criterios de PASS A6.8 + A7/A8 slice 1
+Esto crea desde ahora un contrato de transición que luego podrá consumir un launcher/bridge externo.
 
-1. La bola no se hunde progresivamente al crecer.
-2. Su base visual permanece aproximadamente apoyada en el terreno.
-3. Goombas quedan pegados/sobre la superficie y no profundamente fusionados.
-4. Objetos en la parte inferior no desaparecen completamente bajo el piso.
-5. Navegación A6.6 no regresa.
-6. Monedas pueden absorberse desde el inicio.
-7. Goombas pueden absorberse desde el inicio.
-8. Bob-ombs no pueden absorberse bajo tamaño 2.70.
-9. El HUD avisa correctamente del bloqueo.
-10. Al alcanzar 2.70, Bob-ombs sí pueden absorberse y quedan visibles pegados.
-11. El crecimiento continúa suave.
-12. No hay crash ni soft-lock.
+## PORTAL FABRIC — dirección arquitectónica
 
-## Próximo slice A7-A8
+El "portal" no será sólo un efecto visual.
 
-Después de PASS:
+Será una interfaz estándar:
 
-- Koopa / shell;
-- un tier mayor;
-- objetos estáticos seleccionados;
-- puntuación y bonus por cadena;
-- feedback visual más rico;
-- evaluar reemplazo del modelo con puntas por esfera propia.
+```
+WORLD A
+  -> Universal Handoff State
+  -> Portal / Gate
+  -> World Adapter
+  -> WORLD B
+```
 
-## Restricción arquitectónica
+Primer destino: DOOM.
 
-Mario = física y navegación.
+Destinos futuros posibles:
+- Portal/Source;
+- ciudades/escenarios de otros juegos;
+- mundos 2D usando adapter 2.5D;
+- mundos reconstruidos/reimplementados.
 
-Bola = visual, absorción, crecimiento y attachments.
+El objetivo es que una misión pueda atravesar varios universos y que lo recogido/hecho en uno tenga consecuencias en el siguiente.
 
-No reintroducir collider rígido de la bola en niveles SM64.
+## Gate actual: M1 vertical slice
+
+Criterios de PASS:
+
+1. Bob-omb Battlefield inicia sin bola en el castillo/hub.
+2. Dentro de BOB, la bola aparece.
+3. Attachments se mantienen rígidos respecto a la bola.
+4. Attachments ocultos por suelo/pared reaparecen al emerger.
+5. No se dispersan ni se floor-clampean individualmente.
+6. Cerca de paredes/techos la bola entra en COMPACT.
+7. En espacio abierto recupera su escala lógica.
+8. La masa lógica no disminuye en compact mode.
+9. Monedas/Goombas/Bob-ombs siguen funcionando.
+10. HUD muestra objetivos claros.
+11. Al cumplir requisitos aparece NEXO Gate en el spawn.
+12. Volver y tocar el gate completa la misión.
+13. Se muestra score/best/time.
+14. No regresan bugs de navegación.
+
+## Próxima decisión
+
+Sólo si M1 es divertido/repetible:
+
+- A9 kill gate de diversión;
+- añadir scoring de estilo;
+- Crazy Taxi delivery layer;
+- prototipo DOOM;
+- bridge real de handoff.
+
+No agregar mundos por fama: cada sistema debe cumplir una función en el loop.
