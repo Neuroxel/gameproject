@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 """
-NEXO Portal Fabric bridge v0.1
+NEXO Portal Fabric bridge v0.2
 
-Reads SM64CoopDX mod-storage *.sav files on macOS, finds a pending NEXO handoff,
-and exports a neutral JSON manifest for the next world adapter.
+Reads SM64CoopDX mod-storage *.sav files on macOS and exports a neutral JSON
+manifest for the next world adapter.
+
+Robustness rules:
+- Prefer a true pending handoff (handoff_pending=1).
+- Recover the last complete handoff left by older buggy builds that cleared the
+  pending bit on level reload but kept all payload fields.
+- Never modify the SM64 save.
 
 No external packages required.
 """
@@ -13,15 +19,13 @@ from __future__ import annotations
 import argparse
 import configparser
 import json
-import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 DEFAULT_SAVE_DIR = Path.home() / "Library" / "Application Support" / "sm64coopdx" / "sav"
 DEFAULT_OUTPUT = Path(__file__).resolve().parent / "runtime" / "handoff.json"
 
-EXPECTED_KEYS = {
-    "handoff_pending",
+PAYLOAD_KEYS = {
     "handoff_source",
     "handoff_target",
     "handoff_scale",
@@ -30,6 +34,8 @@ EXPECTED_KEYS = {
     "handoff_bobombs",
     "handoff_score",
 }
+
+EXPECTED_KEYS = PAYLOAD_KEYS | {"handoff_pending"}
 
 
 def parse_save(path: Path) -> Optional[Dict[str, str]]:
@@ -43,32 +49,46 @@ def parse_save(path: Path) -> Optional[Dict[str, str]]:
     if "storage" not in cfg:
         return None
 
-    data = {k: v for k, v in cfg["storage"].items()}
-    return data
+    return {k: v for k, v in cfg["storage"].items()}
 
 
-def find_pending_handoff(save_dir: Path) -> Tuple[Path, Dict[str, str]]:
+def payload_is_complete(data: Dict[str, str]) -> bool:
+    return bool(data.get("handoff_target")) and all(k in data for k in PAYLOAD_KEYS)
+
+
+def find_handoff(save_dir: Path) -> Tuple[Path, Dict[str, str], bool]:
+    """Return (save_path, data, recovered_old_handoff)."""
     if not save_dir.exists():
         raise FileNotFoundError(f"SM64CoopDX sav directory not found: {save_dir}")
 
-    candidates = []
+    pending = []
+    recoverable = []
+
     for path in sorted(save_dir.rglob("*.sav")):
         data = parse_save(path)
-        if not data:
+        if not data or not payload_is_complete(data):
             continue
 
-        if data.get("handoff_pending") == "1" and data.get("handoff_target"):
-            score = sum(1 for k in EXPECTED_KEYS if k in data)
-            candidates.append((score, path, data))
+        completeness = sum(1 for k in EXPECTED_KEYS if k in data)
+        mtime = path.stat().st_mtime
 
-    if not candidates:
+        row = (completeness, mtime, path, data)
+        if data.get("handoff_pending") == "1":
+            pending.append(row)
+        else:
+            # Compatibility recovery for the M1 build that incorrectly reset
+            # handoff_pending on every level init while leaving the payload.
+            recoverable.append(row)
+
+    pool = pending if pending else recoverable
+    if not pool:
         raise RuntimeError(
-            "No pending NEXO handoff found. Complete M1 and cross the NEXO Gate first."
+            "No NEXO handoff payload found. Complete M1 and cross the NEXO Gate first."
         )
 
-    candidates.sort(key=lambda row: row[0], reverse=True)
-    _, path, data = candidates[0]
-    return path, data
+    pool.sort(key=lambda row: (row[0], row[1]), reverse=True)
+    _, _, path, data = pool[0]
+    return path, data, not bool(pending)
 
 
 def as_int(data: Dict[str, str], key: str, default: int = 0) -> int:
@@ -85,13 +105,18 @@ def as_float(data: Dict[str, str], key: str, default: float = 0.0) -> float:
         return default
 
 
-def build_manifest(source_file: Path, data: Dict[str, str]) -> Dict[str, Any]:
+def build_manifest(
+    source_file: Path,
+    data: Dict[str, str],
+    recovered: bool = False,
+) -> Dict[str, Any]:
     return {
         "schema": "nexo.portal.handoff.v1",
         "source": {
             "world": data.get("handoff_source", "UNKNOWN"),
             "adapter": "sm64coopdx",
             "storage_file": str(source_file),
+            "recovered_from_legacy_pending_reset": recovered,
         },
         "target": {
             "world": data.get("handoff_target", "UNKNOWN"),
@@ -110,7 +135,6 @@ def build_manifest(source_file: Path, data: Dict[str, str]) -> Dict[str, Any]:
             "bobombs": as_int(data, "handoff_bobombs"),
         },
         "derived": {
-            # First adapter semantics are intentionally simple and reversible.
             "explosive_resource": as_int(data, "handoff_bobombs"),
             "currency_resource": as_int(data, "handoff_coins"),
             "companion_tokens": as_int(data, "handoff_goombas"),
@@ -148,11 +172,19 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    source_file, data = find_pending_handoff(args.save_dir)
-    manifest = build_manifest(source_file, data)
+    source_file, data, recovered = find_handoff(args.save_dir)
+    manifest = build_manifest(source_file, data, recovered=recovered)
     write_manifest(manifest, args.output)
 
-    print(f"[NEXO] Pending handoff found: {source_file}")
+    if recovered:
+        print(
+            "[NEXO] WARNING: recovered completed handoff from an older build "
+            "that cleared handoff_pending."
+        )
+    else:
+        print(f"[NEXO] Pending handoff found: {source_file}")
+
+    print(f"[NEXO] Source save: {source_file}")
     print(f"[NEXO] Target world: {manifest['target']['world']}")
     print(f"[NEXO] Manifest written: {args.output}")
 
