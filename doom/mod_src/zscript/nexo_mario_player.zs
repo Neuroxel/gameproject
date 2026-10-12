@@ -15,10 +15,22 @@ class NexoMarioDoomPlayer : DoomPlayer
     int NexoSlideTicks;
     double NexoDiveAngle;
 
+    // First-person Mario embodiment state.
+    int NexoHandFireTics;
+    int NexoHandFireDuration;
+    bool NexoHandWasFiring;
+    bool NexoFistLeftPunch;
+    bool NexoNativeWeaponHidden;
+    int NexoHandMotionKind;
+    int NexoHandMotionTics;
+    int NexoHandMotionDuration;
+
     Default
     {
-        // Give this avatar its own player-sound namespace. This prevents
-        // destination marine vocals from leaking underneath Mario.
+        // Mario is a dedicated avatar, not a selectable DOOM skin. +NOSKIN is
+        // also required for sound identity: GZDoom otherwise lets the active
+        // skin override Player.SoundClass before resolving *usefail/*pain/etc.
+        +NOSKIN
         Player.SoundClass "nexo_mario";
     }
 
@@ -40,6 +52,42 @@ class NexoMarioDoomPlayer : DoomPlayer
         A_StartSound(soundName, CHAN_BODY);
     }
 
+    void NexoPlayJumpVoice(int jumpStage)
+    {
+        if (!NexoCVarBool('nexo_mario_sfx')) return;
+        if (player != null && (player.cheats & CF_PREDICTING)) return;
+
+        if (jumpStage <= 1)
+        {
+            // SM64 generic jump voice: random Yah / Wah / Hoo.
+            int roll = random[NexoMarioJumpVoice](0, 2);
+            if (roll == 0)
+                A_StartSound("nexo/mario/jump1_yah", CHAN_BODY);
+            else if (roll == 1)
+                A_StartSound("nexo/mario/jump1_wah", CHAN_BODY);
+            else
+                A_StartSound("nexo/mario/jump1_hoo", CHAN_BODY);
+            return;
+        }
+
+        if (jumpStage == 2)
+        {
+            // SM64 double jump has its own Hoo-hoo call.
+            A_StartSound("nexo/mario/jump2_hoohoo", CHAN_BODY);
+            return;
+        }
+
+        // SM64 triple jump selects from Yahoo / Waha / Yippee with a
+        // 60/20/20 distribution.
+        int tripleRoll = random[NexoMarioTripleVoice](0, 4);
+        if (tripleRoll <= 2)
+            A_StartSound("nexo/mario/jump3_yahoo", CHAN_BODY);
+        else if (tripleRoll == 3)
+            A_StartSound("nexo/mario/jump3_waha", CHAN_BODY);
+        else
+            A_StartSound("nexo/mario/jump3_yippee", CHAN_BODY);
+    }
+
     bool NexoCanStand()
     {
         if (Pos.Z + FullHeight > ceilingz) return false;
@@ -49,6 +97,24 @@ class NexoMarioDoomPlayer : DoomPlayer
         bool fits = TryMove(Pos.XY, false, NULL);
         Height = savedHeight;
         return fits;
+    }
+
+    double NexoCeilingSafeLaunch(double desiredSpeed)
+    {
+        // Maximize the Mario jump while keeping a small head-clearance reserve.
+        // GZDoom integrates Z first and then subtracts gravity each tic. For
+        // constant gravity, a launch speed v rises approximately
+        // v*(v+g)/(2g). Solve that inequality for the available headroom.
+        double headroom = CeilingZ - (Pos.Z + FullHeight) - 5.0;
+        if (headroom <= 0.0) return 0.0;
+
+        double grav = GetGravity();
+        if (grav <= 0.001) return desiredSpeed;
+
+        double safeSpeed =
+            (-grav + sqrt(grav * grav + 8.0 * grav * headroom)) * 0.5;
+
+        return min(desiredSpeed, max(0.0, safeSpeed));
     }
 
     double NexoInputAngle()
@@ -100,15 +166,60 @@ class NexoMarioDoomPlayer : DoomPlayer
         NexoWallKickCooldown = 0;
     }
 
+    void NexoSetHandMotion(int kind, int duration)
+    {
+        NexoHandMotionKind = kind;
+        NexoHandMotionDuration = max(1, duration);
+        NexoHandMotionTics = NexoHandMotionDuration;
+    }
+
+    void NexoRestoreNativeWeapon()
+    {
+        if (player == null || !NexoNativeWeaponHidden) return;
+
+        let weaponPsp = player.FindPSprite(PSP_WEAPON);
+        if (weaponPsp != null)
+        {
+            weaponPsp.Flags &= ~PSPF_FORCEALPHA;
+            weaponPsp.alpha = 1.0;
+        }
+        NexoNativeWeaponHidden = false;
+    }
+
+    void NexoSetNativeWeaponHidden(bool hidden)
+    {
+        if (player == null) return;
+
+        let weaponPsp = player.FindPSprite(PSP_WEAPON);
+        if (weaponPsp == null) return;
+
+        if (hidden)
+        {
+            weaponPsp.Flags |= PSPF_FORCEALPHA;
+            weaponPsp.alpha = 0.0;
+            NexoNativeWeaponHidden = true;
+        }
+        else
+        {
+            NexoRestoreNativeWeapon();
+        }
+    }
+
     void NexoClearHandLayers()
     {
         if (player == null) return;
+
+        NexoRestoreNativeWeapon();
 
         let back = player.FindPSprite(-2);
         if (back != null) back.SetState(null);
 
         let front = player.FindPSprite(2);
         if (front != null) front.SetState(null);
+
+        NexoHandFireTics = 0;
+        NexoHandFireDuration = 0;
+        NexoHandWasFiring = false;
     }
 
     void NexoSetHandLayers(State backState, State frontState)
@@ -147,6 +258,237 @@ class NexoMarioDoomPlayer : DoomPlayer
         NexoSetHandLayers(backState, frontState);
     }
 
+    bool NexoWeaponStateMatches(State current, Weapon weapon, Name label)
+    {
+        if (current == null || weapon == null) return false;
+        State baseState = weapon.FindState(label);
+        return baseState != null && InStateSequence(current, baseState);
+    }
+
+    bool NexoWeaponIsFiring(Weapon weapon)
+    {
+        if (player == null || weapon == null) return false;
+
+        let psp = player.FindPSprite(PSP_WEAPON);
+        if (psp == null || psp.CurState == null) return false;
+
+        return
+            NexoWeaponStateMatches(psp.CurState, weapon, 'Fire')
+            || NexoWeaponStateMatches(psp.CurState, weapon, 'Hold')
+            || NexoWeaponStateMatches(psp.CurState, weapon, 'AltFire')
+            || NexoWeaponStateMatches(psp.CurState, weapon, 'AltHold');
+    }
+
+    bool NexoContinuousWeapon(Weapon weapon)
+    {
+        return weapon is "Chainsaw"
+            || weapon is "Chaingun"
+            || weapon is "PlasmaRifle"
+            || weapon is "ID24Incinerator";
+    }
+
+    int NexoWeaponFireDuration(Weapon weapon)
+    {
+        if (weapon is "Fist") return 8;
+        if (weapon is "Chainsaw") return 3;
+        if (weapon is "Pistol") return 5;
+        if (weapon is "Shotgun") return 7;
+        if (weapon is "SuperShotgun") return 9;
+        if (weapon is "Chaingun") return 3;
+        if (weapon is "RocketLauncher") return 7;
+        if (weapon is "PlasmaRifle" || weapon is "ID24Incinerator") return 3;
+        if (weapon is "BFG9000" || weapon is "ID24CalamityBlade") return 9;
+        return 5;
+    }
+
+    void NexoAnimateFirstPersonHands(Weapon weapon)
+    {
+        if (player == null || weapon == null) return;
+
+        let back = player.FindPSprite(-2);
+        let front = player.FindPSprite(2);
+        if (back == null || front == null) return;
+
+        // Overlay sprites already inherit native weapon raise/lower position and
+        // bob through PSPF_ADDWEAPON/PSPF_ADDBOB. These values are therefore
+        // animation deltas only.
+        back.x = 0.0;
+        back.y = 0.0;
+        back.rotation = 0.0;
+        front.x = 0.0;
+        front.y = 0.0;
+        front.rotation = 0.0;
+
+        bool firing = NexoWeaponIsFiring(weapon);
+
+        if (firing && !NexoHandWasFiring)
+        {
+            NexoHandFireDuration = NexoWeaponFireDuration(weapon);
+            NexoHandFireTics = NexoHandFireDuration;
+
+            if (weapon is "Fist")
+            {
+                NexoFistLeftPunch = !NexoFistLeftPunch;
+            }
+        }
+        else if (firing
+            && NexoContinuousWeapon(weapon)
+            && NexoHandFireTics <= 0)
+        {
+            NexoHandFireDuration = NexoWeaponFireDuration(weapon);
+            NexoHandFireTics = NexoHandFireDuration;
+        }
+
+        if (NexoHandFireTics > 0 && NexoHandFireDuration > 0)
+        {
+            double half = max(1.0, NexoHandFireDuration * 0.5);
+            double pulse =
+                1.0 - abs(NexoHandFireTics - half) / half;
+            pulse = clamp(pulse, 0.0, 1.0);
+
+            if (weapon is "Fist")
+            {
+                // Two Mario fists remain low in the ready pose. Each attack
+                // alternates which glove drives toward the center/up.
+                if (NexoFistLeftPunch)
+                {
+                    back.x = 23.0 * pulse;
+                    back.y = -19.0 * pulse;
+                    back.rotation = -10.0 * pulse;
+                    front.x = 2.0 * pulse;
+                    front.y = 2.0 * pulse;
+                }
+                else
+                {
+                    front.x = -23.0 * pulse;
+                    front.y = -19.0 * pulse;
+                    front.rotation = 10.0 * pulse;
+                    back.x = -2.0 * pulse;
+                    back.y = 2.0 * pulse;
+                }
+            }
+            else if (weapon is "Chainsaw")
+            {
+                double jitter = ((Level.maptime & 1) != 0) ? 1.6 : -1.6;
+                back.x += jitter * pulse;
+                front.x -= jitter * pulse;
+                back.y -= 1.5 * pulse;
+                front.y += 1.0 * pulse;
+            }
+            else if (weapon is "Pistol")
+            {
+                back.y -= 2.0 * pulse;
+                front.y -= 5.0 * pulse;
+                front.rotation = 3.0 * pulse;
+            }
+            else if (weapon is "Shotgun")
+            {
+                back.y -= 4.0 * pulse;
+                front.y -= 7.0 * pulse;
+                back.rotation = -2.0 * pulse;
+                front.rotation = 3.5 * pulse;
+            }
+            else if (weapon is "SuperShotgun")
+            {
+                back.y -= 5.0 * pulse;
+                front.y -= 8.5 * pulse;
+                back.rotation = -3.0 * pulse;
+                front.rotation = 4.0 * pulse;
+            }
+            else if (weapon is "Chaingun")
+            {
+                double jitter = ((Level.maptime & 1) != 0) ? 1.8 : -1.8;
+                back.x += jitter * pulse;
+                front.x -= jitter * pulse;
+                back.y -= 2.0 * pulse;
+                front.y -= 3.0 * pulse;
+            }
+            else if (weapon is "RocketLauncher")
+            {
+                back.y += 3.5 * pulse;
+                front.y += 5.0 * pulse;
+                back.rotation = 2.0 * pulse;
+                front.rotation = -3.0 * pulse;
+            }
+            else if (weapon is "PlasmaRifle" || weapon is "ID24Incinerator")
+            {
+                double jitter = ((Level.maptime & 1) != 0) ? 1.2 : -1.2;
+                back.x += jitter * pulse;
+                front.x -= jitter * pulse;
+                back.y -= 2.0 * pulse;
+                front.y -= 3.0 * pulse;
+            }
+            else if (weapon is "BFG9000" || weapon is "ID24CalamityBlade")
+            {
+                back.y += 4.0 * pulse;
+                front.y += 5.5 * pulse;
+                back.rotation = 2.0 * pulse;
+                front.rotation = -2.0 * pulse;
+            }
+        }
+
+        // Movement presentation: convey Mario's traversal through hands/weapon
+        // without rolling the first-person camera through a somersault.
+        if (NexoHandMotionTics > 0 && NexoHandMotionDuration > 0)
+        {
+            double motion =
+                NexoHandMotionTics / double(NexoHandMotionDuration);
+
+            if (NexoHandMotionKind == 1)       // backflip
+            {
+                back.y -= 5.0 * motion;
+                front.y -= 5.0 * motion;
+                back.rotation -= 5.0 * motion;
+                front.rotation += 5.0 * motion;
+            }
+            else if (NexoHandMotionKind == 2)  // side flip
+            {
+                back.x += 4.0 * motion;
+                front.x += 4.0 * motion;
+                back.rotation -= 3.0 * motion;
+                front.rotation -= 3.0 * motion;
+            }
+            else if (NexoHandMotionKind == 3)  // wall kick
+            {
+                back.x -= 5.0 * motion;
+                front.x -= 5.0 * motion;
+                back.y -= 2.0 * motion;
+                front.y -= 2.0 * motion;
+            }
+            else if (NexoHandMotionKind == 4)  // dive
+            {
+                back.y += 7.0 * motion;
+                front.y += 7.0 * motion;
+                back.rotation -= 2.0 * motion;
+                front.rotation += 2.0 * motion;
+            }
+            else if (NexoHandMotionKind == 5)  // stomp
+            {
+                back.y -= 7.0 * motion;
+                front.y -= 7.0 * motion;
+            }
+            else if (NexoHandMotionKind == 6)  // long jump
+            {
+                back.y += 3.0 * motion;
+                front.y += 3.0 * motion;
+            }
+
+            NexoHandMotionTics--;
+            if (NexoHandMotionTics <= 0)
+            {
+                NexoHandMotionKind = 0;
+                NexoHandMotionDuration = 0;
+            }
+        }
+
+        if (NexoHandFireTics > 0)
+        {
+            NexoHandFireTics--;
+        }
+
+        NexoHandWasFiring = firing;
+    }
+
     void NexoUpdateFirstPersonHands()
     {
         if (player == null
@@ -173,68 +515,81 @@ class NexoMarioDoomPlayer : DoomPlayer
                 handStates.FindState('FistBack'),
                 handStates.FindState('FistFront')
             );
-        }
-        else if (weapon is "Chainsaw")
-        {
-            NexoUseHandPose(
-                handStates.FindState('ChainsawBack'),
-                handStates.FindState('ChainsawFront')
-            );
-        }
-        else if (weapon is "Pistol")
-        {
-            NexoUseHandPose(
-                handStates.FindState('PistolBack'),
-                handStates.FindState('PistolFront')
-            );
-        }
-        else if (weapon is "SuperShotgun")
-        {
-            NexoUseHandPose(
-                handStates.FindState('SuperShotgunBack'),
-                handStates.FindState('SuperShotgunFront')
-            );
-        }
-        else if (weapon is "Shotgun")
-        {
-            NexoUseHandPose(
-                handStates.FindState('ShotgunBack'),
-                handStates.FindState('ShotgunFront')
-            );
-        }
-        else if (weapon is "Chaingun")
-        {
-            NexoUseHandPose(
-                handStates.FindState('ChaingunBack'),
-                handStates.FindState('ChaingunFront')
-            );
-        }
-        else if (weapon is "RocketLauncher")
-        {
-            NexoUseHandPose(
-                handStates.FindState('RocketBack'),
-                handStates.FindState('RocketFront')
-            );
-        }
-        else if (weapon is "PlasmaRifle" || weapon is "ID24Incinerator")
-        {
-            NexoUseHandPose(
-                handStates.FindState('PlasmaBack'),
-                handStates.FindState('PlasmaFront')
-            );
-        }
-        else if (weapon is "BFG9000" || weapon is "ID24CalamityBlade")
-        {
-            NexoUseHandPose(
-                handStates.FindState('BFGBack'),
-                handStates.FindState('BFGFront')
-            );
+
+            // The native Fist sprite contains the destination marine's brown
+            // hand. Hide that presentation layer while keeping all native Fist
+            // mechanics/damage/state logic alive underneath.
+            NexoSetNativeWeaponHidden(true);
         }
         else
         {
-            // Unknown/mod weapon: never paste a misleading generic grip.
-            NexoClearHandLayers();
+            NexoSetNativeWeaponHidden(false);
+
+            if (weapon is "Chainsaw")
+            {
+                NexoUseHandPose(
+                    handStates.FindState('ChainsawBack'),
+                    handStates.FindState('ChainsawFront')
+                );
+            }
+            else if (weapon is "Pistol")
+            {
+                NexoUseHandPose(
+                    handStates.FindState('PistolBack'),
+                    handStates.FindState('PistolFront')
+                );
+            }
+            else if (weapon is "SuperShotgun")
+            {
+                NexoUseHandPose(
+                    handStates.FindState('SuperShotgunBack'),
+                    handStates.FindState('SuperShotgunFront')
+                );
+            }
+            else if (weapon is "Shotgun")
+            {
+                NexoUseHandPose(
+                    handStates.FindState('ShotgunBack'),
+                    handStates.FindState('ShotgunFront')
+                );
+            }
+            else if (weapon is "Chaingun")
+            {
+                NexoUseHandPose(
+                    handStates.FindState('ChaingunBack'),
+                    handStates.FindState('ChaingunFront')
+                );
+            }
+            else if (weapon is "RocketLauncher")
+            {
+                NexoUseHandPose(
+                    handStates.FindState('RocketBack'),
+                    handStates.FindState('RocketFront')
+                );
+            }
+            else if (weapon is "PlasmaRifle" || weapon is "ID24Incinerator")
+            {
+                NexoUseHandPose(
+                    handStates.FindState('PlasmaBack'),
+                    handStates.FindState('PlasmaFront')
+                );
+            }
+            else if (weapon is "BFG9000" || weapon is "ID24CalamityBlade")
+            {
+                NexoUseHandPose(
+                    handStates.FindState('BFGBack'),
+                    handStates.FindState('BFGFront')
+                );
+            }
+            else
+            {
+                // Unknown/mod weapon: never paste a misleading generic grip.
+                NexoClearHandLayers();
+                return;
+            }
         }
+
+        NexoAnimateFirstPersonHands(weapon);
     }
 
     override void BeginPlay()
@@ -252,6 +607,15 @@ class NexoMarioDoomPlayer : DoomPlayer
         NexoDiveActive = false;
         NexoSlideTicks = 0;
         NexoDiveAngle = Angle;
+
+        NexoHandFireTics = 0;
+        NexoHandFireDuration = 0;
+        NexoHandWasFiring = false;
+        NexoFistLeftPunch = false;
+        NexoNativeWeaponHidden = false;
+        NexoHandMotionKind = 0;
+        NexoHandMotionTics = 0;
+        NexoHandMotionDuration = 0;
     }
 
     override void PlayerThink()
@@ -275,9 +639,9 @@ class NexoMarioDoomPlayer : DoomPlayer
         {
             NexoLastLandTick = Level.maptime;
 
-            // DOOM normally holds jumpTics for >18 tics after a jump. Mario's
-            // chained jumps require a fresh button press, so the long engine
-            // cooldown is unnecessary once landing is confirmed.
+            // DOOM normally holds jumpTics after a jump. Mario's chained jumps
+            // require a fresh button press, so clear the inherited cooldown as
+            // soon as a real landing is confirmed.
             player.jumpTics = 0;
 
             if (NexoDiveActive)
@@ -293,7 +657,7 @@ class NexoMarioDoomPlayer : DoomPlayer
         if (onGroundNow
             && NexoJumpChain > 0
             && NexoLastLandTick > -100000
-            && Level.maptime - NexoLastLandTick > 24)
+            && Level.maptime - NexoLastLandTick > 28)
         {
             NexoJumpChain = 0;
         }
@@ -350,7 +714,8 @@ class NexoMarioDoomPlayer : DoomPlayer
             p.cmd.forwardmove >= 0x1800 && planarSpeed2 >= 4.0;
 
         // WALL KICK / WALL JUMP
-        // Fresh Jump while airborne and actually contacting/approaching a wall.
+        // SM64 uses ~62 vs a normal-jump base of ~42: preserve that strong
+        // distinction, but cap it to the current ceiling headroom.
         if (!p.onground
             && jumpRising
             && waterlevel < 2
@@ -361,10 +726,11 @@ class NexoMarioDoomPlayer : DoomPlayer
             if (NexoWallAhead(wallAngle))
             {
                 double baseJump = JumpZ * 35 / TICRATE;
+                double target = NexoCeilingSafeLaunch(baseJump * (62.0 / 42.0));
 
                 Vel.X *= 0.25;
                 Vel.Y *= 0.25;
-                Vel.Z = max(Vel.Z, baseJump * 1.12);
+                Vel.Z = max(Vel.Z, target);
                 Thrust(6.5, wallAngle + 180.0);
 
                 NexoJumpChain = 0;
@@ -372,6 +738,7 @@ class NexoMarioDoomPlayer : DoomPlayer
                 NexoDiveActive = false;
                 NexoSlideTicks = 0;
                 NexoWallKickCooldown = 9;
+                NexoSetHandMotion(3, 8);
 
                 NexoPlayMovementSound("nexo/mario/wallkick");
                 return;
@@ -392,17 +759,20 @@ class NexoMarioDoomPlayer : DoomPlayer
 
             if (forwardRun)
             {
-                Vel.Z += baseJump * 0.78;
+                // SM64 long jump vertical ratio is ~30/42, with horizontal
+                // velocity doing most of the work.
+                Vel.Z += NexoCeilingSafeLaunch(baseJump * (30.0 / 42.0));
                 Thrust(7.5, Angle);
+                NexoSetHandMotion(6, 9);
                 NexoPlayMovementSound("nexo/mario/longjump");
             }
             else
             {
-                // SM64's backflip is distinctly higher. Do not rotate the
-                // first-person camera 360°; visual rotation belongs to the
-                // future hands/body animation layer.
-                Vel.Z += baseJump * 1.35;
+                // SM64 backflip ratio is ~62/42. No literal 360° FPS camera
+                // rotation: hands/body communicate the somersault instead.
+                Vel.Z += NexoCeilingSafeLaunch(baseJump * (62.0 / 42.0));
                 Thrust(5.0, Angle + 180.0);
+                NexoSetHandMotion(1, 12);
                 NexoPlayMovementSound("nexo/mario/backflip");
             }
 
@@ -413,7 +783,7 @@ class NexoMarioDoomPlayer : DoomPlayer
         }
 
         // SIDE FLIP / TURNAROUND JUMP
-        // A strong direction reversal immediately followed by a fresh jump.
+        // SM64 uses the same ~62/42 vertical family as the backflip.
         if (dryGroundJump
             && jumpRising
             && !crouched
@@ -424,7 +794,7 @@ class NexoMarioDoomPlayer : DoomPlayer
 
             Vel.X *= 0.45;
             Vel.Y *= 0.45;
-            Vel.Z += baseJump * 1.22;
+            Vel.Z += NexoCeilingSafeLaunch(baseJump * (62.0 / 42.0));
             Thrust(5.5, jumpAngle);
 
             bOnMobj = false;
@@ -435,6 +805,7 @@ class NexoMarioDoomPlayer : DoomPlayer
             NexoStompActive = false;
             NexoDiveActive = false;
             NexoSlideTicks = 0;
+            NexoSetHandMotion(2, 10);
 
             NexoPlayMovementSound("nexo/mario/sideflip");
             return;
@@ -455,21 +826,27 @@ class NexoMarioDoomPlayer : DoomPlayer
                 && NexoJumpChain > 0
                 && NexoJumpChain < 3
                 && NexoLastLandTick > -100000
-                && Level.maptime - NexoLastLandTick <= 24)
+                && Level.maptime - NexoLastLandTick <= 28)
             {
                 nextJump = NexoJumpChain + 1;
             }
 
-            double factor = 1.0;
-            if (nextJump == 2) factor = 1.10;
-            else if (nextJump == 3) factor = 1.24;
+            // SM64 source values are approximately:
+            // normal 42, double 52, triple 69.
+            // Use those velocity ratios, then dynamically clamp to the actual
+            // current ceiling instead of globally flattening Mario's jumps.
+            double ratio = 1.0;
+            if (nextJump == 2) ratio = 52.0 / 42.0;
+            else if (nextJump == 3) ratio = 69.0 / 42.0;
 
             double savedJumpZ = JumpZ;
             double oldVelZ = Vel.Z;
-            JumpZ = savedJumpZ * factor;
+            double baseJump = savedJumpZ * 35 / TICRATE;
+            double desiredLaunch = baseJump * ratio;
+            double safeLaunch = NexoCeilingSafeLaunch(desiredLaunch);
 
+            JumpZ = safeLaunch * TICRATE / 35.0;
             Super.CheckJump();
-
             JumpZ = savedJumpZ;
 
             bool jumped = p.jumpTics == -1 && Vel.Z > oldVelZ;
@@ -481,12 +858,7 @@ class NexoMarioDoomPlayer : DoomPlayer
                 NexoDiveActive = false;
                 NexoSlideTicks = 0;
 
-                if (nextJump == 3)
-                    NexoPlayMovementSound("nexo/mario/jump3");
-                else if (nextJump == 2)
-                    NexoPlayMovementSound("nexo/mario/jump2");
-                else
-                    NexoPlayMovementSound("nexo/mario/jump");
+                NexoPlayJumpVoice(nextJump);
             }
             return;
         }
@@ -531,6 +903,7 @@ class NexoMarioDoomPlayer : DoomPlayer
                     NexoDiveActive = true;
                     NexoStompActive = false;
                     NexoSlideTicks = 0;
+                    NexoSetHandMotion(4, 10);
 
                     NexoPlayMovementSound("nexo/mario/dive");
                     return;
@@ -547,6 +920,7 @@ class NexoMarioDoomPlayer : DoomPlayer
                     NexoStompActive = true;
                     NexoDiveActive = false;
                     NexoSlideTicks = 0;
+                    NexoSetHandMotion(5, 8);
 
                     NexoPlayMovementSound("nexo/mario/stomp");
                     return;
