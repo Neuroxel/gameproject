@@ -11,51 +11,39 @@ Estrategia: mod Lua, sin recompilar el juego y sin reverse engineering innecesar
 
 ## Estado
 
-- **A0 — PASS:** pipeline ChatGPT/GitHub -> Mac -> SM64CoopDX validado.
-- **A1-A3.1 — VALIDACIÓN ACTIVA:** modelo 3D provisional, física básica y golpe B diferenciado.
-- **A4-A6 — BLOQUEADO** hasta validar A1-A3.
+- **A0 — PASS**
+- **A1-A3.1 — PASS**
+- **A4-A6 — VALIDACIÓN ACTIVA:** detectar Goombas, absorberlos y hacer crecer realmente la bola.
+- **A7+ — BLOQUEADO** hasta validar A4-A6.
 
 El estado canónico detallado vive en `NEXO_STATE.md`.
 
 ## Qué debería verse ahora
 
-Al cargar el mod aparece el HUD:
-
 ```
 NEXO MASHUP LAB
-A1-A3 BALL TEST
-BOLA: ACTIVA
-DPAD ABAJO: reiniciar bola
+A4-A6 KATAMARI TEST
+GOOMBAS: 0 | TAM: 1.15x | VEL: ...
 ```
 
-Un objeto esférico 3D provisional (Spiny Ball) debería aparecer automáticamente frente a Mario. Se usa temporalmente para validar volumen, rotación y física antes de crear nuestro modelo propio.
+La bola sigue usando el modelo 3D provisional de Spiny Ball.
 
-Prueba:
+## Prueba recomendada
 
-1. caminar/correr contra la bola;
-2. pulsar B cerca de ella y comprobar que aparezca `GOLPE FUERTE!` y salga mucho más rápido;
-3. dejarla rodar por una pendiente;
-4. pulsar D-Pad abajo para reposicionarla.
+Usa **Bob-omb Battlefield**, donde hay Goombas accesibles.
 
-## Estructura inicial
-
-- `sm64coopdx/NexoMashupA/` — mod instalable en SM64CoopDX.
-- `NEXO_STATE.md` — estado canónico, gates y decisiones.
-- `AGENTS.md` — instrucciones generales para agentes locales.
-- `CLAUDE.md` — instrucciones específicas para Claude Code.
-- `.gitignore` — evita subir ROMs y contenido de juego.
-
-## Principios
-
-1. Validar diversión antes de aumentar complejidad.
-2. Un gate funcional por vez.
-3. Mantener el repositorio libre de ROMs, dumps y assets propietarios.
-4. No introducir Ghidra, Godot, RenderDoc u otros stacks hasta que exista una necesidad técnica concreta.
-5. Cada cambio debe ser pequeño, reversible y verificable.
+1. Empuja la bola hacia un Goomba.
+2. Al tocarlo/dejarlo entrar en el radio de la bola:
+   - el Goomba debe desaparecer;
+   - debe sonar feedback;
+   - debe aparecer `GOOMBA ABSORBIDO +1`;
+   - `GOOMBAS` debe subir;
+   - `TAM` debe aumentar;
+   - la bola debe hacerse físicamente más grande.
+3. Absorbe varios Goombas y comprueba que sigue siendo jugable.
+4. Pulsa D-Pad abajo para reiniciar tamaño/contador y reposicionar la bola.
 
 ## Actualizar e instalar en macOS
-
-Desde el clon local:
 
 ```bash
 cd ~/Documents/gameproject
@@ -63,10 +51,14 @@ git pull
 bash scripts/install-macos.sh
 ```
 
-El mod queda instalado en:
+Después reinicia SM64CoopDX y habilita el mod si fuera necesario.
 
-```
-~/Library/Application Support/sm64coopdx/mods/NexoMashupA/
-```
+## Principios
+
+1. Validar diversión antes de aumentar complejidad.
+2. Un gate funcional por vez.
+3. Mantener el repositorio libre de ROMs, dumps y assets propietarios.
+4. No introducir tooling pesado hasta que exista una necesidad técnica concreta.
+5. Cada cambio debe ser pequeño, reversible y verificable.
 
 > Este repositorio no incluye ni debe incluir ROMs, ejecutables comerciales ni assets protegidos de los juegos.
