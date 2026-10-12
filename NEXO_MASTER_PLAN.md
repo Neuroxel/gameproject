@@ -233,3 +233,53 @@ After material changes:
 - do not make the user replay a previously closed gate unless a new change may
   have regressed it;
 - prefer deterministic diagnostics over repeated manual guessing.
+
+
+## Runtime-v2 gate sequence — 2026-10-12
+
+Current near-term order is now more granular:
+
+1. **AUDIO-ID-2 final semantic retest**
+   - A/use must contain no destination-marine complaint;
+   - pain/death remain Mario;
+   - jump grammar uses the canonical SM64 pools;
+   - DMX8 quality debt remains separable from functionality.
+2. **MARIOMOVE-2 runtime-v2**
+   - validate normal/double/triple differentiation under tall and ordinary
+     ceilings;
+   - validate backflip, side flip, wall kick, long jump, dive/slide and stomp;
+   - ceiling governor must prevent routine head collisions.
+3. **FP-MARIO-1 runtime-v2**
+   - correct glove scale/placement;
+   - Fist must no longer expose the native brown fist;
+   - Fire/Hold recoil must be visible;
+   - native destination weapons remain mechanically intact.
+4. **FP-MARIO-2 art/state pass**
+   - state-specific Ready/Fire/Reload/Raise/Lower grip art where useful;
+   - local masks/reconstruction for baked destination hands that still leak;
+   - better cuffs/forearms and movement-specific poses.
+5. **MARIOMOVE-3**
+   - ground crouch/crawl polish;
+   - slope/slide behavior;
+   - ledge grab/pull-up;
+   - hanging/climbing;
+   - poles/swimming only where destination geometry can support them cleanly.
+6. **MARIOMOVE-4 compatibility evaluation**
+   - contextual punch/kick/aerial/stomp damage;
+   - dive collision;
+   - pickup/carry/throw;
+   - never steal the destination world's dominant combat grammar.
+7. **Mario full body**
+   - local real Mario body for portals, death, mirrors and external cameras.
+8. **Perspective transition grammar**
+   - visible 3P -> avatar push-in -> portal -> 1P;
+   - reverse pull-out on exit.
+9. **HUD/avatar residue audit**
+   - identify avatar-specific Doomguy residue (for example face portrait) versus
+     destination UI that should remain native;
+   - replace only identity-conflicting elements.
+10. **NEXO_HUB/router stabilization**.
+11. **Source/Portal adapter**.
+12. **M3 only when Source/Portal adapter is genuinely ready**.
+
+Do not skip from the current DOOM embodiment work directly to M3.
