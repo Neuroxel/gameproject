@@ -89,3 +89,19 @@ crashes at Default shader compilation.
 GZDoom g4.14.2 raw SDL axes are not reliable on this macOS controller.
 Use `scripts/patch-gzdoom-sdl-gamecontroller.sh` to backport standardized
 SDL_GameController axes/buttons. Do not return to manual raw-axis remapping.
+
+
+## Identity/perspective baseline
+
+Read PERSPECTIVE_NEXO.md and AUDIO_IDENTITY_NEXO.md.
+
+Invariant:
+- Mario identity persists across worlds;
+- perspective is destination-native;
+- do not show Doomguy as a placeholder and call it Mario;
+- Nintendo voice/SFX assets remain local-only and gitignored.
+
+CONTROL-1 is practical PASS with the SDL GameController backport.
+
+For the SDL audio runtime use DYN_OPENAL=OFF; existing builds can be repaired via
+scripts/patch-gzdoom-sdl-audio.sh.
