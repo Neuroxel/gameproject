@@ -899,9 +899,18 @@ class NexoMarioDoomPlayer : DoomPlayer
 
             JumpZ = safeLaunch * TICRATE / 35.0;
             Super.CheckJump();
-            JumpZ = savedJumpZ;
 
             bool jumped = p.jumpTics == -1 && Vel.Z > oldVelZ;
+            if (jumped && Vel.Z > safeLaunch)
+            {
+                // Base GZDoom adds jump velocity to any existing vertical
+                // platform motion. Enforce the ceiling governor on the final
+                // launch velocity as well.
+                Vel.Z = safeLaunch;
+            }
+
+            JumpZ = savedJumpZ;
+
             if (jumped)
             {
                 NexoJumpChain = nextJump;
