@@ -50,3 +50,14 @@ Pinned runtime: GZDoom 4.14.2.
 
 For case-insensitive String comparison in ZScript use `~==`.
 Do not use `String.CompareNoCase()` for the current runtime.
+
+
+## macOS controller blocker
+
+Official GZDoom 4.14.2 Cocoa backend is rejected for NEXO controller baseline on
+macOS 26 due to upstream issue #3142.
+
+Preferred runtime after local setup: GZDoom 4.14.2 SDL2 backend
+(`OSX_COCOA_BACKEND=OFF`).
+
+Do not waste time hard-coding Cocoa Joy indices.
