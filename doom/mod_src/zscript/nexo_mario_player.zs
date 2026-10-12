@@ -1,10 +1,26 @@
 class NexoMarioDoomPlayer : DoomPlayer
 {
-    // MARIOMOVE-1 state. This is avatar state, not M2 mission state.
+    // Avatar movement state. This is world-independent Mario identity state,
+    // not M2 mission state.
     int NexoJumpChain;
     int NexoLastLandTick;
     bool NexoWasOnGround;
     bool NexoStompActive;
+
+    // Directional traversal state.
+    int NexoPrevForwardMove;
+    int NexoPrevSideMove;
+    int NexoWallKickCooldown;
+    bool NexoDiveActive;
+    int NexoSlideTicks;
+    double NexoDiveAngle;
+
+    Default
+    {
+        // Give this avatar its own player-sound namespace. This prevents
+        // destination marine vocals from leaking underneath Mario.
+        Player.SoundClass "nexo_mario";
+    }
 
     bool NexoCVarBool(Name key)
     {
@@ -35,6 +51,71 @@ class NexoMarioDoomPlayer : DoomPlayer
         return fits;
     }
 
+    double NexoInputAngle()
+    {
+        if (player == null) return Angle;
+
+        Vector2 input =
+            AngleToVector(Angle, player.cmd.forwardmove / 32768.0)
+            + AngleToVector(Angle + 90.0, player.cmd.sidemove / 32768.0);
+
+        if (input.Length() < 0.05) return Angle;
+        return VectorAngle(input.X, input.Y);
+    }
+
+    bool NexoDirectionReversed()
+    {
+        if (player == null) return false;
+
+        int f = player.cmd.forwardmove;
+        int s = player.cmd.sidemove;
+        int threshold = 0x1800;
+
+        bool forwardReverse =
+            ((f > threshold && NexoPrevForwardMove < -threshold)
+            || (f < -threshold && NexoPrevForwardMove > threshold));
+
+        bool sideReverse =
+            ((s > threshold && NexoPrevSideMove < -threshold)
+            || (s < -threshold && NexoPrevSideMove > threshold));
+
+        return forwardReverse || sideReverse;
+    }
+
+    bool NexoWallAhead(out double wallAngle)
+    {
+        wallAngle = NexoInputAngle();
+
+        // MovePlayer runs before CheckJump. MovementBlockingLine therefore
+        // captures a wall that actually stopped this tick's XY movement.
+        if (MovementBlockingLine != null)
+        {
+            return true;
+        }
+
+        // A short mid-body trace also catches a near wall when sliding along it.
+        FLineTraceData trace;
+        bool hit = LineTrace(
+            wallAngle,
+            Radius + 12.0,
+            0.0,
+            0,
+            Height * 0.5,
+            0.0,
+            0.0,
+            trace
+        );
+
+        return hit && trace.HitType == TRACE_HitWall;
+    }
+
+    void NexoResetAirActions()
+    {
+        NexoStompActive = false;
+        NexoDiveActive = false;
+        NexoWallKickCooldown = 0;
+    }
+
     override void BeginPlay()
     {
         Super.BeginPlay();
@@ -43,6 +124,13 @@ class NexoMarioDoomPlayer : DoomPlayer
         NexoLastLandTick = -100000;
         NexoWasOnGround = true;
         NexoStompActive = false;
+
+        NexoPrevForwardMove = 0;
+        NexoPrevSideMove = 0;
+        NexoWallKickCooldown = 0;
+        NexoDiveActive = false;
+        NexoSlideTicks = 0;
+        NexoDiveAngle = Angle;
     }
 
     override void PlayerThink()
@@ -53,24 +141,53 @@ class NexoMarioDoomPlayer : DoomPlayer
 
         bool onGroundNow = player.onground;
 
+        if (NexoWallKickCooldown > 0)
+        {
+            NexoWallKickCooldown--;
+        }
+
         if (onGroundNow && !NexoWasOnGround)
         {
             NexoLastLandTick = Level.maptime;
-            NexoStompActive = false;
+
+            // DOOM normally holds jumpTics for >18 tics after a jump. Mario's
+            // chained jumps require a fresh button press, so the long engine
+            // cooldown is unnecessary once landing is confirmed.
+            player.jumpTics = 0;
+
+            if (NexoDiveActive)
+            {
+                NexoSlideTicks = 14;
+            }
+
+            NexoResetAirActions();
         }
 
-        // A triple-jump chain must be continued promptly after landing.
-        // Staying grounded breaks the chain and prevents infinite bunny-hop
-        // escalation.
+        // Mario triple-jump timing: enough time to release and freshly press
+        // Jump after landing, but standing around cancels the chain.
         if (onGroundNow
             && NexoJumpChain > 0
             && NexoLastLandTick > -100000
-            && Level.maptime - NexoLastLandTick > 14)
+            && Level.maptime - NexoLastLandTick > 24)
         {
             NexoJumpChain = 0;
         }
 
+        // Dive landing becomes a short ground slide. Keep it conservative:
+        // no slope exploit, no infinite acceleration and no forced camera roll.
+        if (onGroundNow && NexoSlideTicks > 0)
+        {
+            NexoSlideTicks--;
+            Thrust(0.28, NexoDiveAngle);
+        }
+        else if (!onGroundNow && NexoSlideTicks > 0)
+        {
+            NexoSlideTicks = 0;
+        }
+
         NexoWasOnGround = onGroundNow;
+        NexoPrevForwardMove = player.cmd.forwardmove;
+        NexoPrevSideMove = player.cmd.sidemove;
     }
 
     override void CheckJump()
@@ -86,16 +203,11 @@ class NexoMarioDoomPlayer : DoomPlayer
         bool jumpDown = (p.cmd.buttons & BT_JUMP) != 0;
         bool jumpRising = jumpDown && !(p.oldbuttons & BT_JUMP);
 
+        // Mario-style ground jumps require a fresh press. This prevents held
+        // Jump or rapid airborne button spam from generating extra jumps/audio.
         if (!jumpDown)
         {
-            Super.CheckJump();
             return;
-        }
-
-        // MovePlayer() runs before CheckJump() and refreshes p.onground.
-        if (p.onground && !NexoWasOnGround)
-        {
-            NexoLastLandTick = Level.maptime;
         }
 
         bool dryGroundJump =
@@ -112,10 +224,37 @@ class NexoMarioDoomPlayer : DoomPlayer
         bool forwardRun =
             p.cmd.forwardmove >= 0x1800 && planarSpeed2 >= 4.0;
 
+        // WALL KICK / WALL JUMP
+        // Fresh Jump while airborne and actually contacting/approaching a wall.
+        if (!p.onground
+            && jumpRising
+            && waterlevel < 2
+            && !bNoGravity
+            && NexoWallKickCooldown <= 0)
+        {
+            double wallAngle;
+            if (NexoWallAhead(wallAngle))
+            {
+                double baseJump = JumpZ * 35 / TICRATE;
+
+                Vel.X *= 0.25;
+                Vel.Y *= 0.25;
+                Vel.Z = max(Vel.Z, baseJump * 1.12);
+                Thrust(6.5, wallAngle + 180.0);
+
+                NexoJumpChain = 0;
+                NexoStompActive = false;
+                NexoDiveActive = false;
+                NexoSlideTicks = 0;
+                NexoWallKickCooldown = 9;
+
+                NexoPlayMovementSound("nexo/mario/wallkick");
+                return;
+            }
+        }
+
         // Crouch + jump while moving = long jump.
         // Crouch + jump from near-standstill = backflip.
-        // Both are deliberately moderate compared with SM64 so DOOM geometry
-        // and combat remain authoritative.
         if (dryGroundJump && jumpRising && crouched && NexoCanStand())
         {
             double baseJump = JumpZ * 35 / TICRATE;
@@ -123,6 +262,8 @@ class NexoMarioDoomPlayer : DoomPlayer
             p.Uncrouch();
             NexoJumpChain = 0;
             NexoStompActive = false;
+            NexoDiveActive = false;
+            NexoSlideTicks = 0;
 
             if (forwardRun)
             {
@@ -132,7 +273,10 @@ class NexoMarioDoomPlayer : DoomPlayer
             }
             else
             {
-                Vel.Z += baseJump * 1.18;
+                // SM64's backflip is distinctly higher. Do not rotate the
+                // first-person camera 360°; visual rotation belongs to the
+                // future hands/body animation layer.
+                Vel.Z += baseJump * 1.35;
                 Thrust(5.0, Angle + 180.0);
                 NexoPlayMovementSound("nexo/mario/backflip");
             }
@@ -143,26 +287,57 @@ class NexoMarioDoomPlayer : DoomPlayer
             return;
         }
 
-        // Normal jump / triple-jump chain. The engine still performs the
-        // actual legality check and movement; NEXO only adjusts JumpZ for
-        // the one confirmed jump attempt.
+        // SIDE FLIP / TURNAROUND JUMP
+        // A strong direction reversal immediately followed by a fresh jump.
+        if (dryGroundJump
+            && jumpRising
+            && !crouched
+            && NexoDirectionReversed())
+        {
+            double baseJump = JumpZ * 35 / TICRATE;
+            double jumpAngle = NexoInputAngle();
+
+            Vel.X *= 0.45;
+            Vel.Y *= 0.45;
+            Vel.Z += baseJump * 1.22;
+            Thrust(5.5, jumpAngle);
+
+            bOnMobj = false;
+            p.onground = false;
+            p.jumpTics = -1;
+
+            NexoJumpChain = 0;
+            NexoStompActive = false;
+            NexoDiveActive = false;
+            NexoSlideTicks = 0;
+
+            NexoPlayMovementSound("nexo/mario/sideflip");
+            return;
+        }
+
+        // NORMAL / DOUBLE / TRIPLE JUMP
         if (dryGroundJump && !crouched)
         {
+            if (!jumpRising)
+            {
+                // Do not let the base player auto-hop from a held button.
+                return;
+            }
+
             int nextJump = 1;
 
-            if (jumpRising
-                && movingIntent
+            if (movingIntent
                 && NexoJumpChain > 0
                 && NexoJumpChain < 3
                 && NexoLastLandTick > -100000
-                && Level.maptime - NexoLastLandTick <= 14)
+                && Level.maptime - NexoLastLandTick <= 24)
             {
                 nextJump = NexoJumpChain + 1;
             }
 
             double factor = 1.0;
-            if (nextJump == 2) factor = 1.08;
-            else if (nextJump == 3) factor = 1.18;
+            if (nextJump == 2) factor = 1.10;
+            else if (nextJump == 3) factor = 1.24;
 
             double savedJumpZ = JumpZ;
             double oldVelZ = Vel.Z;
@@ -178,6 +353,8 @@ class NexoMarioDoomPlayer : DoomPlayer
                 NexoJumpChain = nextJump;
                 NexoLastLandTick = -100000;
                 NexoStompActive = false;
+                NexoDiveActive = false;
+                NexoSlideTicks = 0;
 
                 if (nextJump == 3)
                     NexoPlayMovementSound("nexo/mario/jump3");
@@ -189,6 +366,7 @@ class NexoMarioDoomPlayer : DoomPlayer
             return;
         }
 
+        // Preserve swimming/flying/native special jump behavior.
         Super.CheckJump();
     }
 
@@ -201,29 +379,53 @@ class NexoMarioDoomPlayer : DoomPlayer
             bool crouchDown = (p.cmd.buttons & BT_CROUCH) != 0;
             bool crouchRising = crouchDown && !(p.oldbuttons & BT_CROUCH);
             bool airborne = !p.onground || Pos.Z > floorz + 1.0;
+            bool forwardDive =
+                p.cmd.forwardmove >= 0x1800
+                && (Vel.X * Vel.X + Vel.Y * Vel.Y) >= 2.0;
 
-            // Air + fresh crouch press = Mario ground pound/stomp.
-            // It is one activation per airborne cycle and intentionally does
-            // not add radial damage yet; first prove traversal and map safety.
             if (!totallyfrozen
                 && p.health > 0
                 && crouchRising
                 && airborne
-                && !NexoStompActive
                 && waterlevel < 2
                 && !bNoGravity)
             {
                 p.cmd.buttons &= ~BT_CROUCH;
                 p.Uncrouch();
-
-                Vel.X *= 0.35;
-                Vel.Y *= 0.35;
-                if (Vel.Z > -14.0) Vel.Z = -14.0;
-
-                NexoStompActive = true;
                 NexoJumpChain = 0;
-                NexoPlayMovementSound("nexo/mario/stomp");
-                return;
+
+                // AIR DIVE: forward + fresh crouch in air.
+                if (forwardDive)
+                {
+                    NexoDiveAngle = NexoInputAngle();
+                    Vel.X *= 0.45;
+                    Vel.Y *= 0.45;
+                    Thrust(9.0, NexoDiveAngle);
+                    if (Vel.Z > -3.0) Vel.Z = -3.0;
+
+                    NexoDiveActive = true;
+                    NexoStompActive = false;
+                    NexoSlideTicks = 0;
+
+                    NexoPlayMovementSound("nexo/mario/dive");
+                    return;
+                }
+
+                // GROUND POUND / STOMP: fresh crouch in air without a strong
+                // forward dive request.
+                if (!NexoStompActive)
+                {
+                    Vel.X *= 0.35;
+                    Vel.Y *= 0.35;
+                    if (Vel.Z > -14.0) Vel.Z = -14.0;
+
+                    NexoStompActive = true;
+                    NexoDiveActive = false;
+                    NexoSlideTicks = 0;
+
+                    NexoPlayMovementSound("nexo/mario/stomp");
+                    return;
+                }
             }
         }
 
