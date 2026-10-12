@@ -13,9 +13,9 @@ Construir progresivamente un mashup jugable, divertido y observable, comenzando 
 Orden previsto:
 
 - A0 — pipeline de mod y HUD visible.
-- A1 — esfera visible.
-- A2 — esfera con física.
-- A3 — Mario puede empujarla.
+- A1 — esfera/objeto rodante visible en 3D.
+- A2 — física estable.
+- A3 — Mario puede empujarla y golpearla con respuestas diferenciadas.
 - A4 — detección de entidades absorbibles.
 - A5 — primer Goomba absorbible.
 - A6 — crecimiento de esfera.
@@ -37,37 +37,49 @@ Migrar a mashup multi-juego real con Godot + libsm64 + contenido/mapas compatibl
 
 ### A0 — PASS
 
-Evidencia confirmada el 2026-10-12 mediante captura del usuario:
+Confirmado el 2026-10-12 mediante captura del usuario.
 
-1. SM64CoopDX abre y corre normalmente.
-2. El mod `NexoMashupA` está cargado.
-3. El HUD `NEXO MASHUP LAB / GATE A0 PASS` aparece durante gameplay.
-4. No se reportó crash ni degradación funcional.
+### Primera validación A1-A3 — RESULTADO PARCIAL
 
-Nota: el pulso de color diseñado para A0 no se adopta como criterio de validación. Era demasiado sutil y una captura fija no puede demostrar animación; el HUD visible y el funcionamiento normal son evidencia suficiente del pipeline.
+Observación del usuario:
 
-### A1-A3 — PENDING VALIDATION
+- el objeto aparece y tiene sombra;
+- puede ser empujado;
+- cae bajo gravedad;
+- en escaleras pierde apoyo y cae;
+- el modelo `E_MODEL_BOWLING_BALL` se percibe como una imagen/disco 2D rotando;
+- golpe y empuje normal no mostraban diferencia perceptible.
 
-Implementación actual:
+Conclusión:
 
-- una bola de bowling se genera automáticamente frente al Mario local;
-- comportamiento físico basado en el ejemplo oficial `behavior-ball.lua` de SM64CoopDX;
-- gravedad, fricción, rebote moderado y colisión con suelo/pared;
-- Mario puede empujarla caminando/corriendo contra ella;
-- los ataques producen un empuje más fuerte;
-- D-Pad abajo reinicia/reubica la bola frente a Mario;
-- el HUD muestra el estado de la bola.
+- **A1: FAIL visual** con el modelo bowling-ball.
+- **A2: PARTIAL PASS** para gravedad/rodado/colisión básica; subir escaleras no es requisito de este gate.
+- **A3: PARTIAL PASS** para empuje corporal; FAIL para diferenciación de golpe.
 
-Criterio de PASS conjunto:
+### A1-A3.1 — PENDING VALIDATION
 
-1. La bola aparece automáticamente dentro de gameplay.
-2. Cae y reacciona al suelo/pared de forma estable.
-3. Mario puede desplazarla chocando con ella.
-4. Un ataque produce una respuesta claramente más fuerte.
-5. D-Pad abajo la reposiciona.
-6. No hay crash, spam de objetos ni bloqueo de control.
+Correcciones aplicadas:
 
-Si A1-A3 = PASS, el siguiente gate será A4-A6: detectar Goombas, absorber el primero y hacer crecer la bola.
+1. Se reemplaza temporalmente `E_MODEL_BOWLING_BALL` por `E_MODEL_SPINY_BALL`, el modelo 3D usado por el ejemplo oficial de pelota.
+2. El empuje corporal queda limitado a velocidad moderada.
+3. Un press explícito de botón B cerca de la bola aplica impulso fuerte y componente vertical.
+4. El HUD muestra velocidad aproximada.
+5. Cuando se detecta el golpe fuerte, el HUD muestra `GOLPE FUERTE!` durante varios frames.
+6. D-Pad abajo sigue reposicionando la bola.
+
+Criterio de PASS:
+
+- el objeto se percibe claramente tridimensional al rodearlo;
+- rueda y colisiona de forma estable sobre suelo y pendientes;
+- empuje normal es controlable;
+- B cerca del objeto produce un salto/impulso perceptiblemente mayor y el HUD confirma `GOLPE FUERTE!`;
+- no hay crash ni spam de objetos.
+
+### Limitación conocida: escaleras
+
+`object_step_without_floor_orient()` no proporciona por sí solo un comportamiento de subida de escalones comparable al controlador de Mario. La bola puede caer hacia atrás al intentar subir peldaños. No bloquea A1-A3; se reevaluará después de validar la mecánica Katamari.
+
+Si A1-A3.1 = PASS, el siguiente gate será A4-A6: detectar Goombas, absorber el primero y hacer crecer la bola.
 
 ## Stack autorizado para A0–A9
 
