@@ -524,3 +524,42 @@ one is present. Audio is secondary to CONTROL-1B but should be retested.
 
 Next gate:
 launch the existing SDL build again. No rebuild and no repeated M1/M2.
+
+
+### CONTROL-1C — axis root cause identified; standardized SDL GameController backport
+
+Observed after SDL/OpenGL startup PASS:
+- menu stable;
+- D-pad no longer stuck;
+- RT fires;
+- left stick moves;
+- right stick mapping is wrong;
+- player continuously looks upward;
+- LT affects vertical look.
+
+This is now explained directly by GZDoom's g4.14.2 SDL source. That version
+uses raw `SDL_JoystickGetAxis` and assumes fixed raw-axis semantics. The source
+itself contains a comment noting that a trigger appearing on a stick axis can
+cause the player to look upward uncontrollably.
+
+Current upstream GZDoom has since moved SDL mapped controllers to the
+`SDL_GameController` API, which standardizes:
+- LeftX / LeftY;
+- RightX / RightY;
+- LeftTrigger / RightTrigger.
+
+NEXO now backports that concept to the existing g4.14.2 runtime while
+preserving the old engine interface:
+- prefer exactly one mapped SDL controller on this single-player runtime;
+- standardized stick axes map to movement/yaw/pitch;
+- triggers are removed from analog look and emitted as trigger buttons;
+- standardized A/B/X/Y, shoulders, sticks, Start/Back and D-pad button events;
+- mapped controllers use fresh `Joy:GC:*` config sections, avoiding stale
+  raw-axis mappings from previous tests.
+
+Added:
+- `patches/gzdoom-g4.14.2-sdl-gamecontroller/i_joystick.cpp`;
+- `patches/gzdoom-g4.14.2-sdl-gamecontroller/i_input.cpp`;
+- `scripts/patch-gzdoom-sdl-gamecontroller.sh`.
+
+This is an incremental rebuild, not a full 835-step rebuild.
