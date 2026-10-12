@@ -1,18 +1,23 @@
 # AGENTS.md
 
-## Gate activo: A6.7
+## Estado canónico
 
-A6.6 está aprobado y es una restricción arquitectónica.
+Leer `NEXO_STATE.md`.
 
-No tocar:
-- m.pos / m.vel para controlar la bola;
-- hitbox rígida de bola;
-- navegación nativa de Mario.
+## Gate activo
 
-A6.7 sólo corrige:
-- radio visual;
-- offset de attachments;
-- velocidad angular;
-- yaw visual.
+A6.8 + A7/A8 slice 1.
 
-No comenzar A7 hasta PASS.
+Preservar:
+- Mario = navegación/física;
+- bola intangible y sin collider del mundo;
+- giro lento A6.7.
+
+Cambios autorizados:
+- anclaje vertical visual;
+- offsets de attachments;
+- sistema genérico de pickup tiers;
+- monedas, Goombas, Bob-ombs;
+- HUD/feedback.
+
+No añadir Koopa hasta PASS de este slice.
