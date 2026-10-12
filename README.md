@@ -9,23 +9,40 @@ Laboratorio incremental para experimentar con mashups sistémicos de videojuegos
 Motor anfitrión inicial: **SM64CoopDX**  
 Estrategia: mod Lua, sin recompilar el juego y sin reverse engineering innecesario.
 
-## Primer objetivo
+## Estado
 
-Gate A0: comprobar el pipeline completo:
+- **A0 — PASS:** pipeline ChatGPT/GitHub -> Mac -> SM64CoopDX validado.
+- **A1-A3 — VALIDACIÓN ACTIVA:** bola visible, física básica y empuje por Mario.
+- **A4-A6 — BLOQUEADO** hasta validar A1-A3.
+
+El estado canónico detallado vive en `NEXO_STATE.md`.
+
+## Qué debería verse ahora
+
+Al cargar el mod aparece el HUD:
 
 ```
-ChatGPT/GitHub -> archivo Lua -> Mac -> SM64CoopDX -> HUD visible
+NEXO MASHUP LAB
+A1-A3 BALL TEST
+BOLA: ACTIVA
+DPAD ABAJO: reiniciar bola
 ```
 
-Cuando el mod cargue correctamente debe aparecer en pantalla:
+Una bola de bowling negra debería aparecer automáticamente frente a Mario.
 
-**NEXO MASHUP LAB — GATE A0 PASS**
+Prueba:
+
+1. caminar/correr contra la bola;
+2. golpearla mediante una acción ofensiva;
+3. dejarla rodar por una pendiente;
+4. pulsar D-Pad abajo para reposicionarla.
 
 ## Estructura inicial
 
 - `sm64coopdx/NexoMashupA/` — mod instalable en SM64CoopDX.
 - `NEXO_STATE.md` — estado canónico, gates y decisiones.
-- `AGENTS.md` — instrucciones de trabajo para agentes locales.
+- `AGENTS.md` — instrucciones generales para agentes locales.
+- `CLAUDE.md` — instrucciones específicas para Claude Code.
 - `.gitignore` — evita subir ROMs y contenido de juego.
 
 ## Principios
@@ -36,26 +53,20 @@ Cuando el mod cargue correctamente debe aparecer en pantalla:
 4. No introducir Ghidra, Godot, RenderDoc u otros stacks hasta que exista una necesidad técnica concreta.
 5. Cada cambio debe ser pequeño, reversible y verificable.
 
-## Instalación manual del mod en macOS
+## Actualizar e instalar en macOS
 
-Copiar la carpeta:
+Desde el clon local:
 
-```
-sm64coopdx/NexoMashupA
-```
-
-a:
-
-```
-~/Library/Application Support/sm64coopdx/mods/
+```bash
+cd ~/Documents/gameproject
+git pull
+bash scripts/install-macos.sh
 ```
 
-El resultado debe quedar así:
+El mod queda instalado en:
 
 ```
-~/Library/Application Support/sm64coopdx/mods/NexoMashupA/main.lua
+~/Library/Application Support/sm64coopdx/mods/NexoMashupA/
 ```
-
-Después iniciar SM64CoopDX, habilitar **NEXO Mashup A** en el menú de mods y entrar al juego.
 
 > Este repositorio no incluye ni debe incluir ROMs, ejecutables comerciales ni assets protegidos de los juegos.
