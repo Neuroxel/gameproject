@@ -21,6 +21,7 @@ class NexoMarioDoomPlayer : DoomPlayer
     bool NexoHandWasFiring;
     bool NexoFistLeftPunch;
     bool NexoNativeWeaponHidden;
+    Vector2 NexoNativeWeaponScale;
     int NexoHandMotionKind;
     int NexoHandMotionTics;
     int NexoHandMotionDuration;
@@ -180,8 +181,7 @@ class NexoMarioDoomPlayer : DoomPlayer
         let weaponPsp = player.FindPSprite(PSP_WEAPON);
         if (weaponPsp != null)
         {
-            weaponPsp.Flags &= ~PSPF_FORCEALPHA;
-            weaponPsp.alpha = 1.0;
+            weaponPsp.scale = NexoNativeWeaponScale;
         }
         NexoNativeWeaponHidden = false;
     }
@@ -195,9 +195,16 @@ class NexoMarioDoomPlayer : DoomPlayer
 
         if (hidden)
         {
-            weaponPsp.Flags |= PSPF_FORCEALPHA;
-            weaponPsp.alpha = 0.0;
-            NexoNativeWeaponHidden = true;
+            if (!NexoNativeWeaponHidden)
+            {
+                NexoNativeWeaponScale = weaponPsp.scale;
+                NexoNativeWeaponHidden = true;
+            }
+
+            // PSprite.scale is directly exposed in GZDoom 4.14.2 ZScript.
+            // Scaling the visual to zero hides only the native Fist artwork;
+            // weapon state, attack timing and damage keep running normally.
+            weaponPsp.scale = (0.0, 0.0);
         }
         else
         {
@@ -611,6 +618,7 @@ class NexoMarioDoomPlayer : DoomPlayer
         NexoHandWasFiring = false;
         NexoFistLeftPunch = false;
         NexoNativeWeaponHidden = false;
+        NexoNativeWeaponScale = (1.0, 1.0);
         NexoHandMotionKind = 0;
         NexoHandMotionTics = 0;
         NexoHandMotionDuration = 0;
