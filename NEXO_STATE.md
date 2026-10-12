@@ -33,25 +33,41 @@ Añadir sistemas tipo Crazy Taxi sólo después de validar la base de A.
 
 Migrar a mashup multi-juego real con Godot + libsm64 + contenido/mapas compatibles con DOOM, sólo tras validar el gameplay.
 
-## Gate actual
+## Evidencia y gates
 
-### A0 — PENDING
+### A0 — PASS
 
-Criterio de PASS:
+Evidencia confirmada el 2026-10-12 mediante captura del usuario:
 
-1. SM64CoopDX abre normalmente.
-2. El mod `NexoMashupA` aparece y está habilitado.
-3. Durante gameplay aparece el texto:
-   `NEXO MASHUP LAB — GATE A0 PASS`
-4. El juego continúa respondiendo normalmente.
+1. SM64CoopDX abre y corre normalmente.
+2. El mod `NexoMashupA` está cargado.
+3. El HUD `NEXO MASHUP LAB / GATE A0 PASS` aparece durante gameplay.
+4. No se reportó crash ni degradación funcional.
 
-Criterio de FAIL:
+Nota: el pulso de color diseñado para A0 no se adopta como criterio de validación. Era demasiado sutil y una captura fija no puede demostrar animación; el HUD visible y el funcionamiento normal son evidencia suficiente del pipeline.
 
-- el mod no aparece;
-- error Lua;
-- crash;
-- texto no visible;
-- degradación funcional atribuible al mod.
+### A1-A3 — PENDING VALIDATION
+
+Implementación actual:
+
+- una bola de bowling se genera automáticamente frente al Mario local;
+- comportamiento físico basado en el ejemplo oficial `behavior-ball.lua` de SM64CoopDX;
+- gravedad, fricción, rebote moderado y colisión con suelo/pared;
+- Mario puede empujarla caminando/corriendo contra ella;
+- los ataques producen un empuje más fuerte;
+- D-Pad abajo reinicia/reubica la bola frente a Mario;
+- el HUD muestra el estado de la bola.
+
+Criterio de PASS conjunto:
+
+1. La bola aparece automáticamente dentro de gameplay.
+2. Cae y reacciona al suelo/pared de forma estable.
+3. Mario puede desplazarla chocando con ella.
+4. Un ataque produce una respuesta claramente más fuerte.
+5. D-Pad abajo la reposiciona.
+6. No hay crash, spam de objetos ni bloqueo de control.
+
+Si A1-A3 = PASS, el siguiente gate será A4-A6: detectar Goombas, absorber el primero y hacer crecer la bola.
 
 ## Stack autorizado para A0–A9
 
