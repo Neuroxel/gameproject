@@ -10,7 +10,7 @@ TAG="1.25.2"
 
 echo "[NEXO] Preparing OpenAL Soft $TAG for macOS/CoreAudio..."
 
-for cmd in git cmake ninja; do
+for cmd in git cmake ninja xcrun; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     echo "[NEXO] ERROR: missing required command: $cmd"
     exit 1
@@ -26,11 +26,47 @@ else
   echo "[NEXO] Reusing existing OpenAL Soft source checkout."
 fi
 
-cmake \
+# Do not inherit Homebrew LLVM from CC/CXX or PATH for this build.
+# On this Mac, CMake selected /opt/homebrew/opt/llvm/bin/clang++ and its
+# clang-scan-deps did not receive the Apple SDK system include paths. That made
+# ordinary macOS headers such as pthread.h, Availability.h, sched.h and time.h
+# appear to be missing. Use Apple's toolchain and an explicit macOS SDK.
+APPLE_CC="/usr/bin/clang"
+APPLE_CXX="/usr/bin/clang++"
+SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
+
+if [ ! -x "$APPLE_CC" ] || [ ! -x "$APPLE_CXX" ] || [ ! -d "$SDKROOT" ]; then
+  echo "[NEXO] ERROR: Apple Clang/macOS SDK not available."
+  echo "Run: xcode-select --install"
+  exit 1
+fi
+
+echo "[NEXO] Apple compiler: $("$APPLE_CXX" --version | head -n 1)"
+echo "[NEXO] macOS SDK: $SDKROOT"
+
+# A CMake build directory cannot safely switch compilers in-place. The failed
+# build was configured with Homebrew LLVM, so discard only OpenAL Soft's build
+# cache/artifacts; the downloaded source checkout is preserved.
+if [ -f "$BUILD/CMakeCache.txt" ]; then
+  CACHED_CXX="$(grep '^CMAKE_CXX_COMPILER:FILEPATH=' "$BUILD/CMakeCache.txt" | cut -d= -f2- || true)"
+  if [ "$CACHED_CXX" != "$APPLE_CXX" ]; then
+    echo "[NEXO] Clearing stale OpenAL build cache from compiler: ${CACHED_CXX:-unknown}"
+    rm -rf "$BUILD"
+  fi
+fi
+
+mkdir -p "$BUILD"
+
+env -u CC -u CXX cmake \
   -S "$SRC" \
   -B "$BUILD" \
   -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER="$APPLE_CC" \
+  -DCMAKE_CXX_COMPILER="$APPLE_CXX" \
+  -DCMAKE_OSX_SYSROOT="$SDKROOT" \
+  -DCMAKE_OSX_ARCHITECTURES=arm64 \
+  -DCMAKE_CXX_SCAN_FOR_MODULES=OFF \
   -DCMAKE_INSTALL_PREFIX="$INSTALL" \
   -DLIBTYPE=SHARED \
   -DALSOFT_UTILS=ON \
