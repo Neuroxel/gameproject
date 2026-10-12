@@ -48,6 +48,35 @@ class NexoHandoffHandler : EventHandler
         return cv.GetBool();
     }
 
+    void RefreshArrivalState()
+    {
+        // Pinned g4.14.2 calls PlayerEntered BEFORE WorldLoaded on a fresh
+        // level load. Arrival-critical state must therefore be derived here
+        // as well as in WorldLoaded; relying on WorldLoaded alone leaves the
+        // first PlayerEntered event with default false fields.
+        InM2Map = Level.MapName ~== "MAP01";
+        IdentityActive = CVarBool('nexo_handoff');
+    }
+
+    void LogMarioSfxProbe()
+    {
+        if (!CVarBool('nexo_mario_sfx'))
+        {
+            Console.Printf("[NEXO] Mario SFX probe: disabled by CVAR\n");
+            return;
+        }
+
+        Console.Printf(
+            "[NEXO] Mario SFX probe seconds: jump=%.3f hurt=%.3f death=%.3f use=%.3f portal=%.3f celebrate=%.3f\n",
+            S_GetLength("nexo/mario/jump"),
+            S_GetLength("nexo/mario/hurt"),
+            S_GetLength("nexo/mario/death"),
+            S_GetLength("nexo/mario/use"),
+            S_GetLength("nexo/mario/portal"),
+            S_GetLength("nexo/mario/celebrate")
+        );
+    }
+
     void PrintMission(String text, double duration = 4.0)
     {
         let pawn = players[consoleplayer].mo;
@@ -60,37 +89,37 @@ class NexoHandoffHandler : EventHandler
     void PlayMarioJump(Actor pawn)
     {
         if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
-        pawn.A_StartSound("nexo/mario/jump", CHAN_VOICE, CHANF_DEFAULT, 1.0, ATTN_NONE);
+        S_StartSound("nexo/mario/jump", CHAN_5, CHANF_UI, 1.0, ATTN_NONE);
     }
 
     void PlayMarioUse(Actor pawn)
     {
         if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
-        pawn.A_StartSound("nexo/mario/use", CHAN_VOICE, CHANF_DEFAULT, 1.0, ATTN_NONE);
+        S_StartSound("nexo/mario/use", CHAN_5, CHANF_UI, 1.0, ATTN_NONE);
     }
 
     void PlayMarioHurt(Actor pawn)
     {
         if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
-        pawn.A_StartSound("nexo/mario/hurt", CHAN_VOICE, CHANF_DEFAULT, 1.0, ATTN_NONE);
+        S_StartSound("nexo/mario/hurt", CHAN_5, CHANF_UI, 1.0, ATTN_NONE);
     }
 
     void PlayMarioDeath(Actor pawn)
     {
         if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
-        pawn.A_StartSound("nexo/mario/death", CHAN_VOICE, CHANF_DEFAULT, 1.0, ATTN_NONE);
+        S_StartSound("nexo/mario/death", CHAN_5, CHANF_UI, 1.0, ATTN_NONE);
     }
 
     void PlayMarioPortal(Actor pawn)
     {
         if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
-        pawn.A_StartSound("nexo/mario/portal", CHAN_VOICE, CHANF_DEFAULT, 1.0, ATTN_NONE);
+        S_StartSound("nexo/mario/portal", CHAN_5, CHANF_UI, 1.0, ATTN_NONE);
     }
 
     void PlayMarioCelebrate(Actor pawn)
     {
         if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
-        pawn.A_StartSound("nexo/mario/celebrate", CHAN_VOICE, CHANF_DEFAULT, 1.0, ATTN_NONE);
+        S_StartSound("nexo/mario/celebrate", CHAN_5, CHANF_UI, 1.0, ATTN_NONE);
     }
 
     void BeginPerspectiveTransition(int playerNum)
@@ -139,28 +168,35 @@ class NexoHandoffHandler : EventHandler
 
     override void WorldLoaded(WorldEvent e)
     {
-        InM2Map = Level.MapName ~== "MAP01";
-        IdentityActive = CVarBool('nexo_handoff');
+        RefreshArrivalState();
 
-        // M2 belongs only to the arrival map. Once the player crosses the
-        // semantic gate into MAP02, the original SM64 handoff must not be
-        // applied again.
-        if (!InM2Map)
-        {
-            Applied = false;
-        }
-
-        PerspectivePlayer = -1;
-        PerspectiveTicks = 0;
-        PerspectiveBodyVisible = false;
-        LastButtons = 0;
-        LastHealth = 0;
-        HurtCooldown = 0;
+        Console.Printf(
+            "[NEXO] WorldLoaded: map=%s handoff=%d mario_sfx=%d applied=%d\n",
+            Level.MapName,
+            IdentityActive,
+            CVarBool('nexo_mario_sfx'),
+            Applied
+        );
     }
 
     override void PlayerEntered(PlayerEvent e)
     {
+        RefreshArrivalState();
+
+        PerspectivePlayer = -1;
+        PerspectiveTicks = 0;
+        PerspectiveBodyVisible = false;
+        HurtCooldown = 0;
+
         let pawn = players[e.PlayerNumber].mo;
+
+        Console.Printf(
+            "[NEXO] PlayerEntered: map=%s handoff=%d mario_sfx=%d m2=%d\n",
+            Level.MapName,
+            IdentityActive,
+            CVarBool('nexo_mario_sfx'),
+            InM2Map
+        );
 
         // Mario's identity is world-independent inside the DOOM adapter.
         // M2 itself is still restricted to MAP01.
@@ -176,9 +212,10 @@ class NexoHandoffHandler : EventHandler
 
             if (InM2Map)
             {
+                LogMarioSfxProbe();
                 if (CVarBool('nexo_mario_sfx'))
                 {
-                    Console.Printf("[NEXO] Mario portal cue requested: nexo/mario/portal\n");
+                    Console.Printf("[NEXO] Mario portal cue requested: nexo/mario/portal on CHAN_5/UI\n");
                 }
                 PlayMarioPortal(pawn);
                 BeginPerspectiveTransition(e.PlayerNumber);
