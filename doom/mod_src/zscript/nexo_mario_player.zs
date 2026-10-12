@@ -22,6 +22,7 @@ class NexoMarioDoomPlayer : DoomPlayer
     bool NexoFistLeftPunch;
     bool NexoNativeWeaponHidden;
     Vector2 NexoNativeWeaponScale;
+    Weapon NexoHiddenWeapon;
     int NexoHandMotionKind;
     int NexoHandMotionTics;
     int NexoHandMotionDuration;
@@ -193,9 +194,18 @@ class NexoMarioDoomPlayer : DoomPlayer
         let weaponPsp = player.FindPSprite(PSP_WEAPON);
         if (weaponPsp != null)
         {
-            weaponPsp.scale = NexoNativeWeaponScale;
+            // If the caller is still the hidden Fist, restore exactly what we
+            // saved. If a weapon switch already changed the caller, GZDoom's
+            // new weapon expects a neutral per-state scale; its WeaponScale
+            // remains separately represented by baseScale.
+            if (weaponPsp.Caller == NexoHiddenWeapon)
+                weaponPsp.scale = NexoNativeWeaponScale;
+            else
+                weaponPsp.scale = (1.0, 1.0);
         }
+
         NexoNativeWeaponHidden = false;
+        NexoHiddenWeapon = null;
     }
 
     void NexoSetNativeWeaponHidden(bool hidden)
@@ -210,6 +220,7 @@ class NexoMarioDoomPlayer : DoomPlayer
             if (!NexoNativeWeaponHidden)
             {
                 NexoNativeWeaponScale = weaponPsp.scale;
+                NexoHiddenWeapon = player.ReadyWeapon;
                 NexoNativeWeaponHidden = true;
             }
 
@@ -640,6 +651,7 @@ class NexoMarioDoomPlayer : DoomPlayer
         NexoFistLeftPunch = false;
         NexoNativeWeaponHidden = false;
         NexoNativeWeaponScale = (1.0, 1.0);
+        NexoHiddenWeapon = null;
         NexoHandMotionKind = 0;
         NexoHandMotionTics = 0;
         NexoHandMotionDuration = 0;
