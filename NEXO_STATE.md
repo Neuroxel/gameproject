@@ -222,3 +222,24 @@ Se endureció `scripts/setup-doom-macos.sh`:
 - detecta GZDoom.app recursivamente;
 - valida/chmod del ejecutable;
 - valida freedoom2.wad.
+
+
+## P1.2 GZDoom load regression — ZScript entry point fixed
+
+Observed:
+- GZDoom/Freedoom start correctly;
+- NEXO PK3 is loaded;
+- MAPINFO is parsed;
+- `script parsing took 0.00 ms`;
+- fatal: `unknown event handler class NexoHandoffHandler`.
+
+Diagnosis:
+MAPINFO referenced the handler, but the PK3 ZScript entry point was not being indexed/parsed.
+
+Fix:
+- replace extensionless root `ZSCRIPT` with PK3-style root `zscript.zc`;
+- keep implementation in `zscript/nexo_handoff.zs`;
+- launcher now validates exact PK3 members before launching.
+
+Expected next boot:
+ZScript parsing must be non-zero or at least progress to actual ZScript diagnostics instead of `unknown event handler class`.
