@@ -71,6 +71,15 @@ def build_manifest(data: dict[str, Any], log_path: Path) -> dict[str, Any]:
             "id": str(data.get("mission", "M2_UNKNOWN")),
             "score": int(data.get("score", 0)),
         },
+        "identity": {
+            "avatar": "MARIO",
+            "audio_profile": "mario_voice_v1",
+        },
+        "perspective": {
+            "source": str(data.get("perspective", "first_person")),
+            "target": "adaptive",
+            "transition": "portal_pull_out",
+        },
         "player_state": {
             "logical_mass": float(data.get("mass", 0.0)),
         },
