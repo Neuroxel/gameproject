@@ -9,9 +9,6 @@ class NexoHandoffHandler : EventHandler
     int PerspectivePlayer;
     bool PerspectiveBodyVisible;
 
-    // Mario identity/audio state.
-    int LastButtons;
-
     // M2 — STABILIZE THE BREACH
     int M2Kills;
     int M2Goal;
@@ -105,12 +102,6 @@ class NexoHandoffHandler : EventHandler
         {
             pawn.A_PrintBold(text, duration);
         }
-    }
-
-    void PlayMarioUse(Actor pawn)
-    {
-        if (!CVarBool('nexo_mario_sfx') || pawn == null) return;
-        S_StartSound("nexo/mario/use", CHAN_5, CHANF_UI, 1.0, ATTN_NONE);
     }
 
     void PlayMarioPortal(Actor pawn)
@@ -209,8 +200,6 @@ class NexoHandoffHandler : EventHandler
             // fully live immediately after this one-time center operation.
             pawn.Pitch = 0.0;
 
-            LastButtons = players[e.PlayerNumber].cmd.buttons;
-
             if (InM2Map)
             {
                 LogMarioSfxProbe();
@@ -308,20 +297,14 @@ class NexoHandoffHandler : EventHandler
 
         if (!IdentityActive) return;
 
-        let pawn = players[consoleplayer].mo;
-        if (pawn == null) return;
-
-        int buttons = players[consoleplayer].cmd.buttons;
-
-        // Jump/pain/death are no longer inferred from raw button/health state.
-        // NexoMarioDoomPlayer owns confirmed jump semantics and SNDINFO remaps
-        // native player pain/death events directly to Mario.
-        if ((buttons & BT_USE) && !(LastButtons & BT_USE))
-        {
-            PlayMarioUse(pawn);
-        }
-
-        LastButtons = buttons;
+        // Avatar audio is semantic, not raw-button-driven:
+        // - jump belongs to confirmed Mario movement;
+        // - pain/death belong to SNDINFO player semantics;
+        // - USE belongs to the destination-world switch/door sound.
+        //
+        // Do not add an unconditional vocal grunt on BT_USE. The Mario "use"
+        // resource remains in the local pack for explicit scripted moments,
+        // diagnostics or future contextual interactions.
     }
 
     override void WorldThingDied(WorldEvent e)
