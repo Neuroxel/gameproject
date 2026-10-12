@@ -48,7 +48,7 @@ class NexoHandoffHandler : EventHandler
 
     override void WorldLoaded(WorldEvent e)
     {
-        InM2Map = Level.MapName.CompareNoCase("MAP01") == 0;
+        InM2Map = Level.MapName ~== "MAP01";
 
         // M2 belongs only to the arrival map. Once the player crosses the
         // semantic gate into MAP02, the original SM64 handoff must not be
