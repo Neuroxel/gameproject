@@ -149,3 +149,42 @@ NEXO añade una capa meta pequeña:
 - estado de portal/handoff.
 
 No se reemplazan los menús completos de Mario/DOOM salvo que una misión lo justifique.
+
+
+## Control plane
+
+Portal Fabric transports not only game state but a semantic control profile.
+
+Each adapter maps:
+- MOVE;
+- LOOK/CAMERA;
+- PRIMARY_ACTION;
+- SECONDARY_ACTION;
+- CONTEXT/USE;
+- TRAVERSAL;
+- META/PAUSE.
+
+The physical mapping should remain spatially consistent where possible, while the
+native game keeps mechanics appropriate to its genre.
+
+See `CONTROLS_NEXO.md`.
+
+## Mechanic mixing rule
+
+Do not copy every mechanic into every engine.
+
+Use three layers:
+
+1. **Native mechanic** — what the destination game already does well.
+2. **Persistent consequence** — state produced in earlier worlds changes the
+   destination world.
+3. **Echo mechanic** — at most one recognizable mechanic from another world is
+   materialized when it improves the mission.
+
+Examples:
+- SM64: platforming + Katamari cargo.
+- DOOM: shooter + cargo converted to combat resources.
+- future Portal/Source chapter: portal puzzles + combat shards as portal energy.
+- 2D chapter: projected avatar + carried mission state.
+
+This prevents the project becoming a pile of unrelated gimmicks.
