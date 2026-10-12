@@ -45,6 +45,8 @@ MARIO_SFX_OPTIONAL = (
     "portal", "celebrate",
     "jump2", "jump3", "backflip", "longjump", "stomp", "dive",
     "sideflip", "wallkick",
+    "jump1_hoo", "jump1_wah", "jump1_yah", "jump2_hoohoo",
+    "jump3_yahoo", "jump3_waha", "jump3_yippee",
 )
 MARIO_SFX_EXTS = (".ogg", ".wav", ".flac")
 MARIO_HAND_SPRITES = (
@@ -253,6 +255,16 @@ def build_pk3() -> tuple[Path, bool, bool]:
                     "dive": "use",
                     "sideflip": "backflip",
                     "wallkick": "jump2",
+
+                    # Canonical SM64 jump voice grammar. Older local asset
+                    # folders still remain functional through these aliases.
+                    "jump1_hoo": "jump",
+                    "jump1_wah": "jump2",
+                    "jump1_yah": "jump3",
+                    "jump2_hoohoo": "jump2",
+                    "jump3_yahoo": "celebrate",
+                    "jump3_waha": "backflip",
+                    "jump3_yippee": "longjump",
                 }
                 for logical, fallback in fallback_aliases.items():
                     if logical not in mario_sfx:
