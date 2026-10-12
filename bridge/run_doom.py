@@ -40,7 +40,10 @@ USER_GZDOOM_CONFIG = Path.home() / "Library" / "Preferences" / "gzdoom.ini"
 NEXO_STARTUP_CFG = BRIDGE / "runtime" / "nexo-startup.cfg"
 
 MARIO_SFX_NAMES = ("jump", "hurt", "death", "use")
-MARIO_SFX_OPTIONAL = (\n    "portal", "celebrate",\n    "jump2", "jump3", "backflip", "longjump", "stomp", "dive",\n)
+MARIO_SFX_OPTIONAL = (
+    "portal", "celebrate",
+    "jump2", "jump3", "backflip", "longjump", "stomp", "dive",
+)
 MARIO_SFX_EXTS = (".ogg", ".wav", ".flac")
 
 
@@ -175,6 +178,7 @@ def build_pk3() -> tuple[Path, bool]:
         "MAPINFO",
         "zscript.zc",
         "zscript/nexo_handoff.zs",
+        "zscript/nexo_mario_player.zs",
     }
 
     PK3.parent.mkdir(parents=True, exist_ok=True)
@@ -289,6 +293,7 @@ def build_pk3() -> tuple[Path, bool]:
     print("[NEXO] PK3 members: " + ", ".join(members))
     if mario_sfx_ready:
         print("[NEXO] Mario identity SFX: core set embedded (jump/hurt/death/use)")
+        print("[NEXO] Mario locomotion adapter: ON (triple/backflip/longjump/stomp)")
     elif mario_sfx:
         missing_sfx = [name for name in MARIO_SFX_NAMES if name not in mario_sfx]
         print("[NEXO] Mario identity SFX: partial; disabled until complete: " + ", ".join(missing_sfx))
@@ -490,6 +495,7 @@ def cvar_args(data: dict, mario_sfx_ready: bool, avatar_body_ready: bool) -> lis
         "nexo_bobombs": str(int(cargo.get("bobombs", 0))),
         "nexo_score": str(int(mission.get("score", 0))),
         "nexo_mario_sfx": "true" if mario_sfx_ready else "false",
+        "nexo_mario_movement": "true",
         "nexo_perspective_transition": "true",
         "nexo_avatar_body_ready": "true" if avatar_body_ready else "false",
     }
