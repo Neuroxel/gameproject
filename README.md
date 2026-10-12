@@ -247,3 +247,21 @@ renderer, which fails on Apple's OpenGL 4.1 core context with legacy
 
 `bridge/run_doom.py` now forces the correct desktop OpenGL backend for SDL.
 No rebuild is required.
+
+
+### Fix raw SDL axis mapping on macOS controllers
+
+GZDoom 4.14.2's SDL backend still uses raw joystick axis ordering. On some
+Xbox-compatible Bluetooth controllers this can expose a trigger as a look axis,
+causing constant upward pitch or making LT control vertical look.
+
+Apply NEXO's small backport of SDL's standardized GameController API:
+
+```bash
+git pull
+bash scripts/patch-gzdoom-sdl-gamecontroller.sh
+python3 bridge/run_doom.py --runtime sdl --controller-setup
+```
+
+The patch rebuilds only the changed input objects plus relinking and then
+re-runs the runtime dylib repair.
