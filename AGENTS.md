@@ -1,18 +1,16 @@
 # AGENTS.md
 
-## M1.1
+## Gate actual: Portal Fabric P1.2
 
-Regresión conocida y corregida: detección de mundo.
+M1 y P1.1 están cerrados.
 
-No usar `gCurrCourseNum` para activar M1 desde Lua.
+No modificar SM64 salvo regresión crítica.
 
-Fuente canónica:
-- `gNetworkPlayers[0].currCourseNum`;
-- fallback redundante `currLevelNum == LEVEL_BOB`.
+Trabajar sólo en:
+- bridge;
+- launcher;
+- GZDoom adapter;
+- handoff semantics.
 
-Primero recuperar:
-- HUD;
-- bola;
-- misión en BOB.
-
-Preservar física/navegación M1.
+Runtime baseline: GZDoom 4.14.2.
+Legal test IWAD: Freedoom Phase 2 0.13.0.
