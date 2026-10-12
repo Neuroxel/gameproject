@@ -324,7 +324,16 @@ class NexoMarioDoomPlayer : DoomPlayer
         front.y = 0.0;
         front.rotation = 0.0;
 
-        bool firing = NexoWeaponIsFiring(weapon);
+        bool attackDown =
+            (player.cmd.buttons & (BT_ATTACK | BT_ALTATTACK)) != 0;
+        bool attackRising =
+            attackDown
+            && !(player.oldbuttons & (BT_ATTACK | BT_ALTATTACK));
+
+        // Weapon-state detection is authoritative; fresh attack input is a
+        // one-tic fallback so the hand response starts immediately even when
+        // the destination weapon changes PSprite state later in the tick.
+        bool firing = NexoWeaponIsFiring(weapon) || attackRising;
 
         if (firing && !NexoHandWasFiring)
         {
