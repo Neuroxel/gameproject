@@ -777,3 +777,44 @@ Extractor v2:
 - searches common local folders when no ROM path is supplied;
 - removes the temporary copied ROM after extraction;
 - leaves only gitignored local voice/action samples.
+
+
+## SDL BLACK-SCREEN — fullscreen/focus isolation gate
+
+Latest runtime evidence:
+- OpenAL initializes successfully and opens `Bocinas de MacBook Pro`;
+- GZDoom reaches MAP01;
+- audio plays while video remains black;
+- controller input is initially unavailable/delayed;
+- automap eventually renders and, after leaving it, the 3D view becomes visible;
+- arrival pitch normalization works: once the view appears it starts centered.
+
+The previous startup-window source backport did **not** resolve this runtime
+behavior. The remaining symptoms are now treated as an SDL/macOS fullscreen /
+focus / first-present interaction rather than a controller mapping failure.
+
+Important timing fact:
+GZDoom loads `GlobalSettings` before constructing the SDL video backend, while
+our `+set` console commands may be applied after the initial window already
+exists. Therefore changing `vid_fullscreen` only on the command line is not a
+sufficient early-startup control.
+
+New isolation strategy in `bridge/run_doom.py`:
+- create/use `bridge/runtime/gzdoom-nexo.ini`;
+- seed it once from `~/Library/Preferences/gzdoom.ini` when available, so
+  existing bindings/preferences survive;
+- force before video initialization:
+  - `vid_fullscreen=false`;
+  - `win_maximized=false`;
+  - OpenGL desktop backend;
+  - joystick enabled;
+- use a 1200x800 centered window for the stable baseline;
+- pass this file through GZDoom's native `-config` argument;
+- fullscreen is now explicit opt-in via `--fullscreen`.
+
+This is deliberately diagnostic and conservative: first prove immediate image +
+immediate controller focus in windowed mode. Only then reintroduce fullscreen
+after the first successful frame.
+
+Audio remains PASS. Controller mapping remains PASS; current delayed input is
+classified as startup/focus behavior until this gate is tested.
