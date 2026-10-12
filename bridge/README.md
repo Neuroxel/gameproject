@@ -91,3 +91,29 @@ The v1 handoff schema now documents two optional backwards-compatible blocks:
 ```
 
 World adapters preserve identity while choosing their own native camera mode.
+
+
+## NEXO_HUB campaign router
+
+After M2 has produced `bridge/runtime/handoff_from_doom.json`, resolve the
+next chapter without coupling DOOM directly to another engine:
+
+```bash
+python3 bridge/nexo_router.py --print
+```
+
+The router reads `bridge/campaign.json` and writes
+`bridge/runtime/route.json`.
+
+Current campaign graph:
+
+```
+M1_CARGA_IMPOSIBLE / SM64_BOB
+  -> M2_STABILIZE_BREACH / DOOM_MAP01
+  -> HUB_AFTER_M2 / NEXO_HUB
+  -> M3_PORTAL_LAB / PORTAL_LAB
+```
+
+`M3_PORTAL_LAB` is deliberately `planned`, not runtime-ready. The router
+may resolve it, but `launch_allowed` remains false until the adapter is
+explicitly promoted to `ready`. Current requirement: 8 combat shards.
