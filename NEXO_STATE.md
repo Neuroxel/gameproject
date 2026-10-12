@@ -16,73 +16,72 @@ Construir progresivamente un mashup jugable, divertido y observable, comenzando 
 - A3 — Mario puede empujarlo y golpearlo con respuestas diferenciadas.
 - A4 — detección de entidades absorbibles.
 - A5 — primer Goomba absorbible.
-- A6 — crecimiento real del objeto.
+- A6 — crecimiento visual + físico real.
 - A7 — umbrales de absorción por tamaño.
 - A8 — HUD/progresión de tamaño y puntuación.
 - A9 — kill gate de diversión.
 - A10 — sistema tipo GTA wanted, sólo si A9 = PASS.
 - A11 — sistema de combos tipo Tony Hawk, sólo si el prototipo sigue siendo divertido.
 
-### Fase C
+## Gates confirmados
 
-Añadir sistemas tipo Crazy Taxi sólo después de validar la base de A.
+- A0 = PASS.
+- A1-A3.1 = PASS.
+- A4 = PASS: Goomba detectado.
+- A5 = PASS: Goomba absorbido y eliminado; contador aumenta.
 
-### Fase D
+## A6 — FAIL / causa de revisión
 
-Migrar a mashup multi-juego real con Godot + libsm64 + contenido/mapas compatibles con DOOM, sólo tras validar el gameplay.
+Evidencia del usuario:
 
-## Evidencia y gates
+- `GOOMBAS` aumenta correctamente;
+- `TAM` cambia de 1.15 a 1.33;
+- no se aprecia cambio visual en la esfera;
+- la esfera inicial resulta demasiado pequeña y difícil de controlar.
 
-### A0 — PASS
+No se considera A6 aprobado.
 
-Confirmado el 2026-10-12.
+## A6.1 — PENDING VALIDATION
 
-### A1-A3.1 — PASS
+Cambios:
 
-Confirmado por el usuario el 2026-10-12:
+1. Tamaño inicial sube de 1.15 a **1.80**.
+2. Cada Goomba añade **+0.55** de escala objetivo, deliberadamente exagerado para que la validación sea inequívoca.
+3. Máximo provisional aumenta a 6.00.
+4. La escala se aplica con `obj_scale_xyz()`, que escribe explícitamente X/Y/Z de `header.gfx.scale`.
+5. Se anima gradualmente `visual_scale -> target_scale` para que el crecimiento se vea en movimiento.
+6. El HUD separa:
+   - `OBJ` = escala objetivo lógica;
+   - `VIS` = escala visual que estamos aplicando;
+   - `GFX` = valor leído de `ball.header.gfx.scale.x` desde el objeto real.
+7. Hitbox y wall radius se recalculan usando `visual_scale`.
+8. Se aumenta el radio inicial de empuje.
+9. Se baja velocidad máxima del empuje normal para mejorar control.
+10. El golpe B sigue siendo notablemente más fuerte.
 
-- el modelo provisional se percibe en 3D;
-- puede empujarse de forma controlable;
-- el golpe fuerte con B produce un desplazamiento claramente mayor;
-- la física básica continúa estable.
+### Criterio de PASS
 
-La limitación de escaleras permanece documentada y no bloquea el gate.
+Después de absorber un Goomba:
 
-### A4-A6 — PENDING VALIDATION
+- `OBJ` aumenta de 1.80 a 2.35;
+- `VIS` anima progresivamente hasta 2.35;
+- `GFX` acompaña a `VIS`;
+- la esfera aumenta de tamaño de forma visualmente obvia;
+- la esfera inicial resulta sensiblemente más fácil de empujar/controlar;
+- el crecimiento de hitbox acompaña al visual.
 
-Implementación actual:
+Si `VIS` sube pero `GFX` no, el problema está en la aplicación de escala al objeto.
+Si `GFX` sube pero el modelo no crece, el problema está en la jerarquía/GeoLayout del modelo provisional y se reemplazará por geometría propia o un actor distinto.
 
-1. La bola recorre los objetos con comportamiento `id_bhvGoomba`.
-2. Cuando un Goomba entra en el radio de absorción, se marca para eliminación.
-3. El contador `GOOMBAS` aumenta.
-4. La escala visual aumenta +0.18 por Goomba, con límite provisional 3.25x.
-5. Crecen también `oWallHitboxRadius`, `hitboxRadius` y `hitboxHeight`.
-6. El radio de empuje de Mario aumenta con la bola.
-7. Se introduce un efecto de masa suave: cuantos más Goombas absorbe, más cuesta empujarla pasivamente.
-8. El HUD muestra `GOOMBA ABSORBIDO +1`, tamaño y velocidad.
-9. D-Pad abajo reinicia progreso y reposiciona la bola.
-10. Cambiar de nivel reinicia el progreso.
+## Limitaciones aceptadas
 
-Criterios de PASS:
+- Modelo Spiny Ball provisional.
+- Goomba absorbido desaparece en lugar de quedar pegado.
+- Sólo Goombas.
+- Escaleras fuera de alcance.
+- Multiplayer aún no validado.
 
-- la bola detecta al menos un Goomba estándar al contacto/proximidad inmediata;
-- el Goomba desaparece sin crash;
-- el contador aumenta exactamente una vez por Goomba;
-- el crecimiento visual es claramente perceptible;
-- la colisión/hitbox acompaña al crecimiento;
-- tras varios Goombas la bola sigue siendo empujable;
-- no se producen absorciones repetidas del mismo Goomba ni spam infinito.
-
-## Limitaciones aceptadas en este gate
-
-- El Goomba absorbido desaparece; todavía no se representa pegado a la superficie.
-- Sólo se absorben Goombas estándar.
-- No existe todavía un umbral de tamaño por categoría.
-- El sistema aún no está validado para multiplayer.
-- Puede haber casos de absorción a través de geometría muy fina porque el gate usa distancia simple.
-- Escaleras siguen fuera de alcance.
-
-Si A4-A6 = PASS, el siguiente trabajo será A7-A8: clases de objetos/umbrales de tamaño, progresión más rica y feedback visual de absorción.
+No comenzar A7 hasta A6.1 PASS.
 
 ## Stack autorizado para A0–A9
 
@@ -92,20 +91,8 @@ Si A4-A6 = PASS, el siguiente trabajo será A7-A8: clases de objetos/umbrales de
 - ChatGPT para arquitectura, código, revisión y trazabilidad
 - Claude Code sólo cuando la ejecución/depuración local aporte valor
 
-## Fuera de alcance por ahora
-
-- Ghidra
-- Frida
-- RenderDoc
-- Godot
-- libsm64-godot
-- GodotWadImporter
-- Universal Modder
-- CrossOver como dependencia de desarrollo
-
-## Reglas de provenance y legalidad
+## Reglas
 
 - Nunca versionar ROMs ni dumps.
-- Nunca reemplazar originales del usuario.
-- Mantener código propio separado de datos propietarios.
-- Registrar cambios de arquitectura y cambios de criterio en este archivo.
+- Nunca reemplazar originales.
+- Registrar cambios de criterio y evidencia.
