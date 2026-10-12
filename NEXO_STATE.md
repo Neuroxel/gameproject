@@ -383,3 +383,47 @@ InM2Map = Level.MapName ~== "MAP01";
 
 Do not replace this with newer String helper methods without validating against
 the pinned GZDoom runtime.
+
+
+## Controller blocker — root cause identified
+
+Observed on macOS 26.3 / GZDoom 4.14.2:
+- controller detected;
+- RT opens pause/menu instead of firing;
+- LT pauses;
+- D-pad Up behaves as permanently pressed;
+- controller menu becomes effectively unusable.
+
+This matches upstream GZDoom issue #3142 for macOS 26 / GZDoom 4.14.2:
+triggers broken and D-pad/controller mapping corrupted in the native Cocoa backend.
+
+Upstream issue remains open.
+
+### Technical finding
+
+GZDoom 4.14.2 supports two macOS build paths:
+- native Cocoa backend (official packaged build);
+- SDL2 backend via `OSX_COCOA_BACKEND=OFF`.
+
+The current official runtime is Cocoa and is unsuitable as NEXO's controller
+baseline on macOS 26.
+
+### New remediation path
+
+Added:
+- `scripts/setup-gzdoom-sdl-macos.sh`
+- `bridge/controller_probe.py`
+- launcher runtime selection: `--runtime auto|sdl|cocoa`.
+
+`auto` now prefers a locally built SDL GZDoom when available.
+
+Gate CONTROL-1:
+1. probe identifies controller HID;
+2. SDL GZDoom detects controller;
+3. D-pad neutral when untouched;
+4. RT can bind/fire;
+5. LT can bind without pausing;
+6. both sticks usable;
+7. M2 still loads.
+
+Do not advance M3 until CONTROL-1 passes.
