@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 RUNTIME="$ROOT/.runtime/doom/gzdoom-sdl"
 SRC="$RUNTIME/src"
 BUILD="$RUNTIME/build"
+PATCH_DIR="$ROOT/patches/gzdoom-g4.14.2-sdl-gamecontroller"
 TAG="g4.14.2"
 ZMUSIC_VERSION="1.1.14"
 ZMUSIC_PACKAGE="zmusic-${ZMUSIC_VERSION}-macos-arm.tar.xz"
@@ -77,6 +78,12 @@ else
   echo "[NEXO] Reusing existing GZDoom source checkout."
 fi
 
+if [ -f "$PATCH_DIR/i_joystick.cpp" ] && [ -f "$PATCH_DIR/i_input.cpp" ]; then
+  echo "[NEXO] Applying canonical SDL GameController backport before build..."
+  cp "$PATCH_DIR/i_joystick.cpp" "$SRC/src/common/platform/posix/sdl/i_joystick.cpp"
+  cp "$PATCH_DIR/i_input.cpp" "$SRC/src/common/platform/posix/sdl/i_input.cpp"
+fi
+
 rm -rf "$BUILD"
 mkdir -p "$BUILD"
 
@@ -111,7 +118,8 @@ cmake \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_PREFIX_PATH="$BUILD/zmusic" \
   -DPK3_QUIET_ZIPDIR=ON \
-  -DOSX_COCOA_BACKEND=OFF
+  -DOSX_COCOA_BACKEND=OFF \
+  -DDYN_OPENAL=OFF
 
 CPU_COUNT="$(sysctl -n hw.logicalcpu 2>/dev/null || echo 4)"
 
