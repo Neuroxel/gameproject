@@ -25,6 +25,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 BRIDGE = ROOT / "bridge"
 HANDOFF = BRIDGE / "runtime" / "handoff.json"
+DOOM_LOG = BRIDGE / "runtime" / "doom.log"
 MOD_SRC = ROOT / "doom" / "mod_src"
 PK3 = ROOT / ".runtime" / "doom" / "nexo_doom.pk3"
 
@@ -202,8 +203,13 @@ def main() -> int:
     gzdoom = find_gzdoom(args.gzdoom)
     iwad = find_iwad(args.iwad)
 
+    DOOM_LOG.parent.mkdir(parents=True, exist_ok=True)
+    if DOOM_LOG.exists():
+        DOOM_LOG.unlink()
+
     cmd = [
         str(gzdoom),
+        "+logfile", str(DOOM_LOG),
         "-iwad", str(iwad),
         "-file", str(pk3),
         "+map", args.map,
@@ -216,6 +222,7 @@ def main() -> int:
     print(f"[NEXO] GZDoom: {gzdoom}")
     print(f"[NEXO] IWAD: {iwad}")
     print(f"[NEXO] PK3: {pk3}")
+    print(f"[NEXO] Mission log: {DOOM_LOG}")
     print("[NEXO] Command:")
     print(" ".join(shlex.quote(x) for x in cmd))
 
