@@ -140,3 +140,23 @@ bridge/runtime/handoff_from_doom.json
 ```
 
 Este manifest será la entrada del tercer mundo.
+
+
+## Gamepad continuity
+
+GZDoom supports controllers on macOS. NEXO now forces controller input enabled.
+
+For a one-time controller setup:
+
+```bash
+python3 bridge/run_doom.py --controller-setup
+```
+
+After mapping the device once, normal launches remain:
+
+```bash
+python3 bridge/run_doom.py
+```
+
+M2 is now restricted to MAP01, so entering MAP02 no longer reapplies the original
+SM64 handoff or restarts the mission.
