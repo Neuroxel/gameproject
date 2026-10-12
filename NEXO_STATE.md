@@ -205,3 +205,20 @@ This makes Portal Fabric state durable across engine/session boundaries.
 The user should not need to replay M1 if either:
 - the old save still contains the handoff payload fields; or
 - `bridge/runtime/handoff.json` already exists from the previously successful export.
+
+
+## P1.2 setup macOS — hardening
+
+Tras recuperar correctamente un handoff legado, el dry-run llegó al gate de runtime y reportó `GZDoom executable not found`.
+
+Esto confirma que:
+- bridge/handoff = operativo;
+- fallo actual = runtime local todavía no preparado.
+
+Se endureció `scripts/setup-doom-macos.sh`:
+- sin `find -maxdepth` GNU/no portable;
+- valida dependencias;
+- valida ZIPs antes de extraer;
+- detecta GZDoom.app recursivamente;
+- valida/chmod del ejecutable;
+- valida freedoom2.wad.
