@@ -130,3 +130,15 @@ window is already constructed. Use GZDoom's `-config` path so
 `GlobalSettings` is loaded before video initialization.
 
 Fullscreen is explicit opt-in only.
+
+
+## SDL first-present workaround
+
+The current macOS 26 SDL/OpenGL g4.14.2 bug is reproducibly recovered by
+automap -> 3D transition even in windowed mode. The launcher therefore applies
+a short delayed automap prime by default after map startup.
+
+Do not remove until a lower-level renderer fix is proven.
+
+NEXO campaign/identity CVARs must be queued BEFORE +map so EventHandler
+WorldLoaded/PlayerEntered sees the intended values.
