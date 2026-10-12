@@ -142,3 +142,13 @@ Do not remove until a lower-level renderer fix is proven.
 
 NEXO campaign/identity CVARs must be queued BEFORE +map so EventHandler
 WorldLoaded/PlayerEntered sees the intended values.
+
+
+## g4.14.2 ordering invariants (2026-10-13)
+
+- EventHandler PlayerEntered precedes WorldLoaded on fresh map load.
+  Never initialize arrival-critical NEXO state only in WorldLoaded.
+- Console `wait` delays only the remainder of the same semicolon-separated
+  AddCommandString buffer. Renderer prime must stay in one exec-script line.
+- Mario identity SFX use dedicated global CHAN_5/UI; do not reuse Doom's
+  native CHAN_VOICE.
