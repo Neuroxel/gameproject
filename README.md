@@ -160,3 +160,15 @@ python3 bridge/run_doom.py
 
 M2 is now restricted to MAP01, so entering MAP02 no longer reapplies the original
 SM64 handoff or restarts the mission.
+
+
+### GZDoom runtime compatibility
+
+NEXO currently pins GZDoom 4.14.2. MAP scoping uses ZScript's
+case-insensitive `~==` operator:
+
+```zscript
+Level.MapName ~== "MAP01"
+```
+
+Avoid newer String helper APIs unless tested against 4.14.2.
