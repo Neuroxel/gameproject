@@ -229,3 +229,21 @@ python3 bridge/run_doom.py --runtime sdl --controller-setup
 
 The repair copies the already downloaded ZMusic dylib into GZDoom's
 `Contents/MacOS` directory under the runtime filename the executable requests.
+
+
+### SDL renderer fix on macOS
+
+The SDL build must launch with desktop OpenGL explicitly selected:
+
+```
+vid_preferbackend = 0
+gl_es = false
+```
+
+Why: GZDoom 4.14.2 defaults to Vulkan (`vid_preferbackend=1`). If Vulkan was
+not compiled into the local SDL build, its SDL platform path can select the GLES
+renderer, which fails on Apple's OpenGL 4.1 core context with legacy
+`attribute`/`varying` shader syntax.
+
+`bridge/run_doom.py` now forces the correct desktop OpenGL backend for SDL.
+No rebuild is required.
