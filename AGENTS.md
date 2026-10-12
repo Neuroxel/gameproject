@@ -40,3 +40,10 @@ MAP02+ must remain native unless assigned a later NEXO mission.
 Case-insensitive map-name comparison must use `~==`.
 Current M2 gate:
 `Level.MapName ~== "MAP01"`.
+
+
+## Controller runtime invariant
+
+On macOS 26, prefer the SDL2 GZDoom build.
+The official Cocoa GZDoom 4.14.2 controller backend has known trigger/D-pad
+breakage. Do not treat per-button Cocoa remapping as a final solution.
