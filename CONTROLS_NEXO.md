@@ -103,3 +103,17 @@ For the local SDL runtime NEXO forces:
 
 This avoids the macOS GLSL 330 `attribute`/`varying` crash while preserving
 SDL joystick handling.
+
+
+## Standardized SDL GameController mapping
+
+Raw SDL joystick axis ordering is not accepted as the final NEXO baseline.
+
+For mapped controllers the g4.14.2 SDL runtime is patched to use:
+- Left Stick X/Y -> move;
+- Right Stick X/Y -> yaw/pitch;
+- LT/RT -> trigger buttons, never camera axes;
+- SDL standardized face/shoulder/D-pad events.
+
+Mapped devices use `Joy:GC:*` configuration sections so earlier `Joy:JS:*`
+experiments cannot contaminate the new mapping.
