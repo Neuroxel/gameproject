@@ -82,12 +82,12 @@ class NexoHandoffHandler : EventHandler
 
         // This distinguishes PK3/filesystem resolution from decoder failure
         // using APIs exposed by the exact pinned g4.14.2 ZScript runtime.
-        LogMarioSfxResource("jump", "sounds/nexo/mario/jump.wav");
-        LogMarioSfxResource("hurt", "sounds/nexo/mario/hurt.wav");
-        LogMarioSfxResource("death", "sounds/nexo/mario/death.wav");
-        LogMarioSfxResource("use", "sounds/nexo/mario/use.wav");
-        LogMarioSfxResource("portal", "sounds/nexo/mario/portal.wav");
-        LogMarioSfxResource("celebrate", "sounds/nexo/mario/celebrate.wav");
+        LogMarioSfxResource("jump", "sounds/nexo/mario/jump.dmx");
+        LogMarioSfxResource("hurt", "sounds/nexo/mario/hurt.dmx");
+        LogMarioSfxResource("death", "sounds/nexo/mario/death.dmx");
+        LogMarioSfxResource("use", "sounds/nexo/mario/use.dmx");
+        LogMarioSfxResource("portal", "sounds/nexo/mario/portal.dmx");
+        LogMarioSfxResource("celebrate", "sounds/nexo/mario/celebrate.dmx");
 
         Console.Printf(
             "[NEXO] Mario SFX probe seconds: jump=%.3f hurt=%.3f death=%.3f use=%.3f portal=%.3f celebrate=%.3f\n",
