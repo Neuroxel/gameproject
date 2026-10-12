@@ -176,6 +176,10 @@ class NexoHandoffHandler : EventHandler
 
             if (InM2Map)
             {
+                if (CVarBool('nexo_mario_sfx'))
+                {
+                    Console.Printf("[NEXO] Mario portal cue requested: nexo/mario/portal\n");
+                }
                 PlayMarioPortal(pawn);
                 BeginPerspectiveTransition(e.PlayerNumber);
             }
