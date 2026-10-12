@@ -302,3 +302,34 @@ python3 bridge/run_doom.py --runtime sdl
 ```
 
 Required names: `jump`, `hurt`, `death`, `use` in OGG/WAV/FLAC.
+
+
+## Current audio recovery path
+
+For the existing silent SDL runtime:
+
+```bash
+git pull
+bash scripts/patch-gzdoom-sdl-audio.sh
+python3 bridge/run_doom.py --runtime sdl
+```
+
+This builds project-local OpenAL Soft, re-enables GZDoom's dynamic OpenAL
+loader, bundles `libopenal.1.dylib`, and forces the CoreAudio backend.
+
+If sound still fails, inspect:
+
+```
+bridge/runtime/openal-soft.log
+```
+
+## Extract Mario voice identity from your own SM64 ROM
+
+Do not download third-party Mario voice packs. Use the ROM you already own:
+
+```bash
+bash scripts/extract-mario-sfx-from-sm64-rom.sh /path/to/baserom.us.z64 us
+python3 bridge/run_doom.py --runtime sdl
+```
+
+The extracted files stay local and gitignored.
