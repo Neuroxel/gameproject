@@ -865,3 +865,51 @@ Canonical order is now:
 
 WorldLoaded now logs the identity gate values and PlayerEntered logs when the
 Mario portal cue is requested.
+
+
+## 2026-10-13 — ROOT CAUSES: first-frame prime + EventHandler ordering
+
+Two independent assumptions were proven wrong from the exact pinned
+GZDoom g4.14.2 source.
+
+### Black 3D startup
+
+The previous command line used separate argv commands:
+`+wait 8 +togglemap +wait 2 +togglemap`.
+
+In g4.14.2, `wait` only schedules the **remainder of the same
+semicolon-separated AddCommandString buffer**. A standalone `wait 8` has no
+remainder and returns; the following command-line `togglemap` is a separate
+buffer. Therefore the intended delayed automap prime never actually existed.
+
+Fix:
+`bridge/run_doom.py` now writes
+`bridge/runtime/nexo-startup.cfg` containing one line:
+
+`wait 8; togglemap; wait 2; togglemap`
+
+and queues it through one `+exec` after `+map`.
+
+### Mario identity / M2 arrival
+
+Pinned g4.14.2 calls local EventHandler `PlayerEntered` **before**
+`WorldLoaded` during a fresh map load.
+
+The NEXO handler previously initialized `InM2Map` and `IdentityActive` only
+inside `WorldLoaded`. Consequently the first `PlayerEntered` observed both
+fields as false, suppressing the Mario arrival cue/perspective path and
+returning before M2 handoff application.
+
+Fix:
+- arrival state is derived at the start of `PlayerEntered`;
+- `WorldLoaded` refreshes/logs but no longer destroys state initialized by
+  `PlayerEntered`;
+- Mario SFX use dedicated global `CHAN_5` + `CHANF_UI` so Doom player voice
+  channels cannot clobber identity cues;
+- arrival logs the duration of all six registered Mario sounds via
+  `S_GetLength`;
+- generated SNDINFO quotes exact PK3 paths.
+
+Expected diagnostic:
+`[NEXO] PlayerEntered: map=MAP01 handoff=1 mario_sfx=1 m2=1`
+followed by positive Mario SFX durations and the portal cue request.
