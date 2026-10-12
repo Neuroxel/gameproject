@@ -672,3 +672,30 @@ Optional identity cues:
 
 DOOM now plays the portal cue on arrival and celebration cue on M2 completion
 when Mario identity audio is enabled.
+
+
+## AUDIO-RUNTIME — OpenAL Soft compiler regression identified
+
+User log from 2026-10-12 shows OpenAL Soft configuration succeeded and selected
+the correct macOS audio backend:
+- CoreAudio, WaveFile, Null;
+- ARM Neon;
+- generation completed.
+
+The build then failed during C++ dependency scanning because CMake inherited
+Homebrew LLVM 20.1.7 (`/opt/homebrew/opt/llvm/bin/clang++` and
+`clang-scan-deps`). That scanner invocation did not receive the Apple SDK
+system include paths and consequently reported ordinary macOS headers as
+missing: `pthread.h`, `Availability.h`, `sched.h`, and `time.h`.
+
+This is a compiler/sysroot selection regression, not a missing pthread package
+and not a CoreAudio failure.
+
+Fix:
+- force `/usr/bin/clang` and `/usr/bin/clang++`;
+- resolve the active SDK with `xcrun --sdk macosx --show-sdk-path`;
+- pass `CMAKE_OSX_SYSROOT`;
+- lock `arm64`;
+- disable unnecessary C++ module scanning;
+- clear only the stale OpenAL build cache configured with the wrong compiler;
+- preserve the already-cloned OpenAL Soft source checkout.
