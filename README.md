@@ -1,32 +1,54 @@
 # NEXO Mashup Lab
 
-## Estado
+## Vertical slice actual: M1 — CARGA IMPOSIBLE
 
-La navegación estable de A6.6 se conserva.
+El prototipo ya no busca sólo "hacer un Katamari".
 
-La prueba actual combina dos cosas:
+El loop actual es:
 
-**A6.8**
-- la bola sube visualmente al crecer;
-- deja de hundirse en el piso;
-- attachments quedan fuera de la superficie en vez de embebidos.
+```
+RECOLECTAR
+  -> CRECER
+  -> COMPLETAR CARGA
+  -> VOLVER AL PUNTO INICIAL
+  -> NEXO GATE
+  -> HANDOFF AL SIGUIENTE MUNDO
+```
 
-**A7-A8 — slice 1**
-- monedas;
-- Goombas;
-- Bob-ombs con umbral de tamaño;
-- HUD de progresión;
-- feedback "demasiado grande".
+## Requisitos M1
 
-## Progresión inicial
+En **Bob-omb Battlefield**:
 
-| Objeto | Tamaño mínimo | Crecimiento |
-|---|---:|---:|
-| Moneda | 1.80 | +0.08 |
-| Goomba | 1.80 | +0.35 |
-| Bob-omb | 2.70 | +0.50 |
+- 5 monedas
+- 4 Goombas
+- 2 Bob-ombs
+- masa >= 3.80
 
-Bob-omb no debe desaparecer si todavía eres pequeño.
+Al cumplirlos aparece un **NEXO GATE** en el punto donde comenzaste el nivel.
+
+Vuelve y atraviesa el gate para terminar la misión.
+
+El destino guardado del primer handoff es **DOOM**. Todavía no lanza DOOM: esta fase valida el contrato de transición y el loop completo.
+
+## Cambios de física/presentación
+
+### Rigid attachments
+
+Los objetos pegados ya no se corrigen individualmente contra el piso.
+
+Mantienen una posición rígida sobre la bola. Si quedan detrás de suelo/pared, se ocultan temporalmente y reaparecen al emerger.
+
+### Compact Mode
+
+La masa lógica puede ser grande, pero el tamaño visual se adapta al espacio mediante raycasts.
+
+En pasillos o bajo techos verás:
+
+`COMPACT`
+
+La masa/progresión NO se pierde.
+
+Mario conserva siempre su física nativa.
 
 ## Actualizar
 
@@ -38,15 +60,15 @@ bash scripts/install-macos.sh
 
 Reinicia SM64CoopDX.
 
-## Qué probar
+## Prueba recomendada
 
-1. Navegación: puertas y entrada al escenario deben seguir funcionando.
-2. Absorbe varios Goombas y observa si la esfera crece hacia arriba, sin hundirse.
-3. Detente y mira si los Goombas quedan sobre la superficie, no dentro.
-4. Recoge monedas con la bola.
-5. Acércate a un Bob-omb antes de TAM 2.70: debe aparecer "DEMASIADO GRANDE".
-6. Crece hasta 2.70 o más.
-7. Absorbe un Bob-omb y confirma que queda pegado.
-8. Comprueba que el giro sigue lento y natural.
+1. En el castillo, confirma que el mod no pone la bola.
+2. Entra a Bob-omb Battlefield.
+3. Recolecta la carga marcada en HUD.
+4. Observa attachments cerca del suelo/pared.
+5. Lleva la bola grande por espacios estrechos y observa COMPACT.
+6. Completa requisitos.
+7. Regresa al NEXO GATE del inicio.
+8. Tócalo y revisa score/best/time + `HANDOFF PREPARADO -> DOOM`.
 
-No usamos todavía Koopas: primero validamos que el sistema genérico de categorías/umbrales sea estable.
+El modelo del gate y la esfera siguen siendo placeholders funcionales.
