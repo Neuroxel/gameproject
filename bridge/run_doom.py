@@ -292,7 +292,22 @@ def main() -> int:
     if args.dry_run:
         return 0
 
-    subprocess.Popen(cmd, cwd=str(ROOT))
+    launch_env = os.environ.copy()
+
+    if runtime_kind == "sdl":
+        # Extra safety for locally built macOS runtime dependencies. The setup
+        # script also bundles libzmusic.1.dylib next to the executable.
+        dyld_paths = [
+            str(gzdoom.parent),
+            str(ROOT / ".runtime/doom/gzdoom-sdl/build/zmusic/lib"),
+        ]
+        existing = launch_env.get("DYLD_LIBRARY_PATH")
+        if existing:
+            dyld_paths.append(existing)
+        launch_env["DYLD_LIBRARY_PATH"] = ":".join(dyld_paths)
+        print(f"[NEXO] DYLD_LIBRARY_PATH: {launch_env['DYLD_LIBRARY_PATH']}")
+
+    subprocess.Popen(cmd, cwd=str(ROOT), env=launch_env)
     print("[NEXO] GZDoom launched.")
     return 0
 
