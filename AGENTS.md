@@ -99,3 +99,17 @@ right-stick look.
 On macOS 26, NEXO SDL defaults to the isolated windowed-safe config. Do not make
 fullscreen startup the default while black-screen/delayed-focus behavior is
 unresolved. Fullscreen tests require explicit `--fullscreen`.
+
+
+## Launch ordering invariant
+
+For DOOM launch:
+1. renderer/controller CVARs;
+2. NEXO handoff/identity CVARs;
+3. +map;
+4. SDL renderer prime.
+
+Never place nexo_handoff or nexo_mario_sfx after +map.
+
+The automatic automap prime is a temporary macOS 26 first-present workaround
+and is diagnostic-toggleable with --no-render-prime.
