@@ -341,3 +341,22 @@ The chain window is 28 tics after a real landing and still requires a fresh
 Jump press. Held Jump and airborne button spam remain invalid.
 
 Status: **runtime-v2 prepared; user retest required**.
+
+
+## Special-move voice fidelity
+
+The movement adapter no longer assigns convenient legacy cues to special moves.
+
+Verified SM64 action semantics now used by NEXO:
+- backflip: generic Mario jump voice pool (Yah/Wah/Hoo);
+- side flip: generic jump voice pool;
+- wall kick: generic jump voice pool;
+- long jump: Yahoo;
+- dive activation: Hoo-hoo;
+- ground pound: dedicated Ground-Pound Wah.
+
+This is separate from physical movement and separate from DOOM weapon/world
+audio.
+
+The side-flip/spin action effects used by SM64 are a future optional local
+asset enhancement; NEXO does not substitute an unrelated voice for them.
