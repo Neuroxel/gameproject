@@ -84,3 +84,46 @@ Primer handoff previsto:
 SM64 -> DOOM.
 
 No integrar DOOM hasta M1 PASS.
+
+
+## M1 — PASS FUNCIONAL / VISUAL QA PENDIENTE
+
+Evidencia del usuario:
+
+- bola + HUD aparecen correctamente dentro de Bob-omb Battlefield;
+- no aparecen en el castillo;
+- M1 se completa;
+- score y best score funcionan;
+- handoff se guarda con destino DOOM;
+- compact mode funciona;
+- thresholds y absorción funcionan;
+- navegación permanece estable.
+
+### Deuda visual congelada
+
+Los attachments todavía muestran variación perceptible de distancia:
+- algunos quedan demasiado separados;
+- otros demasiado embebidos;
+- el placeholder del NEXO Gate (estrella transparente) no tiene valor visual final.
+
+Estas tareas NO bloquean la transición P1.
+
+Se registran como `VISUAL-QA-ATTACHMENTS` y `VISUAL-QA-GATE`.
+
+## Portal Fabric P1 — bridge externo iniciado
+
+Se agrega:
+
+- `bridge/nexo_handoff.py`;
+- `bridge/README.md`;
+- `bridge/nexo-portal-handoff-v1.schema.json`.
+
+El bridge lee los `.sav` de SM64CoopDX en macOS, detecta `handoff_pending=1` y produce un manifiesto neutral JSON.
+
+Aún no lanza DOOM.
+
+Próximo gate técnico:
+**P1.1 — leer handoff real desde el Mac y generar handoff.json**.
+
+Después:
+**P1.2 — elegir/instalar runtime DOOM y crear doom_adapter mínimo**.
