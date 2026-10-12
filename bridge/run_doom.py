@@ -47,6 +47,18 @@ MARIO_SFX_OPTIONAL = (
     "sideflip", "wallkick",
 )
 MARIO_SFX_EXTS = (".ogg", ".wav", ".flac")
+MARIO_HAND_SPRITES = (
+    "NHFBA0.png", "NHFFA0.png",
+    "NHCBA0.png", "NHCFA0.png",
+    "NHPBA0.png", "NHPFA0.png",
+    "NHSBA0.png", "NHSFA0.png",
+    "NH2BA0.png", "NH2FA0.png",
+    "NHGBA0.png", "NHGFA0.png",
+    "NHRBA0.png", "NHRFA0.png",
+    "NHEBA0.png", "NHEFA0.png",
+    "NHBBA0.png", "NHBFA0.png",
+)
+
 
 
 def export_handoff() -> bool:
@@ -105,6 +117,17 @@ def find_local_mario_sfx() -> dict[str, Path]:
                 found[logical] = candidate
                 break
     return found
+
+
+def local_mario_hands_status() -> tuple[bool, list[str]]:
+    """Validate the complete local first-person Mario hand grip pack."""
+    marker = LOCAL_MARIO_HANDS / "READY"
+    missing = [
+        name for name in MARIO_HAND_SPRITES
+        if not (LOCAL_MARIO_HANDS / name).is_file()
+    ]
+    ready = marker.is_file() and not missing
+    return ready, missing
 
 
 def _wav_pcm16le_to_dmx(path: Path) -> tuple[bytes, int]:
@@ -180,6 +203,7 @@ def build_pk3() -> tuple[Path, bool]:
         "MAPINFO",
         "zscript.zc",
         "zscript/nexo_handoff.zs",
+        "zscript/nexo_mario_hands.zs",
         "zscript/nexo_mario_player.zs",
     }
 
@@ -187,6 +211,7 @@ def build_pk3() -> tuple[Path, bool]:
     members: list[str] = []
     mario_sfx = find_local_mario_sfx()
     mario_sfx_ready = all(name in mario_sfx for name in MARIO_SFX_NAMES)
+    mario_hands_ready, mario_hands_missing = local_mario_hands_status()
 
     with zipfile.ZipFile(PK3, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for path in sorted(MOD_SRC.rglob("*")):
@@ -285,6 +310,13 @@ def build_pk3() -> tuple[Path, bool]:
             zf.writestr("SNDINFO", "\n".join(sndinfo_lines) + "\n")
             members.append("SNDINFO")
 
+        if mario_hands_ready:
+            for filename in MARIO_HAND_SPRITES:
+                source = LOCAL_MARIO_HANDS / filename
+                arcname = f"sprites/nexo/mario_hands/{filename}"
+                zf.write(source, arcname)
+                members.append(arcname)
+
     missing = sorted(required.difference(members))
     if missing:
         hint = ""
@@ -311,7 +343,16 @@ def build_pk3() -> tuple[Path, bool]:
         print("[NEXO] Mario identity SFX: partial; disabled until complete: " + ", ".join(missing_sfx))
     else:
         print("[NEXO] Mario identity SFX: no local assets; hooks remain disabled")
-    return PK3, mario_sfx_ready
+
+    if mario_hands_ready:
+        print("[NEXO] Mario first-person hand pack: COMPLETE and embedded")
+    elif (LOCAL_MARIO_HANDS / "READY").exists():
+        print(
+            "[NEXO] WARNING: Mario hand READY marker exists but pack is incomplete: "
+            + ", ".join(mario_hands_missing)
+        )
+
+    return PK3, mario_sfx_ready, mario_hands_ready
 
 
 def find_gzdoom(explicit: str | None, runtime_mode: str = "auto") -> tuple[Path, str]:
@@ -556,9 +597,8 @@ def main() -> int:
     args = parser.parse_args()
 
     handoff = load_handoff()
-    pk3, mario_sfx_ready = build_pk3()
+    pk3, mario_sfx_ready, mario_hands_ready = build_pk3()
     avatar_body_ready = (LOCAL_MARIO_BODY / "READY").exists()
-    mario_hands_ready = (LOCAL_MARIO_HANDS / "READY").exists()
     gzdoom, runtime_kind = find_gzdoom(args.gzdoom, args.runtime)
     iwad = find_iwad(args.iwad)
     nexo_config = (
