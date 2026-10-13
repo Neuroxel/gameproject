@@ -369,7 +369,7 @@ def build_pk3() -> tuple[Path, bool, bool]:
 
     if mario_hands_ready:
         print("[NEXO] Mario first-person hand pack: COMPLETE and embedded")
-        print("[NEXO] Mario hand runtime: v2 grip scale + Fire/Hold recoil + movement coupling")
+        print("[NEXO] Mario hand runtime: v3 Mario sleeves/cuffs + reliable nonlinear Fire/Hold recoil")
     elif (LOCAL_MARIO_HANDS / "READY").exists():
         print(
             "[NEXO] WARNING: Mario hand READY marker exists but pack is incomplete: "
