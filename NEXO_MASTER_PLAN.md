@@ -283,3 +283,25 @@ Current near-term order is now more granular:
 12. **M3 only when Source/Portal adapter is genuinely ready**.
 
 Do not skip from the current DOOM embodiment work directly to M3.
+
+
+## Current execution checkpoint — FP-MARIO v3
+
+Latest user runtime evidence:
+- general Mario jump behavior is now good;
+- canonical jump voice pool loads;
+- wall kick remains validated;
+- backflip fidelity still needs one focused retest;
+- FP-MARIO v2 movement exists but visual/attack quality is insufficient.
+
+Current implementation checkpoint:
+1. FP-MARIO v3 grip/sleeve/cuff render + reliable nonlinear attack impulse;
+2. backflip stronger backward identity + nonlinear first-person presentation;
+3. MARIOMOVE-3 crouch/crawl first-person presentation groundwork;
+4. next runtime QA calibrates Fist, Pistol and one representative two-hand
+   launcher/long-gun family;
+5. after that, proceed to state-specific weapon-hand art and baked-hand
+   masking only where screenshots prove it is necessary.
+
+Do not reopen the now-working jump ratios/audio unless runtime regression
+evidence appears.
