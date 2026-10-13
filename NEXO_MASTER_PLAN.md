@@ -305,3 +305,30 @@ Current implementation checkpoint:
 
 Do not reopen the now-working jump ratios/audio unless runtime regression
 evidence appears.
+
+
+## Progression update — FP-MARIO no longer blocks body-source work
+
+User direction: do not spend multiple cycles indefinitely micro-calibrating
+generic first-person hands.
+
+Therefore workstreams now overlap safely:
+
+1. FP-MARIO v4 gets one final generic positioning QA.
+2. FP-MARIO-2 state-specific/masking improvements may continue later per weapon
+   without blocking architecture.
+3. AVATAR-BODY-1 has started now:
+   local full-body Mario part extraction + canonical skeleton manifest.
+4. AVATAR-BODY-2 follows with neutral/portal/death pose rendering.
+5. MARIOMOVE-3 continues in parallel:
+   crouch/crawl presentation already exists; ledge/slope/climbing remains the
+   next traversal investigation.
+6. When body rendering is genuinely coherent, activate the visible
+   3P -> portal -> 1P transition.
+7. Then HUD/avatar-residue audit, NEXO_HUB/router stabilization and
+   Source/Portal adapter.
+8. M3 remains blocked until the Source/Portal adapter is genuinely ready.
+
+Working principle:
+**visual polish debt may remain local and explicit, but it must not stall
+independent architectural phases once the underlying adapter is functional.**
