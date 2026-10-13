@@ -98,3 +98,30 @@ First-person hands and full body are separate render responsibilities:
 - AVATAR-BODY owns external/camera-visible Mario.
 
 They share the same avatar identity but do not require the same sprite pipeline.
+
+
+## AVATAR-BODY-2 — neutral preview renderer implemented
+
+Script:
+`scripts/render-mario-body-preview-local.py`
+
+It consumes the local AVATAR-BODY-1 source pack and:
+- resolves the canonical parent/child skeleton translations;
+- builds a static neutral external-view pose;
+- maps SM64 model Z to screen horizontal and X to screen vertical;
+- rotates arm/leg chains downward for a readable standing pose;
+- applies Mario color families;
+- renders a transparent 512x512 PNG locally.
+
+Output:
+`assets_local/mario_avatar/body_neutral_preview.png`
+
+This is **source/pose QA only**:
+- no READY marker;
+- no chasecam activation;
+- no DOOM third-person gameplay;
+- no committed Nintendo geometry.
+
+If the neutral preview is coherent, AVATAR-BODY-3 will expand the renderer into
+portal/death/external pose variants and only then activate the existing
+perspective adapter's body-ready gate.
