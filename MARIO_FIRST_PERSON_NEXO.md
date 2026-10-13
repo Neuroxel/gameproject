@@ -313,3 +313,77 @@ than merely larger procedural offsets:
 - full-body Mario for external/death/portal views.
 
 Status: **runtime-v2 ready for QA / NOT PASS**.
+
+
+## Runtime-v3 correction after 21:40-21:44 user QA
+
+New user screenshots and playtest invalidate runtime-v2 as a final hand solution.
+
+Confirmed improvements from v2:
+- hand overlays now move with attacks;
+- pistol no longer has the catastrophic v1 full-weapon occlusion;
+- the runtime pack and Fire/Hold controller load correctly.
+
+Remaining defects observed by the user:
+- gloves are now too small;
+- the raw low-poly white mesh does not read strongly enough as Mario's glove;
+- Fist movement is too small and too linear;
+- Fist/attack animation does not retrigger reliably on every fresh press;
+- the launcher/two-hand families leave visibly disconnected hands;
+- per-weapon size/position still needs calibration.
+
+Therefore FP-MARIO-1 remains **NOT PASS**.
+
+### v3 visual treatment
+
+The pose manifest is now `nexo.mario_hands.pose_manifest.v3`.
+
+Changes:
+- moderate scale increase from v2 (~0.20-0.31) to ~0.28-0.34;
+- two-hand grips moved inward toward the weapon body;
+- pistol remains a single front-layer grip but is enlarged;
+- Fist hands are larger and closer together;
+- every rendered hand can now include:
+  - a Mario-red sleeve;
+  - a white glove cuff;
+  - dark silhouette edging;
+- hand facet contrast is compressed so the genuine N64 mesh reads less like a
+  crystal and more like a white cartoon glove.
+
+The red sleeve/cuff are renderer primitives only. The hand geometry remains the
+locally extracted genuine SM64 hand mesh from the user's ROM.
+
+### v3 attack reliability
+
+The old logic retriggered primarily when the native PSprite entered Fire.
+For weapons such as Fist, a new physical press could occur while the previous
+native Fire sequence was still active; that explains the user's
+"some presses animate, some do not" report.
+
+v3 starts an animation impulse when either:
+- a fresh physical BT_ATTACK/BT_ALTATTACK edge occurs; or
+- the native weapon enters a new Fire/Hold sequence.
+
+Continuous weapons still recycle their vibration while held.
+
+### v3 nonlinear motion
+
+Fist no longer translates along a small linear path.
+
+Each punch now:
+- alternates left/right;
+- follows a nonlinear extend/retract impulse;
+- moves strongly inward/upward;
+- rotates through the jab;
+- grows slightly in apparent scale at peak extension to simulate depth;
+- gives the inactive hand a small counter-motion.
+
+Gun families now have larger, weapon-specific recoil vectors rather than only
+small vertical offsets.
+
+Mario movement coupling is also nonlinear:
+- backflip widens/raises/counter-rotates the hands;
+- side flip, wall kick, dive, stomp and long jump have stronger readable
+  first-person hand trajectories.
+
+Status: **runtime-v3 prepared / user visual QA required**.
