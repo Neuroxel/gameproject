@@ -332,3 +332,21 @@ Therefore workstreams now overlap safely:
 Working principle:
 **visual polish debt may remain local and explicit, but it must not stall
 independent architectural phases once the underlying adapter is functional.**
+
+
+## Execution boundary — generic hands stop blocking architecture
+
+The user has explicitly prioritized forward progress over indefinite generic
+hand micro-calibration.
+
+Current boundary:
+1. FP-MARIO v6 receives one bottom-anchor/proportion QA.
+2. Any remaining weapon-specific hand leakage/placement becomes FP-MARIO-2
+   local polish debt.
+3. AVATAR-BODY neutral/portal/death pose work proceeds now.
+4. Perspective transition implementation may proceed once body QA is coherent.
+5. MARIOMOVE-3 traversal work continues in parallel.
+6. Router/HUB and Source/Portal readiness work remain downstream as previously
+   defined.
+
+Do not reopen successful jump/audio systems to solve unrelated hand art debt.
