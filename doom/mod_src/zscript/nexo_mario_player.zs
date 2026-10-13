@@ -567,6 +567,27 @@ class NexoMarioDoomPlayer : DoomPlayer
             }
         }
 
+        // MARIOMOVE-3 groundwork: native GZDoom crouch already reduces
+        // movement through crouchfactor. Reflect that avatar state in the
+        // first-person body language without changing destination combat.
+        if (player.onground && player.crouchfactor < 0.75)
+        {
+            back.y += 5.0;
+            front.y += 5.0;
+
+            bool crawling =
+                abs(player.cmd.forwardmove) + abs(player.cmd.sidemove) >= 0x1000;
+
+            if (crawling)
+            {
+                double crawlSway = ((Level.maptime & 3) < 2) ? 1.5 : -1.5;
+                back.x += crawlSway;
+                front.x -= crawlSway;
+                back.rotation -= crawlSway;
+                front.rotation += crawlSway;
+            }
+        }
+
         if (NexoHandFireTics > 0)
         {
             NexoHandFireTics--;
