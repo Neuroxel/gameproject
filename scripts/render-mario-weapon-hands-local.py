@@ -189,6 +189,48 @@ def paint_rotated_capsule(
                 pixels[y * width + x] = color
 
 
+def paint_rotated_tapered_sleeve(
+    pixels,
+    width: int,
+    height: int,
+    cx: float,
+    cy: float,
+    top_w: float,
+    bottom_w: float,
+    h: float,
+    angle_deg: float,
+    color,
+):
+    """Paint a small tapered sleeve instead of a rectangular/capsule block."""
+    if top_w <= 0 or bottom_w <= 0 or h <= 0:
+        return
+
+    angle = math.radians(angle_deg)
+    ca, sa = math.cos(angle), math.sin(angle)
+    extent = int(math.ceil(max(top_w, bottom_w, h))) + 4
+
+    min_x = max(0, int(math.floor(cx - extent)))
+    max_x = min(width - 1, int(math.ceil(cx + extent)))
+    min_y = max(0, int(math.floor(cy - extent)))
+    max_y = min(height - 1, int(math.ceil(cy + extent)))
+
+    half_h = h * 0.5
+    for y in range(min_y, max_y + 1):
+        for x in range(min_x, max_x + 1):
+            dx = (x + 0.5) - cx
+            dy = (y + 0.5) - cy
+            lx = dx * ca + dy * sa
+            ly = -dx * sa + dy * ca
+
+            if ly < -half_h or ly > half_h:
+                continue
+
+            t = (ly + half_h) / h
+            local_half_w = (top_w * (1.0 - t) + bottom_w * t) * 0.5
+            if abs(lx) <= local_half_w:
+                pixels[y * width + x] = color
+
+
 def paint_mario_wrist(pixels, width: int, height: int, inst):
     """Add a compact Mario-red sleeve and white cuff under one hand mesh."""
     sleeve = inst.get("sleeve")
@@ -204,15 +246,19 @@ def paint_mario_wrist(pixels, width: int, height: int, inst):
     sw = float(sleeve.get("w", 22.0))
     sh = float(sleeve.get("h", 34.0))
 
-    # Dark external silhouette first, then Mario-red sleeve.
-    paint_rotated_capsule(
+    # Dark external silhouette first, then a tapered Mario-red sleeve.
+    # The top remains narrow at the glove cuff and widens only toward the arm.
+    top_w = float(sleeve.get("top_w", sw * 0.72))
+    bottom_w = float(sleeve.get("bottom_w", sw))
+
+    paint_rotated_tapered_sleeve(
         pixels, width, height, sx, sy,
-        sw + 3.0, sh + 3.0, angle,
+        top_w + 2.5, bottom_w + 3.0, sh + 2.0, angle,
         (52, 25, 26, 255),
     )
-    paint_rotated_capsule(
+    paint_rotated_tapered_sleeve(
         pixels, width, height, sx, sy,
-        sw, sh, angle,
+        top_w, bottom_w, sh, angle,
         (184, 39, 34, 255),
     )
 
