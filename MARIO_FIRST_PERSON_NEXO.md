@@ -387,3 +387,30 @@ Mario movement coupling is also nonlinear:
   first-person hand trajectories.
 
 Status: **runtime-v3 prepared / user visual QA required**.
+
+
+## Runtime-v4 final generic calibration
+
+The 23:22-23:23 screenshots confirm v3 motion is materially better, but the
+generic pose layer is still too visually dominant as a task.
+
+The user explicitly requested that the project stop waiting on repeated
+micro-calibration and advance independent phases.
+
+v4 therefore serves as the final generic procedural calibration:
+- Fist lowered and converged;
+- pistol grip lowered;
+- two-hand grips pulled toward the weapon;
+- glove scale normalized around ~0.27-0.31;
+- red sleeve exposure reduced;
+- sleeve changed from rounded block/capsule to a tapered arm shape;
+- cuff reduced;
+- all nonlinear v3 attack/recoil logic retained.
+
+After one v4 QA:
+- if a weapon remains imperfect, record it as **local FP-MARIO-2 polish debt**;
+- do not hold AVATAR-BODY, perspective, router or traversal architecture;
+- use state-specific art/masking only for the weapon families that still prove
+  visually wrong.
+
+This is a deliberate boundary between adapter completion and polish debt.
