@@ -237,3 +237,29 @@ READY requires coherent portal/death/external body presentation.
 
 Never show Doomguy/Freedoom marine in chasecam and call it Mario.
 Normal DOOM remains first-person.
+
+
+## FP-MARIO v6 / AVATAR-BODY multi-pose invariant
+
+Latest user direction:
+- generic first-person hands must originate from the bottom of the viewport;
+- Pistol/Fist gloves must be comparable in apparent size to the baked
+  destination hand;
+- do not stall independent architecture on repeated generic hand calibration.
+
+Current implementation:
+- FP-MARIO pose manifest v6;
+- forearms extend to the PNG lower edge;
+- runtime weapon-family Y offsets place the full arm lower on screen;
+- Fist/Pistol use larger ~0.42/0.43 mesh scale;
+- long-gun families use smaller ~0.33-0.36 grips;
+- remaining baked destination-hand leakage is FP-MARIO-2 mask debt.
+
+AVATAR-BODY renderer now emits:
+- neutral;
+- portal;
+- death
+local QA previews in one run.
+
+Do not create the full-body READY marker until those external-avatar previews
+are visually coherent.
