@@ -1501,3 +1501,53 @@ Movement:
 - backflip: ACTIVE / fidelity retest.
 - FP-MARIO-1: NOT PASS; v3 retest required.
 - FP-MARIO-2 state-specific/masking work remains next after v3 calibration.
+
+
+## 2026-10-12 23:22-23:23 — FP-MARIO v3 improved; v4 final calibration + body phase active
+
+### User runtime evidence
+
+New screenshots confirm runtime-v3 moved in the correct direction:
+- hand movement is visibly improved;
+- Mario identity is more legible because the red sleeve/white glove context is
+  now present;
+- however hand placement remains too high/separated on multiple weapons;
+- the primitive red sleeve presentation reads too blocky/"South Park"-like;
+- two-hand weapon grips still do not sit naturally on the weapon;
+- Fist/empty-hand ready pose remains visually crude.
+
+The user explicitly requested that this stop blocking broader project progress.
+
+### FP-MARIO runtime-v4
+
+Prepared as the final **generic procedural calibration** before state-specific
+FP-MARIO-2 work:
+- hands lowered toward the native weapon grip region;
+- two-hand families pulled inward;
+- Fist converged and lowered;
+- pistol hand lowered while preserving weapon readability;
+- exposed sleeve area reduced;
+- sleeve primitive changed from capsule/block to tapered arm shape;
+- cuff reduced and rounded;
+- nonlinear attack/movement controller from v3 retained.
+
+FP-MARIO-1 remains NOT PASS until one v4 visual confirmation, but further
+project phases are no longer blocked on pixel-perfect generic hand placement.
+
+### New phase started: AVATAR-BODY-1
+
+Created:
+- `MARIO_FULL_BODY_NEXO.md`;
+- `scripts/extract-mario-body-parts-from-sm64-rom.py`.
+
+The script reconstructs normal Mario body-part geometry locally from the user's
+validated SM64 ROM and stores the canonical SM64 geo hierarchy offsets in a
+local manifest.
+
+No Nintendo geometry is committed.
+No `assets_local/mario_avatar/READY` marker is created.
+Normal DOOM remains first person.
+
+Next body step:
+neutral/portal/death pose renderer -> visual QA -> only then external-camera
+integration and the visible 3P <-> 1P transition grammar.
