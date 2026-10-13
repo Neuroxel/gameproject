@@ -1551,3 +1551,27 @@ Normal DOOM remains first person.
 Next body step:
 neutral/portal/death pose renderer -> visual QA -> only then external-camera
 integration and the visible 3P <-> 1P transition grammar.
+
+
+### AVATAR-BODY-2 renderer now implemented
+
+The full-body stream advanced in parallel with FP-MARIO v4.
+
+Added:
+- `scripts/extract-mario-body-parts-from-sm64-rom.py`;
+- `scripts/render-mario-body-preview-local.py`;
+- `MARIO_FULL_BODY_NEXO.md`.
+
+The extractor uses the user's local validated SM64 ROM and canonical
+sm64coopdx model/geo source to create a local-only body part pack plus exact
+hierarchy translations.
+
+The preview renderer assembles those parts into a neutral front external-view
+PNG for visual QA.
+
+Important:
+- `assets_local/mario_avatar/READY` is still intentionally absent;
+- the current GZDoom transition therefore cannot expose a Doom marine proxy;
+- normal DOOM remains first-person;
+- this is real advancement of the body pipeline without conflating source
+  extraction with runtime acceptance.
