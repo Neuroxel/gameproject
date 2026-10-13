@@ -136,12 +136,113 @@ def draw_triangle(pixels, zbuf, width, height, p0, p1, p2, color):
             pixels[pos] = color
 
 
+def paint_rotated_capsule(
+    pixels,
+    width: int,
+    height: int,
+    cx: float,
+    cy: float,
+    w: float,
+    h: float,
+    angle_deg: float,
+    color,
+):
+    """Paint a rounded capsule in screen space.
+
+    This is used only for Mario's red sleeve / white glove cuff behind the
+    locally extracted hand mesh. The hand geometry itself still comes from the
+    user's own SM64 ROM.
+    """
+    if w <= 0 or h <= 0:
+        return
+
+    angle = math.radians(angle_deg)
+    ca, sa = math.cos(angle), math.sin(angle)
+    radius = min(w * 0.5, h * 0.5)
+    half_h = h * 0.5
+    core = max(0.0, half_h - radius)
+    extent = int(math.ceil(max(w, h))) + 3
+
+    min_x = max(0, int(math.floor(cx - extent)))
+    max_x = min(width - 1, int(math.ceil(cx + extent)))
+    min_y = max(0, int(math.floor(cy - extent)))
+    max_y = min(height - 1, int(math.ceil(cy + extent)))
+
+    for y in range(min_y, max_y + 1):
+        for x in range(min_x, max_x + 1):
+            dx = (x + 0.5) - cx
+            dy = (y + 0.5) - cy
+
+            # Rotate screen-space point into local capsule coordinates.
+            lx = dx * ca + dy * sa
+            ly = -dx * sa + dy * ca
+
+            aly = abs(ly)
+            inside = False
+            if aly <= core:
+                inside = abs(lx) <= radius
+            else:
+                cap_y = aly - core
+                inside = lx * lx + cap_y * cap_y <= radius * radius
+
+            if inside:
+                pixels[y * width + x] = color
+
+
+def paint_mario_wrist(pixels, width: int, height: int, inst):
+    """Add a compact Mario-red sleeve and white cuff under one hand mesh."""
+    sleeve = inst.get("sleeve")
+    if not sleeve:
+        return
+
+    tx = float(inst.get("tx", width / 2))
+    ty = float(inst.get("ty", height))
+    angle = float(sleeve.get("angle", 0.0))
+
+    sx = tx + float(sleeve.get("dx", 0.0))
+    sy = ty + float(sleeve.get("dy", 0.0))
+    sw = float(sleeve.get("w", 22.0))
+    sh = float(sleeve.get("h", 34.0))
+
+    # Dark external silhouette first, then Mario-red sleeve.
+    paint_rotated_capsule(
+        pixels, width, height, sx, sy,
+        sw + 3.0, sh + 3.0, angle,
+        (52, 25, 26, 255),
+    )
+    paint_rotated_capsule(
+        pixels, width, height, sx, sy,
+        sw, sh, angle,
+        (184, 39, 34, 255),
+    )
+
+    cuff = inst.get("cuff", {})
+    cx = tx + float(cuff.get("dx", sleeve.get("cuff_dx", 0.0)))
+    cy = ty + float(cuff.get("dy", sleeve.get("cuff_dy", 2.0)))
+    cw = float(cuff.get("w", max(16.0, sw * 0.92)))
+    ch = float(cuff.get("h", 11.0))
+    ca = float(cuff.get("angle", angle))
+
+    paint_rotated_capsule(
+        pixels, width, height, cx, cy,
+        cw + 2.0, ch + 2.0, ca,
+        (54, 54, 58, 255),
+    )
+    paint_rotated_capsule(
+        pixels, width, height, cx, cy,
+        cw, ch, ca,
+        (244, 244, 240, 255),
+    )
+
+
 def render_layer(width, height, instances, meshes):
     pixels = [(0, 0, 0, 0)] * (width * height)
     zbuf = [float("-inf")] * (width * height)
     light = normalized((-0.25, -0.45, 0.86))
 
     for order, inst in enumerate(instances):
+        paint_mario_wrist(pixels, width, height, inst)
+
         mesh_name = inst["mesh"]
         if mesh_name not in meshes:
             mesh_path = MESH_DIR / f"{mesh_name}.obj"
@@ -173,7 +274,9 @@ def render_layer(width, height, instances, meshes):
             wa, wb, wc = world[ia], world[ib], world[ic]
             n = normalized(cross(sub(wb, wa), sub(wc, wa)))
             ndotl = abs(n[0]*light[0] + n[1]*light[1] + n[2]*light[2])
-            shade = 0.46 + 0.54 * ndotl
+            # Keep the genuine N64 faceting, but compress the contrast so the
+            # silhouette reads as a white Mario glove instead of a crystal.
+            shade = 0.72 + 0.28 * ndotl
 
             # Mario glove: warm white with enough grey range to preserve the
             # low-poly N64 shape against bright weapon sprites.
@@ -203,7 +306,7 @@ def add_glove_outline(pixels, width: int, height: int, radius: int = 1):
 
     source = list(pixels)
     output = list(pixels)
-    outline = (54, 54, 54, 255)
+    outline = (48, 48, 52, 255)
 
     for y in range(height):
         for x in range(width):
