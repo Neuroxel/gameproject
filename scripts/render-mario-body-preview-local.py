@@ -14,6 +14,7 @@ coherent Mario-shaped external avatar before portal/death-camera integration.
 
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import json
 import math
@@ -24,7 +25,6 @@ ROOT = Path(__file__).resolve().parents[1]
 BODY_ROOT = ROOT / "assets_local" / "mario_avatar"
 MESH_DIR = BODY_ROOT / "meshes"
 MANIFEST = BODY_ROOT / "body_source_manifest.json"
-OUTPUT = BODY_ROOT / "body_neutral_preview.png"
 HAND_RENDERER = ROOT / "scripts" / "render-mario-weapon-hands-local.py"
 
 WIDTH = 512
@@ -40,14 +40,37 @@ COLORS = {
     "brown": (102, 57, 34, 255),
 }
 
-# Static neutral external-view pose. SM64 geometry bones extend along local +X.
-# Arms/legs are flipped around local Z so those chains descend from shoulders/
-# hips in a readable standing pose. This is a preview, not animation data.
-POSE_Z_DEG = {
-    "left_arm": 180.0,
-    "right_arm": 180.0,
-    "left_thigh": 180.0,
-    "right_thigh": 180.0,
+# Static external-view pose families. SM64 geometry bones extend along local +X.
+# These are local QA poses, not animation data and not a replacement for the
+# source skeleton.
+POSES = {
+    "neutral": {
+        "left_arm": 180.0,
+        "right_arm": 180.0,
+        "left_thigh": 180.0,
+        "right_thigh": 180.0,
+    },
+    "portal": {
+        # Forward/transition silhouette: arms angle toward the portal while
+        # legs keep a readable running/brace stance.
+        "left_arm": 148.0,
+        "right_arm": 212.0,
+        "left_forearm": 332.0,
+        "right_forearm": 28.0,
+        "left_thigh": 166.0,
+        "right_thigh": 194.0,
+        "left_leg": 18.0,
+        "right_leg": 342.0,
+    },
+    "death": {
+        # External death/collapse source pose. Runtime death animation remains
+        # a later integration concern.
+        "root": 88.0,
+        "left_arm": 162.0,
+        "right_arm": 198.0,
+        "left_thigh": 170.0,
+        "right_thigh": 190.0,
+    },
 }
 
 
@@ -136,7 +159,9 @@ def shade(color, factor):
     )
 
 
-def main() -> int:
+def render_pose(pose_name: str, output: Path) -> int:
+    pose_z_deg = POSES[pose_name]
+
     if not MANIFEST.is_file():
         raise RenderError(
             f"Body source manifest missing: {MANIFEST}. "
@@ -167,7 +192,7 @@ def main() -> int:
         ox, oy, oz = node.get("offset", [0, 0, 0])
         local = mat_translate(float(ox), float(oy), float(oz))
 
-        pose_deg = POSE_Z_DEG.get(node_name, 0.0)
+        pose_deg = pose_z_deg.get(node_name, 0.0)
         if pose_deg:
             local = mat_mul(local, mat_rot_z(pose_deg))
 
@@ -255,14 +280,35 @@ def main() -> int:
 
     pixels = helper.add_glove_outline(pixels, WIDTH, HEIGHT, radius=1)
     BODY_ROOT.mkdir(parents=True, exist_ok=True)
-    helper.write_png(OUTPUT, WIDTH, HEIGHT, pixels, (0, 0))
+    helper.write_png(output, WIDTH, HEIGHT, pixels, (0, 0))
 
     visible = sum(1 for px in pixels if px[3])
-    print("[NEXO] Mario full-body neutral preview: RENDERED")
-    print(f"[NEXO] Output: {OUTPUT}")
+    print(f"[NEXO] Mario full-body {pose_name} preview: RENDERED")
+    print(f"[NEXO] Output: {output}")
     print(f"[NEXO] Visible pixels: {visible}")
+    return visible
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Render local Mario full-body QA poses"
+    )
+    parser.add_argument(
+        "--pose",
+        choices=sorted(POSES),
+        default=None,
+        help="Render only one QA pose; omitted renders neutral/portal/death",
+    )
+    args = parser.parse_args()
+
+    pose_names = [args.pose] if args.pose else ["neutral", "portal", "death"]
+
+    for pose_name in pose_names:
+        output = BODY_ROOT / f"body_{pose_name}_preview.png"
+        render_pose(pose_name, output)
+
     print("[NEXO] Runtime READY was NOT created.")
-    print("[NEXO] This preview requires visual QA before external-camera integration.")
+    print("[NEXO] Body poses require visual QA before external-camera integration.")
     return 0
 
 
