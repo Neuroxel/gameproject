@@ -251,3 +251,19 @@ Backflip:
 
 Do not mark FP-MARIO-1 or backflip fidelity PASS without new user runtime
 evidence.
+
+
+## AVATAR-BODY phase invariant
+
+Full-body Mario is now an active local-only pipeline:
+- `MARIO_FULL_BODY_NEXO.md`;
+- `scripts/extract-mario-body-parts-from-sm64-rom.py`;
+- `scripts/render-mario-body-preview-local.py`.
+
+Do not set `assets_local/mario_avatar/READY` merely because OBJ parts or one
+preview exist.
+
+READY requires coherent portal/death/external body presentation.
+
+Never show Doomguy/Freedoom marine in chasecam and call it Mario.
+Normal DOOM remains first-person.
