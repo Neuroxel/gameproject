@@ -125,3 +125,21 @@ This is **source/pose QA only**:
 If the neutral preview is coherent, AVATAR-BODY-3 will expand the renderer into
 portal/death/external pose variants and only then activate the existing
 perspective adapter's body-ready gate.
+
+
+## AVATAR-BODY-2 — multi-pose QA implemented
+
+The local body renderer now generates three source/pose QA views in one run:
+- `body_neutral_preview.png`;
+- `body_portal_preview.png`;
+- `body_death_preview.png`.
+
+These remain local-only and do not create the runtime READY marker.
+
+The purpose is to validate a coherent external Mario silhouette for:
+- ordinary external camera;
+- portal transition;
+- death/collapse presentation.
+
+Only after visual QA will AVATAR-BODY-3 connect them to the existing GZDoom
+perspective transition gate.
