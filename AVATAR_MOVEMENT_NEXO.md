@@ -360,3 +360,29 @@ audio.
 
 The side-flip/spin action effects used by SM64 are a future optional local
 asset enhancement; NEXO does not substitute an unrelated voice for them.
+
+
+## Backflip runtime-v3 fidelity correction
+
+The user reports the general jump system now feels good, while the backward
+jump/backflip still needs confirmation of its Mario identity.
+
+SM64 source behavior initializes backflip with:
+- forward velocity = -16;
+- vertical family = 62.
+
+NEXO already matched the 62/42 vertical family. Runtime-v3 now also:
+- damps residual forward/sideways momentum to 30%;
+- applies a stronger explicit backward thrust;
+- keeps the ceiling-aware vertical governor;
+- extends the first-person hand presentation from 12 to 14 tics;
+- uses a nonlinear hand arc with widening and counter-rotation.
+
+The FPS camera still does **not** perform a literal 360-degree flip. The target
+is faithful movement consequence plus readable avatar embodiment without
+making DOOM first-person combat disorienting.
+
+Status:
+- normal/double/triple jump: user reports working well;
+- wall kick: previously user-confirmed functional;
+- backflip: **ACTIVE / fidelity retest required**.
