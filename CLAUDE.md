@@ -211,3 +211,43 @@ Current non-negotiable facts:
 
 Do not mark AUDIO-ID-2, MARIOMOVE-2 or FP-MARIO-1 PASS without new user runtime
 evidence.
+
+
+## Runtime-v3 DOOM embodiment invariant
+
+New user QA on 2026-10-12 21:40-21:44 supersedes the runtime-v2 visual hand
+assumptions.
+
+Confirmed:
+- canonical SM64 jump voice pool loads at runtime;
+- general jump behavior now feels good to the user;
+- wall kick remains previously confirmed;
+- v2 hand overlays move and the pistol is materially improved.
+
+Not confirmed / still active:
+- backflip fidelity;
+- FP-MARIO-1 visual pass;
+- final A/use semantic silence.
+
+Runtime-v3 hand rules:
+- use pose manifest v3, not v2;
+- glove scales are now ~0.28-0.34, not the old ~0.20-0.26;
+- two-hand grips are pulled inward;
+- genuine local SM64 hand mesh remains authoritative;
+- renderer adds Mario-red sleeve + white cuff and softer facet contrast;
+- every fresh attack edge must trigger a hand impulse even if native Fire has
+  not fully exited;
+- native Fire-state entry remains a fallback trigger;
+- Fist attack is nonlinear, larger and perspective-scaled;
+- movement hand presentation is nonlinear;
+- crouch/crawl has first-person body-language presentation only; native GZDoom
+  crouch movement remains authoritative.
+
+Backflip:
+- vertical family remains SM64 62/42 with ceiling governor;
+- residual planar momentum is damped;
+- backward thrust is stronger;
+- no literal 360-degree first-person camera roll.
+
+Do not mark FP-MARIO-1 or backflip fidelity PASS without new user runtime
+evidence.
