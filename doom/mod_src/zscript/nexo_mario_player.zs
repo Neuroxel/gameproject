@@ -335,16 +335,16 @@ class NexoMarioDoomPlayer : DoomPlayer
         // screen-space: the PNG contains a full forearm reaching its lower
         // edge, while this runtime offset places that arm at the bottom of the
         // actual first-person viewport instead of floating around the gun.
-        if (weapon is "Fist") return 25.0;
-        if (weapon is "Pistol") return 24.0;
-        if (weapon is "Chainsaw") return 19.0;
-        if (weapon is "Shotgun") return 19.0;
-        if (weapon is "SuperShotgun") return 18.0;
-        if (weapon is "Chaingun") return 18.0;
-        if (weapon is "RocketLauncher") return 18.0;
-        if (weapon is "PlasmaRifle" || weapon is "ID24Incinerator") return 18.0;
-        if (weapon is "BFG9000" || weapon is "ID24CalamityBlade") return 17.0;
-        return 20.0;
+        if (weapon is "Fist") return 34.0;
+        if (weapon is "Pistol") return 32.0;
+        if (weapon is "Chainsaw") return 23.0;
+        if (weapon is "Shotgun") return 23.0;
+        if (weapon is "SuperShotgun") return 22.0;
+        if (weapon is "Chaingun") return 22.0;
+        if (weapon is "RocketLauncher") return 22.0;
+        if (weapon is "PlasmaRifle" || weapon is "ID24Incinerator") return 22.0;
+        if (weapon is "BFG9000" || weapon is "ID24CalamityBlade") return 21.0;
+        return 24.0;
     }
 
     void NexoAnimateFirstPersonHands(Weapon weapon)
