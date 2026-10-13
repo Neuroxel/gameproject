@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "[NEXO] Avatar local pipeline — FP hands v4 + full-body source/preview"
+echo "[NEXO] Avatar local pipeline — FP hands v6 + full-body neutral/portal/death QA"
 echo
 
 python3 -m py_compile   bridge/run_doom.py   scripts/render-mario-weapon-hands-local.py   scripts/extract-mario-body-parts-from-sm64-rom.py   scripts/render-mario-body-preview-local.py
