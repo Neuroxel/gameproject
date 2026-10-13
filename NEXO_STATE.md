@@ -1434,3 +1434,70 @@ Static audit:
 - no raw-button PlayMarioUse path remains.
 
 Status remains **runtime-v2 retest required; no new PASS declared**.
+
+
+## 2026-10-12 21:40-21:44 — FP-MARIO v2 runtime QA; v3 prepared
+
+### Terminal evidence
+
+The user's run:
+- fast-forwarded local main to the then-current canonical state;
+- successfully generated all extended Mario movement voice files;
+- Python compilation completed without error;
+- rendered and activated all 18 v2 hand layers;
+- embedded the complete hand pack in the generated PK3;
+- reported `Mario jump voice grammar: CANONICAL SM64 POOL`;
+- reported `Mario hand runtime: v2 ...`;
+- launched pinned GZDoom g4.14.2 successfully;
+- loaded all Mario DMX resources with positive runtime lengths.
+
+This is strong evidence that the remaining v2 hand problem is presentation and
+attack-state behavior, not asset-loading or PK3 integration.
+
+### New user visual/playtest evidence
+
+User reports:
+- hand overlays do move;
+- pistol is materially improved relative to v1;
+- gloves are too small;
+- the raw hand silhouettes do not read strongly as Mario gloves;
+- Fist motion is small and looks like a basic linear translation;
+- Fist/attack animation is intermittent across button presses;
+- launcher/two-hand grips remain too separated;
+- jump behavior now works well;
+- backflip physical/effect fidelity remains uncertain.
+
+FP-MARIO v2 is therefore **FAIL as final visual presentation**, while its
+underlying overlay/runtime architecture remains accepted.
+
+### FP-MARIO runtime-v3 prepared
+
+Visual:
+- glove scales raised to ~0.28-0.34;
+- two-hand positions pulled inward;
+- Mario-red sleeve + white cuff added behind each hand where present;
+- softer facet contrast;
+- Fist hands enlarged and converged.
+
+Attack controller:
+- fresh physical attack edge always starts a new impulse, even if the previous
+  native Fire sequence has not fully exited;
+- native Fire-state entry remains a fallback trigger;
+- continuous weapons still repeat while held;
+- Fist uses a larger nonlinear curved jab with perspective scale growth.
+
+Movement:
+- first-person movement hand arcs are nonlinear and stronger;
+- backflip residual planar momentum is damped and backward thrust increased to
+  better reflect SM64's -16 forward-velocity initialization;
+- ceiling governor is unchanged.
+
+### Gate classification after this evidence
+
+- AUDIO-ID-2 core runtime/load path: functionally healthy.
+- canonical SM64 jump voice pool: runtime-confirmed loaded.
+- MARIOMOVE jump chain: user reports good.
+- wall kick: prior user confirmation retained.
+- backflip: ACTIVE / fidelity retest.
+- FP-MARIO-1: NOT PASS; v3 retest required.
+- FP-MARIO-2 state-specific/masking work remains next after v3 calibration.
