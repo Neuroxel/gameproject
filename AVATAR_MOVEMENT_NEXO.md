@@ -386,3 +386,20 @@ Status:
 - normal/double/triple jump: user reports working well;
 - wall kick: previously user-confirmed functional;
 - backflip: **ACTIVE / fidelity retest required**.
+
+
+## MARIOMOVE-3 groundwork — crouch/crawl presentation
+
+Pinned GZDoom 4.14.2 already reduces ground movement and bobbing according to
+`player.crouchfactor`, so NEXO does not need to replace destination movement
+physics merely to make crouching slower.
+
+Runtime-v3 adds first-person Mario body language only:
+- when grounded and deeply crouched, both hands lower;
+- when crouched + moving, the hands add a small alternating crawl sway;
+- firing still uses the destination weapon's native mechanics and state timing.
+
+This is deliberately presentation-first. A deeper Mario crawl/slope system
+remains pending geometry/runtime validation.
+
+Status: **MARIOMOVE-3 groundwork active; not PASS**.
