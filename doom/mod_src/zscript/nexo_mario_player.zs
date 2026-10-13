@@ -317,7 +317,7 @@ class NexoMarioDoomPlayer : DoomPlayer
 
     int NexoWeaponFireDuration(Weapon weapon)
     {
-        if (weapon is "Fist") return 8;
+        if (weapon is "Fist") return 10;
         if (weapon is "Chainsaw") return 3;
         if (weapon is "Pistol") return 5;
         if (weapon is "Shotgun") return 7;
@@ -343,9 +343,11 @@ class NexoMarioDoomPlayer : DoomPlayer
         back.x = 0.0;
         back.y = 0.0;
         back.rotation = 0.0;
+        back.scale = (1.0, 1.0);
         front.x = 0.0;
         front.y = 0.0;
         front.rotation = 0.0;
+        front.scale = (1.0, 1.0);
 
         bool attackDown =
             (player.cmd.buttons & (BT_ATTACK | BT_ALTATTACK)) != 0;
@@ -353,12 +355,17 @@ class NexoMarioDoomPlayer : DoomPlayer
             attackDown
             && !(player.oldbuttons & (BT_ATTACK | BT_ALTATTACK));
 
-        // Weapon-state detection is authoritative; fresh attack input is a
-        // one-tic fallback so the hand response starts immediately even when
-        // the destination weapon changes PSprite state later in the tick.
-        bool firing = NexoWeaponIsFiring(weapon) || attackRising;
+        bool fireState = NexoWeaponIsFiring(weapon);
+        bool fireStateStart = fireState && !NexoHandWasFiring;
 
-        if (firing && !NexoHandWasFiring)
+        // Reliability rule:
+        // every fresh physical attack press starts a hand impulse even if the
+        // native weapon is still technically inside its previous Fire state.
+        // Fire-state entry remains a second authoritative trigger for weapons
+        // whose controller path does not expose a clean one-tic button edge.
+        bool startImpulse = attackRising || fireStateStart;
+
+        if (startImpulse)
         {
             NexoHandFireDuration = NexoWeaponFireDuration(weapon);
             NexoHandFireTics = NexoHandFireDuration;
@@ -368,7 +375,7 @@ class NexoMarioDoomPlayer : DoomPlayer
                 NexoFistLeftPunch = !NexoFistLeftPunch;
             }
         }
-        else if (firing
+        else if (fireState
             && NexoContinuousWeapon(weapon)
             && NexoHandFireTics <= 0)
         {
@@ -378,10 +385,14 @@ class NexoMarioDoomPlayer : DoomPlayer
 
         if (NexoHandFireTics > 0 && NexoHandFireDuration > 0)
         {
-            double half = max(1.0, NexoHandFireDuration * 0.5);
-            double pulse =
-                1.0 - abs(NexoHandFireTics - half) / half;
-            pulse = clamp(pulse, 0.0, 1.0);
+            // Nonlinear impulse: fast extension, readable apex, quick return.
+            // 4p(1-p) avoids the previous linear/triangular "slide" look.
+            double progress =
+                1.0 - NexoHandFireTics / (NexoHandFireDuration * 1.0);
+            progress = clamp(progress, 0.0, 1.0);
+
+            double pulse = 4.0 * progress * (1.0 - progress);
+            double arc = (progress - 0.5) * pulse * 2.0;
 
             if (weapon is "Fist")
             {
@@ -389,19 +400,32 @@ class NexoMarioDoomPlayer : DoomPlayer
                 // alternates which glove drives toward the center/up.
                 if (NexoFistLeftPunch)
                 {
-                    back.x = 23.0 * pulse;
-                    back.y = -19.0 * pulse;
-                    back.rotation = -10.0 * pulse;
-                    front.x = 2.0 * pulse;
-                    front.y = 2.0 * pulse;
+                    // Curved jab toward the center with perspective growth.
+                    back.x = 36.0 * pulse + 8.0 * arc;
+                    back.y = -36.0 * pulse - 4.0 * arc;
+                    back.rotation = -18.0 * pulse + 7.0 * arc;
+                    back.scale = (
+                        1.0 + 0.24 * pulse,
+                        1.0 + 0.24 * pulse
+                    );
+
+                    front.x = -4.0 * pulse;
+                    front.y = 4.0 * pulse;
+                    front.rotation = 3.0 * pulse;
                 }
                 else
                 {
-                    front.x = -23.0 * pulse;
-                    front.y = -19.0 * pulse;
-                    front.rotation = 10.0 * pulse;
-                    back.x = -2.0 * pulse;
-                    back.y = 2.0 * pulse;
+                    front.x = -36.0 * pulse - 8.0 * arc;
+                    front.y = -36.0 * pulse - 4.0 * arc;
+                    front.rotation = 18.0 * pulse - 7.0 * arc;
+                    front.scale = (
+                        1.0 + 0.24 * pulse,
+                        1.0 + 0.24 * pulse
+                    );
+
+                    back.x = 4.0 * pulse;
+                    back.y = 4.0 * pulse;
+                    back.rotation = -3.0 * pulse;
                 }
             }
             else if (weapon is "Chainsaw")
@@ -414,23 +438,29 @@ class NexoMarioDoomPlayer : DoomPlayer
             }
             else if (weapon is "Pistol")
             {
-                back.y -= 2.0 * pulse;
-                front.y -= 5.0 * pulse;
-                front.rotation = 3.0 * pulse;
+                back.x -= 1.5 * pulse;
+                back.y -= 3.0 * pulse;
+                front.x += 2.5 * arc;
+                front.y -= 8.0 * pulse;
+                front.rotation = 6.0 * pulse;
             }
             else if (weapon is "Shotgun")
             {
-                back.y -= 4.0 * pulse;
-                front.y -= 7.0 * pulse;
-                back.rotation = -2.0 * pulse;
-                front.rotation = 3.5 * pulse;
+                back.x -= 2.0 * pulse;
+                back.y -= 6.0 * pulse;
+                front.x += 3.0 * arc;
+                front.y -= 11.0 * pulse;
+                back.rotation = -4.0 * pulse;
+                front.rotation = 6.0 * pulse;
             }
             else if (weapon is "SuperShotgun")
             {
-                back.y -= 5.0 * pulse;
-                front.y -= 8.5 * pulse;
-                back.rotation = -3.0 * pulse;
-                front.rotation = 4.0 * pulse;
+                back.x -= 2.5 * pulse;
+                back.y -= 7.0 * pulse;
+                front.x += 3.5 * arc;
+                front.y -= 13.0 * pulse;
+                back.rotation = -5.0 * pulse;
+                front.rotation = 7.0 * pulse;
             }
             else if (weapon is "Chaingun")
             {
@@ -442,10 +472,12 @@ class NexoMarioDoomPlayer : DoomPlayer
             }
             else if (weapon is "RocketLauncher")
             {
-                back.y += 3.5 * pulse;
-                front.y += 5.0 * pulse;
-                back.rotation = 2.0 * pulse;
-                front.rotation = -3.0 * pulse;
+                back.x -= 2.5 * pulse;
+                front.x += 2.5 * pulse;
+                back.y += 6.0 * pulse;
+                front.y += 8.0 * pulse;
+                back.rotation = 4.0 * pulse;
+                front.rotation = -5.0 * pulse;
             }
             else if (weapon is "PlasmaRifle" || weapon is "ID24Incinerator")
             {
@@ -468,46 +500,63 @@ class NexoMarioDoomPlayer : DoomPlayer
         // without rolling the first-person camera through a somersault.
         if (NexoHandMotionTics > 0 && NexoHandMotionDuration > 0)
         {
-            double motion =
-                NexoHandMotionTics / (NexoHandMotionDuration * 1.0);
+            double moveProgress =
+                1.0 - NexoHandMotionTics / (NexoHandMotionDuration * 1.0);
+            moveProgress = clamp(moveProgress, 0.0, 1.0);
+            double motion = 4.0 * moveProgress * (1.0 - moveProgress);
+            double moveArc = (moveProgress - 0.5) * motion * 2.0;
 
             if (NexoHandMotionKind == 1)       // backflip
             {
-                back.y -= 5.0 * motion;
-                front.y -= 5.0 * motion;
-                back.rotation -= 5.0 * motion;
-                front.rotation += 5.0 * motion;
+                // First-person readability of the somersault without rolling
+                // the camera 360 degrees: hands rise, widen and counter-rotate.
+                back.x -= 5.0 * motion;
+                front.x += 5.0 * motion;
+                back.y -= 12.0 * motion + 3.0 * moveArc;
+                front.y -= 12.0 * motion - 3.0 * moveArc;
+                back.rotation -= 13.0 * motion;
+                front.rotation += 13.0 * motion;
             }
             else if (NexoHandMotionKind == 2)  // side flip
             {
-                back.x += 4.0 * motion;
-                front.x += 4.0 * motion;
-                back.rotation -= 3.0 * motion;
-                front.rotation -= 3.0 * motion;
+                back.x += 8.0 * motion;
+                front.x += 8.0 * motion;
+                back.y -= 3.0 * moveArc;
+                front.y -= 3.0 * moveArc;
+                back.rotation -= 7.0 * motion;
+                front.rotation -= 7.0 * motion;
             }
             else if (NexoHandMotionKind == 3)  // wall kick
             {
-                back.x -= 5.0 * motion;
-                front.x -= 5.0 * motion;
-                back.y -= 2.0 * motion;
-                front.y -= 2.0 * motion;
+                back.x -= 9.0 * motion;
+                front.x -= 9.0 * motion;
+                back.y -= 5.0 * motion;
+                front.y -= 5.0 * motion;
+                back.rotation += 5.0 * moveArc;
+                front.rotation += 5.0 * moveArc;
             }
             else if (NexoHandMotionKind == 4)  // dive
             {
-                back.y += 7.0 * motion;
-                front.y += 7.0 * motion;
-                back.rotation -= 2.0 * motion;
-                front.rotation += 2.0 * motion;
+                back.y += 11.0 * motion;
+                front.y += 11.0 * motion;
+                back.x -= 4.0 * motion;
+                front.x += 4.0 * motion;
+                back.rotation -= 6.0 * motion;
+                front.rotation += 6.0 * motion;
             }
             else if (NexoHandMotionKind == 5)  // stomp
             {
-                back.y -= 7.0 * motion;
-                front.y -= 7.0 * motion;
+                back.y -= 12.0 * motion;
+                front.y -= 12.0 * motion;
+                back.x -= 3.0 * moveArc;
+                front.x += 3.0 * moveArc;
             }
             else if (NexoHandMotionKind == 6)  // long jump
             {
-                back.y += 3.0 * motion;
-                front.y += 3.0 * motion;
+                back.y += 7.0 * motion;
+                front.y += 7.0 * motion;
+                back.x -= 3.0 * motion;
+                front.x += 3.0 * motion;
             }
 
             NexoHandMotionTics--;
@@ -523,7 +572,7 @@ class NexoMarioDoomPlayer : DoomPlayer
             NexoHandFireTics--;
         }
 
-        NexoHandWasFiring = firing;
+        NexoHandWasFiring = fireState;
     }
 
     void NexoUpdateFirstPersonHands()
@@ -814,12 +863,18 @@ class NexoMarioDoomPlayer : DoomPlayer
             {
                 // SM64 backflip ratio is ~62/42. No literal 360° FPS camera
                 // rotation: hands/body communicate the somersault instead.
+                Vel.X *= 0.30;
+                Vel.Y *= 0.30;
                 Vel.Z = max(
                     Vel.Z,
                     NexoCeilingSafeLaunch(baseJump * (62.0 / 42.0))
                 );
-                Thrust(5.0, Angle + 180.0);
-                NexoSetHandMotion(1, 12);
+
+                // SM64 initializes backflip forwardVel=-16. In the FPS adapter
+                // we preserve the strong backward identity without importing
+                // SM64's third-person camera/skeleton rotation.
+                Thrust(6.5, Angle + 180.0);
+                NexoSetHandMotion(1, 14);
                 // SM64 backflip uses the generic Yah/Wah/Hoo family.
                 NexoPlayGenericJumpVoice();
             }
