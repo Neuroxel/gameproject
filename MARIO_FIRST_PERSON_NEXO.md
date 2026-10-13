@@ -414,3 +414,50 @@ After one v4 QA:
   visually wrong.
 
 This is a deliberate boundary between adapter completion and polish debt.
+
+
+## Runtime-v6 — bottom-anchored weapon-proportional hands
+
+Further user feedback established that v4/v5 still failed the most basic
+first-person embodiment cue: Mario's arms did not visibly originate from the
+bottom of the viewport, and the Pistol/Fist gloves remained too small relative
+to the destination weapon's baked hand.
+
+The generic hand pipeline is therefore no longer calibrated only by shifting
+the hand mesh around the weapon.
+
+### Art-space vs screen-space separation
+
+v6 renders the hand higher **inside its 320x200 PNG** and extends a tapered
+Mario-red forearm continuously from the glove cuff to the PNG's lower edge.
+
+At runtime, ZScript applies a weapon-family positive Y offset to the complete
+overlay:
+- Fist: +34;
+- Pistol: +32;
+- long-gun families: approximately +21..23.
+
+This produces the intended first-person composition:
+**arm enters from the bottom of the screen -> cuff -> glove -> weapon grip**.
+
+### Weapon-proportional hand sizes
+
+v6 abandons one common glove size.
+
+Approximate local mesh scales:
+- Fist: 0.42;
+- Pistol: 0.43;
+- Chainsaw/Shotgun/SSG/Chaingun/Rocket/Plasma: ~0.33-0.35;
+- BFG family: ~0.34-0.36.
+
+Pistol/Fist deliberately approach the apparent size of the destination's baked
+human hand so the Mario glove can cover/replace that identity instead of
+floating above it.
+
+### Polish boundary
+
+Any native hand pixels still visible after v6 are no longer a generic
+positioning problem. They become **FP-MARIO-2 weapon-mask debt** for that
+specific sprite/state.
+
+That debt must not block AVATAR-BODY, perspective grammar or router work.
