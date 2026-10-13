@@ -1,160 +1,108 @@
 {
-  "schema": "nexo.mario_hands.pose_manifest.v3",
+  "schema": "nexo.mario_hands.pose_manifest.v4",
   "canvas": [320, 200],
   "grab_offset": [0, 52],
   "notes": [
-    "Runtime-v3 retuned from user screenshots captured 2026-10-12 21:40-21:44.",
-    "v2 proved functional but hands were too small, visually crystalline and separated from several weapon grips.",
-    "v3 enlarges gloves moderately, moves two-handed grips inward, and adds a compact Mario-red sleeve plus white cuff behind the genuine SM64 hand mesh.",
-    "The sleeve/cuff are local renderer primitives; the hand geometry itself still comes from the user's own validated SM64 ROM.",
-    "Fist uses two larger low ready gloves; native brown Fist presentation remains hidden while mechanics remain native.",
+    "Runtime-v4 final-calibration pass from user screenshots captured 2026-10-12 23:22-23:23.",
+    "v3 motion was accepted as improved, but poses were too high/separated and the red sleeve primitives read as blocky/South-Park-like.",
+    "v4 lowers hands toward actual grip points, pulls two-handed poses inward, reduces exposed sleeve area, and uses tapered sleeves.",
+    "This is intended as the final generic procedural calibration before state-specific FP-MARIO-2 art/masking.",
     "Coordinates are 320x200 virtual weapon-space."
   ],
   "layers": {
     "NHFBA0.png": [
-      {
-        "mesh":"left_hand_closed",
-        "tx":124,"ty":186,"scale":0.34,"rx":-16,"ry":8,"rz":66,
-        "sleeve":{"dx":-2,"dy":17,"w":25,"h":36,"angle":-8},
-        "cuff":{"dx":-1,"dy":3,"w":23,"h":12,"angle":-8}
-      }
+      {"mesh":"left_hand_closed","tx":130,"ty":192,"scale":0.31,"rx":-22,"ry":20,"rz":78,
+       "sleeve":{"dx":-1,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":-7},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":-7}}
     ],
     "NHFFA0.png": [
-      {
-        "mesh":"right_hand_closed",
-        "tx":184,"ty":186,"scale":0.34,"rx":-16,"ry":-8,"rz":114,
-        "sleeve":{"dx":2,"dy":17,"w":25,"h":36,"angle":8},
-        "cuff":{"dx":1,"dy":3,"w":23,"h":12,"angle":8}
-      }
+      {"mesh":"right_hand_closed","tx":179,"ty":192,"scale":0.31,"rx":-22,"ry":-20,"rz":102,
+       "sleeve":{"dx":1,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":7},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":7}}
     ],
 
     "NHCBA0.png": [
-      {
-        "mesh":"right_hand_closed",
-        "tx":188,"ty":184,"scale":0.31,"rx":-15,"ry":-12,"rz":101,
-        "sleeve":{"dx":3,"dy":17,"w":24,"h":35,"angle":10},
-        "cuff":{"dx":1,"dy":3,"w":22,"h":11,"angle":8}
-      }
+      {"mesh":"right_hand_closed","tx":181,"ty":191,"scale":0.29,"rx":-19,"ry":-17,"rz":101,
+       "sleeve":{"dx":2,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":8},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":7}}
     ],
     "NHCFA0.png": [
-      {
-        "mesh":"left_hand_closed",
-        "tx":135,"ty":179,"scale":0.30,"rx":-15,"ry":12,"rz":75,
-        "sleeve":{"dx":-4,"dy":18,"w":23,"h":35,"angle":-14},
-        "cuff":{"dx":-1,"dy":4,"w":22,"h":11,"angle":-10}
-      }
+      {"mesh":"left_hand_closed","tx":143,"ty":189,"scale":0.28,"rx":-19,"ry":17,"rz":79,
+       "sleeve":{"dx":-2,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":-10},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":-8}}
     ],
 
     "NHPBA0.png": [],
     "NHPFA0.png": [
-      {
-        "mesh":"right_hand_closed",
-        "tx":169,"ty":186,"scale":0.33,"rx":-18,"ry":-8,"rz":101,
-        "sleeve":{"dx":2,"dy":17,"w":25,"h":38,"angle":6},
-        "cuff":{"dx":1,"dy":3,"w":23,"h":12,"angle":5}
-      }
+      {"mesh":"right_hand_closed","tx":170,"ty":194,"scale":0.30,"rx":-22,"ry":-16,"rz":99,
+       "sleeve":{"dx":1,"dy":16,"w":18,"top_w":13,"bottom_w":20,"h":23,"angle":5},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":5}}
     ],
 
     "NHSBA0.png": [
-      {
-        "mesh":"right_hand_closed",
-        "tx":187,"ty":184,"scale":0.30,"rx":-15,"ry":-12,"rz":101,
-        "sleeve":{"dx":3,"dy":17,"w":23,"h":35,"angle":10},
-        "cuff":{"dx":1,"dy":3,"w":22,"h":11,"angle":8}
-      }
+      {"mesh":"right_hand_closed","tx":181,"ty":191,"scale":0.29,"rx":-19,"ry":-17,"rz":101,
+       "sleeve":{"dx":2,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":8},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":7}}
     ],
     "NHSFA0.png": [
-      {
-        "mesh":"left_hand_closed",
-        "tx":137,"ty":178,"scale":0.29,"rx":-14,"ry":12,"rz":75,
-        "sleeve":{"dx":-4,"dy":18,"w":22,"h":34,"angle":-14},
-        "cuff":{"dx":-1,"dy":4,"w":21,"h":11,"angle":-10}
-      }
+      {"mesh":"left_hand_closed","tx":143,"ty":188,"scale":0.28,"rx":-18,"ry":17,"rz":78,
+       "sleeve":{"dx":-2,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":-10},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":-8}}
     ],
 
     "NH2BA0.png": [
-      {
-        "mesh":"right_hand_closed",
-        "tx":188,"ty":185,"scale":0.30,"rx":-15,"ry":-12,"rz":101,
-        "sleeve":{"dx":3,"dy":17,"w":23,"h":36,"angle":10},
-        "cuff":{"dx":1,"dy":3,"w":22,"h":11,"angle":8}
-      }
+      {"mesh":"right_hand_closed","tx":182,"ty":191,"scale":0.29,"rx":-19,"ry":-17,"rz":101,
+       "sleeve":{"dx":2,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":8},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":7}}
     ],
     "NH2FA0.png": [
-      {
-        "mesh":"left_hand_open",
-        "tx":134,"ty":178,"scale":0.28,"rx":-18,"ry":16,"rz":73,
-        "sleeve":{"dx":-5,"dy":18,"w":22,"h":34,"angle":-16},
-        "cuff":{"dx":-1,"dy":4,"w":21,"h":11,"angle":-11}
-      }
+      {"mesh":"left_hand_open","tx":141,"ty":188,"scale":0.27,"rx":-22,"ry":20,"rz":76,
+       "sleeve":{"dx":-2,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":-11},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":-9}}
     ],
 
     "NHGBA0.png": [
-      {
-        "mesh":"right_hand_closed",
-        "tx":190,"ty":185,"scale":0.30,"rx":-15,"ry":-12,"rz":101,
-        "sleeve":{"dx":3,"dy":17,"w":23,"h":35,"angle":10},
-        "cuff":{"dx":1,"dy":3,"w":22,"h":11,"angle":8}
-      }
+      {"mesh":"right_hand_closed","tx":183,"ty":191,"scale":0.29,"rx":-19,"ry":-17,"rz":101,
+       "sleeve":{"dx":2,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":8},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":7}}
     ],
     "NHGFA0.png": [
-      {
-        "mesh":"left_hand_closed",
-        "tx":133,"ty":180,"scale":0.29,"rx":-14,"ry":12,"rz":74,
-        "sleeve":{"dx":-4,"dy":18,"w":22,"h":34,"angle":-14},
-        "cuff":{"dx":-1,"dy":4,"w":21,"h":11,"angle":-10}
-      }
+      {"mesh":"left_hand_closed","tx":141,"ty":189,"scale":0.28,"rx":-18,"ry":17,"rz":78,
+       "sleeve":{"dx":-2,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":-10},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":-8}}
     ],
 
     "NHRBA0.png": [
-      {
-        "mesh":"right_hand_closed",
-        "tx":188,"ty":185,"scale":0.31,"rx":-15,"ry":-12,"rz":100,
-        "sleeve":{"dx":4,"dy":17,"w":24,"h":36,"angle":11},
-        "cuff":{"dx":1,"dy":3,"w":23,"h":11,"angle":9}
-      }
+      {"mesh":"right_hand_closed","tx":184,"ty":191,"scale":0.29,"rx":-19,"ry":-17,"rz":100,
+       "sleeve":{"dx":2,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":9},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":8}}
     ],
     "NHRFA0.png": [
-      {
-        "mesh":"left_hand_open",
-        "tx":136,"ty":179,"scale":0.30,"rx":-18,"ry":17,"rz":72,
-        "sleeve":{"dx":-5,"dy":18,"w":23,"h":35,"angle":-16},
-        "cuff":{"dx":-1,"dy":4,"w":22,"h":11,"angle":-11}
-      }
+      {"mesh":"left_hand_open","tx":143,"ty":188,"scale":0.28,"rx":-22,"ry":21,"rz":75,
+       "sleeve":{"dx":-2,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":-11},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":-9}}
     ],
 
     "NHEBA0.png": [
-      {
-        "mesh":"right_hand_closed",
-        "tx":191,"ty":185,"scale":0.30,"rx":-16,"ry":-12,"rz":101,
-        "sleeve":{"dx":4,"dy":17,"w":23,"h":35,"angle":11},
-        "cuff":{"dx":1,"dy":3,"w":22,"h":11,"angle":9}
-      }
+      {"mesh":"right_hand_closed","tx":184,"ty":191,"scale":0.29,"rx":-19,"ry":-17,"rz":101,
+       "sleeve":{"dx":2,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":9},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":8}}
     ],
     "NHEFA0.png": [
-      {
-        "mesh":"left_hand_closed",
-        "tx":131,"ty":180,"scale":0.29,"rx":-14,"ry":12,"rz":74,
-        "sleeve":{"dx":-4,"dy":18,"w":22,"h":34,"angle":-14},
-        "cuff":{"dx":-1,"dy":4,"w":21,"h":11,"angle":-10}
-      }
+      {"mesh":"left_hand_closed","tx":140,"ty":189,"scale":0.28,"rx":-18,"ry":17,"rz":78,
+       "sleeve":{"dx":-2,"dy":17,"w":18,"top_w":13,"bottom_w":20,"h":24,"angle":-10},
+       "cuff":{"dx":0,"dy":5,"w":18,"h":9,"angle":-8}}
     ],
 
     "NHBBA0.png": [
-      {
-        "mesh":"right_hand_closed",
-        "tx":194,"ty":185,"scale":0.31,"rx":-16,"ry":-12,"rz":101,
-        "sleeve":{"dx":4,"dy":17,"w":24,"h":36,"angle":11},
-        "cuff":{"dx":1,"dy":3,"w":23,"h":11,"angle":9}
-      }
+      {"mesh":"right_hand_closed","tx":186,"ty":191,"scale":0.30,"rx":-19,"ry":-18,"rz":101,
+       "sleeve":{"dx":2,"dy":17,"w":19,"top_w":14,"bottom_w":21,"h":25,"angle":9},
+       "cuff":{"dx":0,"dy":5,"w":19,"h":9,"angle":8}}
     ],
     "NHBFA0.png": [
-      {
-        "mesh":"left_hand_open",
-        "tx":126,"ty":179,"scale":0.30,"rx":-18,"ry":18,"rz":71,
-        "sleeve":{"dx":-6,"dy":18,"w":23,"h":35,"angle":-17},
-        "cuff":{"dx":-1,"dy":4,"w":22,"h":11,"angle":-12}
-      }
+      {"mesh":"left_hand_open","tx":138,"ty":188,"scale":0.28,"rx":-22,"ry":22,"rz":74,
+       "sleeve":{"dx":-2,"dy":17,"w":19,"top_w":14,"bottom_w":21,"h":25,"angle":-12},
+       "cuff":{"dx":0,"dy":5,"w":19,"h":9,"angle":-10}}
     ]
   }
 }
