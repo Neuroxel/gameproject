@@ -1575,3 +1575,36 @@ Important:
 - normal DOOM remains first-person;
 - this is real advancement of the body pipeline without conflating source
   extraction with runtime acceptance.
+
+
+## 2026-10-12 — FP-MARIO v6 bottom-anchor correction; AVATAR-BODY multi-pose advance
+
+Latest user feedback:
+- hands remain too high;
+- Pistol/Fist remain too small relative to the destination hand;
+- positioning still looks artificial;
+- project must continue advancing instead of iterating indefinitely on the same
+  generic hand pose.
+
+### FP-MARIO v6
+
+Architectural correction:
+- forearms now extend physically to the lower edge of each hand PNG;
+- runtime offsets then lower the whole overlay relative to the native weapon;
+- Fist/Pistol are substantially larger than long-gun grips;
+- Pistol/Fist receive deeper positive Y offsets;
+- two-hand families stay closer to the weapon axis.
+
+This is intended to create the missing visual chain:
+bottom of viewport -> Mario sleeve -> cuff -> glove -> weapon.
+
+Remaining baked destination-hand pixels after this pass are classified as
+FP-MARIO-2 mask/reconstruction debt, not another generic scale iteration.
+
+### AVATAR-BODY progress
+
+The full-body QA renderer now emits neutral, portal and death previews in one
+run. Runtime body READY remains intentionally OFF.
+
+This advances perspective-transition work independently from first-person hand
+polish.
