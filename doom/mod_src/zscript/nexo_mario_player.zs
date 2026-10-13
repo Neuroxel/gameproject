@@ -329,6 +329,24 @@ class NexoMarioDoomPlayer : DoomPlayer
         return 5;
     }
 
+    double NexoHandRestYOffset(Weapon weapon)
+    {
+        // PSprite Y grows downward. v5 deliberately separates art-space from
+        // screen-space: the PNG contains a full forearm reaching its lower
+        // edge, while this runtime offset places that arm at the bottom of the
+        // actual first-person viewport instead of floating around the gun.
+        if (weapon is "Fist") return 25.0;
+        if (weapon is "Pistol") return 24.0;
+        if (weapon is "Chainsaw") return 19.0;
+        if (weapon is "Shotgun") return 19.0;
+        if (weapon is "SuperShotgun") return 18.0;
+        if (weapon is "Chaingun") return 18.0;
+        if (weapon is "RocketLauncher") return 18.0;
+        if (weapon is "PlasmaRifle" || weapon is "ID24Incinerator") return 18.0;
+        if (weapon is "BFG9000" || weapon is "ID24CalamityBlade") return 17.0;
+        return 20.0;
+    }
+
     void NexoAnimateFirstPersonHands(Weapon weapon)
     {
         if (player == null || weapon == null) return;
@@ -340,12 +358,14 @@ class NexoMarioDoomPlayer : DoomPlayer
         // Overlay sprites already inherit native weapon raise/lower position and
         // bob through PSPF_ADDWEAPON/PSPF_ADDBOB. These values are therefore
         // animation deltas only.
+        double restY = NexoHandRestYOffset(weapon);
+
         back.x = 0.0;
-        back.y = 0.0;
+        back.y = restY;
         back.rotation = 0.0;
         back.scale = (1.0, 1.0);
         front.x = 0.0;
-        front.y = 0.0;
+        front.y = restY;
         front.rotation = 0.0;
         front.scale = (1.0, 1.0);
 
@@ -402,7 +422,7 @@ class NexoMarioDoomPlayer : DoomPlayer
                 {
                     // Curved jab toward the center with perspective growth.
                     back.x = 36.0 * pulse + 8.0 * arc;
-                    back.y = -36.0 * pulse - 4.0 * arc;
+                    back.y += -36.0 * pulse - 4.0 * arc;
                     back.rotation = -18.0 * pulse + 7.0 * arc;
                     back.scale = (
                         1.0 + 0.24 * pulse,
@@ -410,13 +430,13 @@ class NexoMarioDoomPlayer : DoomPlayer
                     );
 
                     front.x = -4.0 * pulse;
-                    front.y = 4.0 * pulse;
+                    front.y += 4.0 * pulse;
                     front.rotation = 3.0 * pulse;
                 }
                 else
                 {
                     front.x = -36.0 * pulse - 8.0 * arc;
-                    front.y = -36.0 * pulse - 4.0 * arc;
+                    front.y += -36.0 * pulse - 4.0 * arc;
                     front.rotation = 18.0 * pulse - 7.0 * arc;
                     front.scale = (
                         1.0 + 0.24 * pulse,
@@ -424,7 +444,7 @@ class NexoMarioDoomPlayer : DoomPlayer
                     );
 
                     back.x = 4.0 * pulse;
-                    back.y = 4.0 * pulse;
+                    back.y += 4.0 * pulse;
                     back.rotation = -3.0 * pulse;
                 }
             }
