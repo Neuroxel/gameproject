@@ -247,9 +247,28 @@ def paint_mario_wrist(pixels, width: int, height: int, inst):
     sh = float(sleeve.get("h", 34.0))
 
     # Dark external silhouette first, then a tapered Mario-red sleeve.
-    # The top remains narrow at the glove cuff and widens only toward the arm.
+    # v5 can anchor the forearm physically to the bottom of the 320x200
+    # weapon-space instead of rendering a short floating red patch.
     top_w = float(sleeve.get("top_w", sw * 0.72))
     bottom_w = float(sleeve.get("bottom_w", sw))
+
+    if bool(sleeve.get("to_bottom", False)):
+        top_x = tx + float(sleeve.get("top_dx", sleeve.get("dx", 0.0)))
+        top_y = ty + float(sleeve.get("top_dy", sleeve.get("dy", 4.0)))
+        bottom_x = tx + float(sleeve.get("bottom_dx", 0.0))
+        bottom_y = float(height + sleeve.get("bottom_overhang", 6.0))
+
+        vx = bottom_x - top_x
+        vy = bottom_y - top_y
+        sh = max(1.0, math.hypot(vx, vy))
+        sx = (top_x + bottom_x) * 0.5
+        sy = (top_y + bottom_y) * 0.5
+
+        # Local +Y maps to world (-sin(angle), cos(angle)).
+        angle = math.degrees(math.atan2(-vx, vy))
+    else:
+        top_x = sx
+        top_y = sy
 
     paint_rotated_tapered_sleeve(
         pixels, width, height, sx, sy,
@@ -263,8 +282,12 @@ def paint_mario_wrist(pixels, width: int, height: int, inst):
     )
 
     cuff = inst.get("cuff", {})
-    cx = tx + float(cuff.get("dx", sleeve.get("cuff_dx", 0.0)))
-    cy = ty + float(cuff.get("dy", sleeve.get("cuff_dy", 2.0)))
+    if bool(sleeve.get("to_bottom", False)):
+        cx = top_x + float(cuff.get("dx", 0.0))
+        cy = top_y + float(cuff.get("dy", 0.0))
+    else:
+        cx = tx + float(cuff.get("dx", sleeve.get("cuff_dx", 0.0)))
+        cy = ty + float(cuff.get("dy", sleeve.get("cuff_dy", 2.0)))
     cw = float(cuff.get("w", max(16.0, sw * 0.92)))
     ch = float(cuff.get("h", 11.0))
     ca = float(cuff.get("angle", angle))
