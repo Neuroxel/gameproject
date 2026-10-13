@@ -18,14 +18,14 @@ echo "[NEXO] Extracting AVATAR-BODY-1 local geometry..."
 python3 scripts/extract-mario-body-parts-from-sm64-rom.py "$@"
 
 echo
-echo "[NEXO] Rendering AVATAR-BODY-2 neutral preview..."
+echo "[NEXO] Rendering AVATAR-BODY-2 neutral/portal/death previews..."
 python3 scripts/render-mario-body-preview-local.py
 
 echo
 echo "[NEXO] Local avatar preparation complete."
 echo "[NEXO] First-person hand READY: assets_local/mario_hands/READY"
 echo "[NEXO] Full-body runtime READY remains intentionally OFF."
-echo "[NEXO] Body preview: assets_local/mario_avatar/body_neutral_preview.png"
+echo "[NEXO] Body previews: assets_local/mario_avatar/body_{neutral,portal,death}_preview.png"
 echo
 echo "[NEXO] Launch DOOM separately with:"
 echo "  python3 bridge/run_doom.py --runtime sdl"
